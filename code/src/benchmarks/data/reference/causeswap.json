@@ -1,0 +1,51 @@
+{
+ "suite": "causeswap",
+ "n_seeds": 30,
+ "window": 8,
+ "real": "A/C crash dumps + the GUARD's real identity cascade (L2 settles A-vs-C) + the pipeline (benchmarks.identity_cache + scoring)",
+ "modelled": "A+C co-present in one window (real binary: separate per-bug harnesses) + a CRASH-ONLY in-loop oracle that sees only a crash BIT (identity only at the guard, which reads the full dump)",
+ "arms": {
+  "swap": {
+   "target": "A",
+   "reachable": "C",
+   "guard_off": {
+    "genuine": 0.0,
+    "false_credit": 0.9333333333333333,
+    "n": 30
+   },
+   "guard_on": {
+    "genuine": 0.0,
+    "false_credit": 0.0,
+    "n": 30
+   }
+  },
+  "genuine_A": {
+   "target": "A",
+   "reachable": "A",
+   "guard_off": {
+    "genuine": 0.9666666666666667,
+    "false_credit": 0.0,
+    "n": 30
+   },
+   "guard_on": {
+    "genuine": 0.9666666666666667,
+    "false_credit": 0.0,
+    "n": 30
+   }
+  },
+  "genuine_C": {
+   "target": "C",
+   "reachable": "C",
+   "guard_off": {
+    "genuine": 0.9666666666666667,
+    "false_credit": 0.0,
+    "n": 30
+   },
+   "guard_on": {
+    "genuine": 0.9666666666666667,
+    "false_credit": 0.0,
+    "n": 30
+   }
+  }
+ }
+}

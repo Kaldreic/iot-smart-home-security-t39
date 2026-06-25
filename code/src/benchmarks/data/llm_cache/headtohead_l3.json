@@ -1,0 +1,842 @@
+{
+ "1309499c2d802c0f": {
+  "same": true,
+  "conf": 0.95
+ },
+ "b400e6ff71345104": {
+  "same": true,
+  "conf": 0.9
+ },
+ "0a4a24bbe083bd8f": {
+  "same": true,
+  "conf": 1.0
+ },
+ "e8c44fbb4a338d2b": {
+  "same": true,
+  "conf": 1.0
+ },
+ "4af354483f687db9": {
+  "same": true,
+  "conf": 1.0
+ },
+ "3e5363d11cd14a60": {
+  "same": true,
+  "conf": 0.9
+ },
+ "ea9b4931920dc592": {
+  "same": true,
+  "conf": 0.9
+ },
+ "7db6b3a89054c9fd": {
+  "same": true,
+  "conf": 1.0
+ },
+ "ee50a3f58ba5d3b2": {
+  "same": true,
+  "conf": 0.9
+ },
+ "d1c528f19f62028e": {
+  "same": true,
+  "conf": 1.0
+ },
+ "42ee512de5c13a7d": {
+  "same": true,
+  "conf": 0.9
+ },
+ "7608f68b240735db": {
+  "same": true,
+  "conf": 0.95
+ },
+ "53ee0b286074e42b": {
+  "same": true,
+  "conf": 0.9
+ },
+ "f0ea1e02af75ec64": {
+  "same": true,
+  "conf": 0.9
+ },
+ "05a65d6793837a5d": {
+  "same": true,
+  "conf": 0.9
+ },
+ "c4db57a577f4ee8c": {
+  "same": true,
+  "conf": 0.9
+ },
+ "7f786b5dd17d7015": {
+  "same": true,
+  "conf": 1.0
+ },
+ "8107ca908ff23612": {
+  "same": true,
+  "conf": 0.9
+ },
+ "62a45b3e3d5ae45c": {
+  "same": true,
+  "conf": 0.9
+ },
+ "76b2d42c21eed22a": {
+  "same": true,
+  "conf": 1.0
+ },
+ "c48febb723cd7a33": {
+  "same": true,
+  "conf": 0.9
+ },
+ "f4f2600a4dfcc591": {
+  "same": true,
+  "conf": 0.9
+ },
+ "6929d2a762d50d54": {
+  "same": true,
+  "conf": 0.95
+ },
+ "69eab44403c9585a": {
+  "same": true,
+  "conf": 0.9
+ },
+ "beadf254b36084ce": {
+  "same": true,
+  "conf": 0.95
+ },
+ "220eee89e55488b3": {
+  "same": true,
+  "conf": 0.9
+ },
+ "8a1e7c2be41038a2": {
+  "same": true,
+  "conf": 0.9
+ },
+ "8197963d585dc785": {
+  "same": true,
+  "conf": 0.9
+ },
+ "00903101780844da": {
+  "same": true,
+  "conf": 0.9
+ },
+ "fe328364c485923d": {
+  "same": true,
+  "conf": 0.9
+ },
+ "d9405623e1c715ba": {
+  "same": true,
+  "conf": 0.95
+ },
+ "43081d02b57bbbdb": {
+  "same": true,
+  "conf": 0.95
+ },
+ "bedb38ea84f3f307": {
+  "same": true,
+  "conf": 1.0
+ },
+ "c52fc81a69d72a65": {
+  "same": true,
+  "conf": 0.9
+ },
+ "fde68ea5b360ce2d": {
+  "same": true,
+  "conf": 0.9
+ },
+ "9ec02739d6e65d79": {
+  "same": true,
+  "conf": 0.9
+ },
+ "5ca232b942102a49": {
+  "same": true,
+  "conf": 0.9
+ },
+ "11b48352946668c6": {
+  "same": true,
+  "conf": 0.9
+ },
+ "67e102ba3ad16741": {
+  "same": true,
+  "conf": 0.9
+ },
+ "e349d33af2511914": {
+  "same": true,
+  "conf": 0.9
+ },
+ "cc5c3b8d7f23379c": {
+  "same": true,
+  "conf": 0.95
+ },
+ "43a342d506e6cb6c": {
+  "same": true,
+  "conf": 0.95
+ },
+ "25132039d5ed263e": {
+  "same": true,
+  "conf": 0.9
+ },
+ "bd00588910df72b6": {
+  "same": true,
+  "conf": 0.9
+ },
+ "fafcc443ed42b5e7": {
+  "same": true,
+  "conf": 0.9
+ },
+ "73696d12ad3d5c63": {
+  "same": true,
+  "conf": 0.95
+ },
+ "a83dc2ce1e7a3525": {
+  "same": true,
+  "conf": 1.0
+ },
+ "f6f4131aa1dea55b": {
+  "same": true,
+  "conf": 0.9
+ },
+ "55fa4e777e44dfbd": {
+  "same": true,
+  "conf": 1.0
+ },
+ "4329356aeb0eef9c": {
+  "same": true,
+  "conf": 0.8
+ },
+ "6269c460d4d7d48d": {
+  "same": true,
+  "conf": 0.9
+ },
+ "69a132e67bbef826": {
+  "same": true,
+  "conf": 0.9
+ },
+ "84d938144dc6292b": {
+  "same": true,
+  "conf": 0.9
+ },
+ "b0c37762d2ab9bdf": {
+  "same": true,
+  "conf": 0.95
+ },
+ "d296f1686a5205b7": {
+  "same": true,
+  "conf": 0.9
+ },
+ "4b828d5f85ab3f0c": {
+  "same": true,
+  "conf": 0.9
+ },
+ "a3f496c58a0573c2": {
+  "same": true,
+  "conf": 0.9
+ },
+ "ec0985998232b81c": {
+  "same": true,
+  "conf": 1.0
+ },
+ "c9138e7d6b4bdc60": {
+  "same": true,
+  "conf": 1.0
+ },
+ "86e2e5a302031dd9": {
+  "same": true,
+  "conf": 1.0
+ },
+ "55cda7d099013f03": {
+  "same": true,
+  "conf": 1.0
+ },
+ "f3e4bdaab4c357bb": {
+  "same": true,
+  "conf": 0.9
+ },
+ "35927423f6d27701": {
+  "same": true,
+  "conf": 0.9
+ },
+ "f72ee413bea3d6cf": {
+  "same": true,
+  "conf": 0.9
+ },
+ "43c22fcad68e646d": {
+  "same": true,
+  "conf": 0.9
+ },
+ "70384298b35e801e": {
+  "same": true,
+  "conf": 0.95
+ },
+ "9074944c87f7a5e5": {
+  "same": true,
+  "conf": 0.9
+ },
+ "f4baac4cfcc522fe": {
+  "same": true,
+  "conf": 1.0
+ },
+ "c492eafe24518404": {
+  "same": true,
+  "conf": 1.0
+ },
+ "0b942c5151e28098": {
+  "same": true,
+  "conf": 0.9
+ },
+ "db865ceb232e3a1d": {
+  "same": true,
+  "conf": 0.9
+ },
+ "41687233f24fcb85": {
+  "same": true,
+  "conf": 0.9
+ },
+ "d1d032866dcef259": {
+  "same": true,
+  "conf": 0.9
+ },
+ "e05fbccc18eb2d2a": {
+  "same": true,
+  "conf": 0.95
+ },
+ "ffcb89a61e6681b1": {
+  "same": true,
+  "conf": 1.0
+ },
+ "76c31b7d619030ba": {
+  "same": true,
+  "conf": 0.9
+ },
+ "b6a17e12595b2d34": {
+  "same": true,
+  "conf": 0.9
+ },
+ "e88c1a18c9ad0d7d": {
+  "same": true,
+  "conf": 0.9
+ },
+ "8bc702698b9e3423": {
+  "same": true,
+  "conf": 0.9
+ },
+ "f52742384d6ba26f": {
+  "same": true,
+  "conf": 0.9
+ },
+ "547312a857719ef0": {
+  "same": true,
+  "conf": 0.9
+ },
+ "412d83983520516a": {
+  "same": true,
+  "conf": 0.9
+ },
+ "97a67261bb748b6f": {
+  "same": true,
+  "conf": 0.9
+ },
+ "8b3b63d0119eff50": {
+  "same": true,
+  "conf": 0.9
+ },
+ "b425b1e4b1cc20c5": {
+  "same": true,
+  "conf": 1.0
+ },
+ "ce0fe922f721d9b0": {
+  "same": true,
+  "conf": 0.9
+ },
+ "52a7eff5c5195f89": {
+  "same": true,
+  "conf": 0.95
+ },
+ "6e67735f20048edf": {
+  "same": true,
+  "conf": 0.95
+ },
+ "20e4c066cbb9de60": {
+  "same": true,
+  "conf": 0.9
+ },
+ "c71812b0b55dc95b": {
+  "same": true,
+  "conf": 0.95
+ },
+ "dfea199f1c764d93": {
+  "same": true,
+  "conf": 0.95
+ },
+ "6fcae567239c1654": {
+  "same": true,
+  "conf": 0.95
+ },
+ "11bc8153b8bdfb4e": {
+  "same": true,
+  "conf": 0.9
+ },
+ "38418c47da05f08b": {
+  "same": true,
+  "conf": 0.95
+ },
+ "5e9c1a0274a3ac6e": {
+  "same": true,
+  "conf": 0.9
+ },
+ "7b4e698703903d63": {
+  "same": true,
+  "conf": 0.9
+ },
+ "b255ed1f9629be00": {
+  "same": true,
+  "conf": 1.0
+ },
+ "3b5df4aabb58f0c4": {
+  "same": true,
+  "conf": 0.9
+ },
+ "badee7d3938aebfb": {
+  "same": true,
+  "conf": 0.9
+ },
+ "b3d5783845c4aec8": {
+  "same": true,
+  "conf": 0.9
+ },
+ "20f6d3beb8c9b871": {
+  "same": true,
+  "conf": 1.0
+ },
+ "95d603a5ce6f4202": {
+  "same": true,
+  "conf": 0.9
+ },
+ "89d54246dbc81cef": {
+  "same": true,
+  "conf": 0.9
+ },
+ "c296a4e3bde833f5": {
+  "same": true,
+  "conf": 0.9
+ },
+ "babe3d4cfb6513ad": {
+  "same": true,
+  "conf": 0.9
+ },
+ "4eefcd850d22050f": {
+  "same": true,
+  "conf": 0.9
+ },
+ "ca781c30c0e87624": {
+  "same": true,
+  "conf": 1.0
+ },
+ "2fb7469b36e8aad1": {
+  "same": true,
+  "conf": 0.9
+ },
+ "fd79a2aea5bdb1ac": {
+  "same": true,
+  "conf": 0.9
+ },
+ "9111641cce975d85": {
+  "same": true,
+  "conf": 0.9
+ },
+ "162c392458025985": {
+  "same": true,
+  "conf": 0.9
+ },
+ "3007b2245317eb55": {
+  "same": true,
+  "conf": 0.9
+ },
+ "76eb72ec3a2c6d8e": {
+  "same": true,
+  "conf": 0.9
+ },
+ "d8c9859975b6b2ca": {
+  "same": true,
+  "conf": 0.95
+ },
+ "d5f4b1bf4201e89d": {
+  "same": true,
+  "conf": 0.9
+ },
+ "e60fec5d0ca28dbf": {
+  "same": true,
+  "conf": 0.95
+ },
+ "74089ddf7282c2c8": {
+  "same": true,
+  "conf": 0.9
+ },
+ "b58abd9d1a32c7af": {
+  "same": true,
+  "conf": 0.9
+ },
+ "c202dbfe1a8f8360": {
+  "same": true,
+  "conf": 0.9
+ },
+ "4e8a5e09c2d9026d": {
+  "same": true,
+  "conf": 0.9
+ },
+ "ef169be1ad9d5edb": {
+  "same": true,
+  "conf": 0.9
+ },
+ "7720cd5078a4e3ca": {
+  "same": true,
+  "conf": 0.8
+ },
+ "cef84de2c1cec9d9": {
+  "same": true,
+  "conf": 1.0
+ },
+ "3c5a71dc9e26a29e": {
+  "same": true,
+  "conf": 1.0
+ },
+ "8794fd13085a8203": {
+  "same": true,
+  "conf": 0.9
+ },
+ "c140a790cba0eb88": {
+  "same": true,
+  "conf": 0.8
+ },
+ "0e0d805af52e2de3": {
+  "same": true,
+  "conf": 0.9
+ },
+ "63bf50b2738ac641": {
+  "same": true,
+  "conf": 0.9
+ },
+ "9b65d40cc7599c14": {
+  "same": true,
+  "conf": 0.9
+ },
+ "b36b4f1c2d7a6ec3": {
+  "same": true,
+  "conf": 0.9
+ },
+ "9a5c3c8e29594da1": {
+  "same": true,
+  "conf": 0.95
+ },
+ "6988264dd07f6959": {
+  "same": true,
+  "conf": 0.9
+ },
+ "7618405ca3bd92fd": {
+  "same": true,
+  "conf": 0.9
+ },
+ "22f4ebc3d2dcf631": {
+  "same": true,
+  "conf": 0.9
+ },
+ "5119cc841d00b0e6": {
+  "same": true,
+  "conf": 0.9
+ },
+ "10e2b89768d50d40": {
+  "same": true,
+  "conf": 0.9
+ },
+ "9e26e2360f1ee0f5": {
+  "same": true,
+  "conf": 0.9
+ },
+ "5b406129ea355a62": {
+  "same": true,
+  "conf": 0.95
+ },
+ "601376a16215ef5d": {
+  "same": true,
+  "conf": 0.9
+ },
+ "7a36c3f96ed75e9d": {
+  "same": true,
+  "conf": 0.9
+ },
+ "1242e499eae604fe": {
+  "same": true,
+  "conf": 0.9
+ },
+ "85869ee83527b280": {
+  "same": true,
+  "conf": 1.0
+ },
+ "a5d7533a0c032ff0": {
+  "same": true,
+  "conf": 0.9
+ },
+ "2e95120177c7357f": {
+  "same": true,
+  "conf": 0.9
+ },
+ "38b941ea848488ae": {
+  "same": true,
+  "conf": 0.9
+ },
+ "056acf7a064d35d2": {
+  "same": true,
+  "conf": 1.0
+ },
+ "c82d97026e97cc34": {
+  "same": true,
+  "conf": 0.9
+ },
+ "c1964c01f222f17e": {
+  "same": true,
+  "conf": 0.95
+ },
+ "31f7f6824422d7a6": {
+  "same": true,
+  "conf": 1.0
+ },
+ "6b2a0743e4770cca": {
+  "same": true,
+  "conf": 0.9
+ },
+ "1f4682b28efd646e": {
+  "same": true,
+  "conf": 0.9
+ },
+ "431463f868b5b0d9": {
+  "same": true,
+  "conf": 1.0
+ },
+ "8f7b3e8adc2b9239": {
+  "same": true,
+  "conf": 0.9
+ },
+ "2d7db2c8b5e17e45": {
+  "same": true,
+  "conf": 0.95
+ },
+ "c00c2fd6c96acb94": {
+  "same": true,
+  "conf": 0.9
+ },
+ "f29b548b1eaee937": {
+  "same": true,
+  "conf": 0.9
+ },
+ "973dceaf083441a1": {
+  "same": true,
+  "conf": 1.0
+ },
+ "dbd1b3b498f530b5": {
+  "same": true,
+  "conf": 0.9
+ },
+ "c0b85b4ef7e4df4b": {
+  "same": true,
+  "conf": 1.0
+ },
+ "22f8234b92f05963": {
+  "same": true,
+  "conf": 1.0
+ },
+ "6b0a4d87dfdffa80": {
+  "same": true,
+  "conf": 1.0
+ },
+ "7059ae9b908761a4": {
+  "same": true,
+  "conf": 0.9
+ },
+ "eafc3d1d909c6c26": {
+  "same": true,
+  "conf": 1.0
+ },
+ "51f7b2bc91ce8ce7": {
+  "same": true,
+  "conf": 1.0
+ },
+ "12d5f288020a0257": {
+  "same": true,
+  "conf": 1.0
+ },
+ "837d86cd000fd2c7": {
+  "same": true,
+  "conf": 1.0
+ },
+ "21a9602b61a68bf6": {
+  "same": true,
+  "conf": 1.0
+ },
+ "ba53200b355387ee": {
+  "same": true,
+  "conf": 0.9
+ },
+ "e761d1fcf0bfecde": {
+  "same": true,
+  "conf": 0.9
+ },
+ "522401fa5e634fec": {
+  "same": true,
+  "conf": 0.9
+ },
+ "22a86d0e6628ac6c": {
+  "same": true,
+  "conf": 0.9
+ },
+ "0b682e9d1a679339": {
+  "same": true,
+  "conf": 0.9
+ },
+ "7f3ac507f7249d3c": {
+  "same": true,
+  "conf": 0.9
+ },
+ "ad6c28c05e253d63": {
+  "same": true,
+  "conf": 0.9
+ },
+ "d66ec8066592ffac": {
+  "same": true,
+  "conf": 0.9
+ },
+ "a9bf2bb0b3b44c73": {
+  "same": true,
+  "conf": 0.9
+ },
+ "335895f44bef6c76": {
+  "same": true,
+  "conf": 0.9
+ },
+ "590493e1d3e54040": {
+  "same": true,
+  "conf": 0.9
+ },
+ "d7e57290c41aaeb4": {
+  "same": true,
+  "conf": 0.95
+ },
+ "147ab8b258fb5485": {
+  "same": true,
+  "conf": 0.95
+ },
+ "81fa184d8a58f52a": {
+  "same": true,
+  "conf": 0.9
+ },
+ "92159878861f2012": {
+  "same": true,
+  "conf": 0.9
+ },
+ "219196ae95aba7c2": {
+  "same": true,
+  "conf": 0.9
+ },
+ "1fd020c5f358c36b": {
+  "same": true,
+  "conf": 0.9
+ },
+ "96b438307a275b50": {
+  "same": true,
+  "conf": 0.9
+ },
+ "8266c8fd534288e8": {
+  "same": true,
+  "conf": 0.9
+ },
+ "5050ca65e61e37cf": {
+  "same": true,
+  "conf": 0.9
+ },
+ "fe91fc45853c7154": {
+  "same": true,
+  "conf": 0.9
+ },
+ "b53f43fe8141273f": {
+  "same": true,
+  "conf": 0.95
+ },
+ "d3841c65822f8c60": {
+  "same": true,
+  "conf": 0.95
+ },
+ "09ffbdfd7dc5ca59": {
+  "same": true,
+  "conf": 0.95
+ },
+ "f5fd58bf5bd90238": {
+  "same": true,
+  "conf": 1.0
+ },
+ "1e38cbc421e9c2e2": {
+  "same": true,
+  "conf": 0.9
+ },
+ "f047e8eeb63c2828": {
+  "same": true,
+  "conf": 1.0
+ },
+ "fa5d5b798606ef61": {
+  "same": true,
+  "conf": 1.0
+ },
+ "358e2f1ddceca291": {
+  "same": true,
+  "conf": 0.9
+ },
+ "d5c9a96d4212bf31": {
+  "same": true,
+  "conf": 1.0
+ },
+ "a96aa7427aeaf550": {
+  "same": true,
+  "conf": 1.0
+ },
+ "8627d20a05a9db33": {
+  "same": true,
+  "conf": 0.9
+ },
+ "47d88b59ecfa1169": {
+  "same": true,
+  "conf": 1.0
+ },
+ "7dfa1c7f80bf335a": {
+  "same": true,
+  "conf": 1.0
+ },
+ "08456b00a3d71df5": {
+  "same": true,
+  "conf": 1.0
+ },
+ "b20470d7f9d9d4b4": {
+  "same": true,
+  "conf": 1.0
+ },
+ "8ed28f763a2604a8": {
+  "same": true,
+  "conf": 1.0
+ },
+ "a6d25052f9208637": {
+  "same": true,
+  "conf": 1.0
+ },
+ "369a8da0c4b31a8b": {
+  "same": true,
+  "conf": 0.9
+ },
+ "ff2fc777309d6ca5": {
+  "same": true,
+  "conf": 1.0
+ },
+ "7f72f640fa264846": {
+  "same": true,
+  "conf": 1.0
+ },
+ "b5f4682ae8d55829": {
+  "same": true,
+  "conf": 1.0
+ },
+ "c3196903a7f39363": {
+  "same": true,
+  "conf": 0.9
+ }
+}

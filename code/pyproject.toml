@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rdd"
+version = "0.1.0"
+description = "Robust Delta-Debugging: a noise-robust bug-reproduction minimiser for wireless IoT fuzzing"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+  { name = "Aldo Ristori" },
+  { name = "Nicole Sperandini" },
+]
+# numpy (the suite) + drain3 (the tool). The live L3 judge talks to an OPTIONAL local
+# Ollama server over stdlib urllib — not a dependency; the committed verdict cache
+# reproduces every benchmark without it.
+dependencies = [
+  "numpy>=1.24",
+  "drain3>=0.9",
+]
+
+[project.urls]
+Repository = "https://github.com/Kaldreic/iot-smart-home-security-t39"
+Report = "https://github.com/Kaldreic/iot-smart-home-security-t39/tree/main/report"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["rdd*", "emulation*", "benchmarks*"]
+exclude = ["*.tests", "*.tests.*"]
+
+# Ship the committed reference data + real crash dumps so a wheel install is self-contained.
+[tool.setuptools.package-data]
+emulation = ["data/**/*.json", "data/**/*.txt"]
+benchmarks = ["data/**/*.json"]

@@ -1,0 +1,9 @@
+# Bug E (data-length-update) example crash DUMP -- LL_ASSERT(ntf) at ull_llcp_common.c:1138 (rp_comm_ntf)
+# Captured: HARNESS_BUG=E HARNESS_SUBSET=24 (true 2-minimal {LENGTH_REQ1, LENGTH_REQ2}) on build-dle/testbinary
+# Shell exit 255 = mocked bt_ctlr_assert_handle -> exit(-1). A DISTINCT crash identity: a doubled
+# LL_LENGTH_REQ clobbers the retained notification rx node, so rp_comm_ntf asserts on NULL. The crash
+# SITE (ull_llcp_common.c:1138) differs from A (ull_conn_update_parameters), B (ull_llcp_cc), C
+# (ull_llcp_conn_upd.c:247) and D (ull_llcp_phy.c:437), so the L2/L3 site-dedup separates it.
+# ----------------------------------------------------------------------------------------
+ASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138
+Assertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138

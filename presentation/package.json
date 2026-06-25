@@ -1,0 +1,20 @@
+{
+  "name": "iot-smart-home-security-t39-slides",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "slidev build",
+    "dev": "slidev --open",
+    "export": "slidev export"
+  },
+  "dependencies": {
+    "@slidev/cli": "^52.14.2",
+    "@slidev/theme-seriph": "^0.25.0"
+  },
+  "devDependencies": {
+    "playwright-chromium": "^1.60.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

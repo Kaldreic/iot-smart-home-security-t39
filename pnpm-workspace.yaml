@@ -1,0 +1,10 @@
+packages:
+  - "presentation"
+allowBuilds:
+  esbuild: true
+  playwright-chromium: true
+# Security pin: force the dompurify 3.2.x that Slidev's transitive tree pulls up
+# to >=3.4.0. Lives here (not package.json#pnpm) because pnpm 10 deprecates the
+# package.json location and pnpm 11 silently ignores it.
+overrides:
+  dompurify: ">=3.4.0"

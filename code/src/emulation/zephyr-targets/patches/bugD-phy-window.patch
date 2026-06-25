@@ -1,0 +1,139 @@
+--- a/tests/bluetooth/controller/ctrl_phy_update/src/main.c
++++ b/tests/bluetooth/controller/ctrl_phy_update/src/main.c
+@@ -1694,5 +1694,136 @@ ZTEST(phy_periph, test_phy_update_periph_rem_no_actual_change)
+ 		      llcp_ctx_buffers_free());
+ }
+ 
++
++/* ============================================================================
++ * / Bug D -- SUBSET-selectable PHY-update doubled-IND assert oracle window.
++ *
++ * MULTI-PACKET minimal (like Bug C). One native unit-test binary; the test is a
++ * NO-OP unless HARNESS_BUG==D (the native unit_testing binary has no per-test CLI
++ * filter -- it runs the WHOLE suite -- so selection is by getenv, the PROBE_ID
++ * pattern). HARNESS_SUBSET is a bitmask over the LL-PDU window; an external minimiser
++ * drives a channel-OFF exhaustive subset sweep by varying it.
++ *
++ * Confirmed injection: on the
++ * peripheral, a remote LL_PHY_REQ starts the remote PHY-update procedure; IND#1
++ * (LL_PHY_UPDATE_IND) is RETAINED (ull_llcp_phy.c:~1167) and the FSM enters
++ * RP_PU_STATE_WAIT_INSTANT; a SECOND, load-bearing LL_PHY_UPDATE_IND arrives
++ * while already in WAIT_INSTANT and OVERWRITES ctx->node_ref.rx, which the FSM
++ * does not re-retain, so the tail of llcp_rr_rx (ull_llcp_remote.c:318) clears
++ * ctx->node_ref.rx = NULL; at the instant pu_ntf (ull_llcp_phy.c:437) does
++ * ntf = ctx->node_ref.rx (NULL); LL_ASSERT(ntf) -> mocked bt_ctlr_assert_handle
++ * -> exit(-1) -> shell 255. A single IND keeps node_ref.rx valid -> no crash.
++ *
++ * The PHY-update procedure is EXCLUSIVE (like Bug A/C). EMPIRICAL finding (same
++ * as Bug C): a PEER-injected decoy is NOT
++ * transparent (it leaves the controller mid-RX and the procedure desyncs). A
++ * COMPLETE, FULLY-DRAINED *local* LE-Ping IS transparent: ull_cp_le_ping ->
++ * controller TXes LL_LE_PING_REQ -> peer LL_LE_PING_RSP -> release tx, returning
++ * the ctx pool to balance with no pending RX, so the later remote PHY procedure
++ * still desyncs on the 2nd IND. We therefore use drained local LE-Pings as the
++ * (genuinely droppable) decoys, injected BEFORE the PHY_REQ.
++ *
++ * Window bit layout (HARNESS_SUBSET bit i => window[i]):
++ *   bit0 (0x01) LE_PING decoy #1   transparent: a COMPLETE local LE-Ping
++ *   bit1 (0x02) LE_PING decoy #2   (ull_cp_le_ping -> REQ out, peer RSP in, tx released)
++ *   bit2 (0x04) LE_PING decoy #3   injected BEFORE the PHY_REQ, fully drained
++ *   bit3 (0x08) IND #1             load-bearing: drives the remote PHY proc to WAIT_INSTANT
++ *   bit4 (0x10) IND #2             load-bearing: the desync trigger (asserts at instant)
++ *
++ * The LL_PHY_REQ precondition (the procedure-start packet) is injected whenever
++ * any IND is requested (ind1||ind2), mirroring Bug C's local-CPR precondition.
++ * The two INDs (bits 3,4) are the true minimal: dropping EITHER (one IND, or
++ * IND#2 with no prior WAIT_INSTANT) does NOT crash. HARNESS_SUBSET selects the subset;
++ * crash iff BOTH IND bits set. Channel-OFF true 2-minimal = {IND1, IND2}. The
++ * assert emits its OWN message (ASSERTION FAIL [ntf] @ ull_llcp_phy.c:437) ->
++ * exit 255; no SIGFPE handler is needed. NO-OP unless HARNESS_BUG==D.
++ * ==========================================================================*/
++#include <stdlib.h>    /* getenv/strtoul for the HARNESS_BUG / HARNESS_SUBSET selectors */
++#include <string.h>    /* strcmp                                              */
++
++static bool bug_is(const char *want)
++{
++	const char *s = getenv("HARNESS_BUG");
++	return s && want && s[0] == want[0] && s[1] == '\0';
++}
++
++ZTEST(phy_periph, test_bug_d)
++{
++	if (!bug_is("D")) {
++		return;   /* not selected -> no-op (whole-suite binary) */
++	}
++
++	const char *s = getenv("HARNESS_SUBSET");
++	unsigned long mask = s ? strtoul(s, NULL, 0) : 0UL;
++	struct node_tx *tx;
++	struct pdu_data_llctrl_phy_req req = { .rx_phys = PHY_1M, .tx_phys = PHY_2M };
++	struct pdu_data_llctrl_phy_req rsp = { .rx_phys = PHY_1M | PHY_2M | PHY_CODED,
++					       .tx_phys = PHY_1M | PHY_2M | PHY_CODED };
++	struct pdu_data_llctrl_phy_upd_ind ind = { .instant = 7,
++						   .c_to_p_phy = 0,
++						   .p_to_c_phy = PHY_2M };
++	uint16_t instant = 0;
++	bool ind1 = (mask & 0x08U);   /* window[3] = IND #1 (-> WAIT_INSTANT)        */
++	bool ind2 = (mask & 0x10U);   /* window[4] = IND #2 (load-bearing desync)    */
++
++	test_set_role(&conn, BT_HCI_ROLE_PERIPHERAL);
++	ull_cp_state_set(&conn, ULL_CP_CONNECTED);
++
++	/* window[0..2]: transparent decoys -- a COMPLETE, fully-drained local LE-Ping each
++	 * (ull_cp_le_ping -> controller TXes LL_LE_PING_REQ -> peer LL_LE_PING_RSP -> release tx).
++	 * Injected BEFORE the PHY_REQ (no procedure pending => clean); droppable, not in the minimal. */
++#define D_PING(bit) do { if (mask & (bit)) {                                     \
++		uint8_t e = ull_cp_le_ping(&conn);                                         \
++		zassert_equal(e, BT_HCI_ERR_SUCCESS);                                      \
++		event_prepare(&conn);                                                      \
++		lt_rx(LL_LE_PING_REQ, &conn, &tx, NULL);                                   \
++		lt_tx(LL_LE_PING_RSP, &conn, NULL);                                        \
++		event_done(&conn);                                                         \
++		ull_cp_release_tx(&conn, tx); } } while (0)
++	D_PING(0x01U);      /* window[0] */
++	D_PING(0x02U);      /* window[1] */
++	D_PING(0x04U);      /* window[2] */
++#undef D_PING
++
++	if (ind1 || ind2) {
++		/* LL_PHY_REQ precondition: remote starts the PHY-update procedure -> controller
++		 * TXes PHY_RSP; consume it and ACK so the procedure advances to expect the IND. */
++		event_prepare(&conn);
++		lt_rx_q_is_empty(&conn);
++		lt_tx(LL_PHY_REQ, &conn, &req);
++		event_done(&conn);
++
++		event_prepare(&conn);
++		lt_rx(LL_PHY_RSP, &conn, &tx, &rsp);
++		lt_rx_q_is_empty(&conn);
++		ind.instant = instant = event_counter(&conn) + 6;
++
++		if (ind1) {   /* window[3]: FIRST PHY_UPDATE_IND -> retains rx node -> WAIT_INSTANT */
++			lt_tx(LL_PHY_UPDATE_IND, &conn, &ind);   /* IND #1 */
++		}
++		event_tx_ack(&conn, tx);
++		event_done(&conn);
++		ull_cp_release_tx(&conn, tx);
++
++		if (ind2) {   /* window[4]: SECOND PHY_UPDATE_IND while in WAIT_INSTANT (load-bearing) */
++			event_prepare(&conn);
++			/* if IND#1 was dropped, seed an instant so the pump terminates */
++			if (!ind1) {
++				ind.instant = instant = event_counter(&conn) + 6;
++			}
++			lt_tx(LL_PHY_UPDATE_IND, &conn, &ind);   /* IND #2 */
++			event_done(&conn);
++		}
++
++		/* Pump to the instant -> at the NTF event pu_ntf() -> LL_ASSERT(ntf) iff desynced */
++		while (!is_instant_reached(&conn, instant)) {
++			event_prepare(&conn);
++			event_done(&conn);
++		}
++		event_prepare(&conn);
++		event_done(&conn);
++	}
++}
++
+ ZTEST_SUITE(phy_central, NULL, NULL, phy_setup, NULL, NULL);
+ ZTEST_SUITE(phy_periph, NULL, NULL, phy_setup, NULL, NULL);

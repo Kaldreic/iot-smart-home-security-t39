@@ -1,0 +1,176 @@
+{
+ "suite": "levers",
+ "n_bugs": 6,
+ "n_seeds": 8,
+ "l3_live": 46,
+ "real": {
+  "baseline": {
+   "genuine": {
+    "mean": 0.7708333333333333,
+    "min": 0.6666666666666666,
+    "max": 1.0,
+    "n": 8
+   },
+   "false_credit": {
+    "mean": 0.1875,
+    "min": 0.0,
+    "max": 0.3333333333333333,
+    "n": 8
+   },
+   "exact_minimal": {
+    "mean": 0.5083333333333333,
+    "min": 0.2,
+    "max": 0.8,
+    "n": 8
+   },
+   "mean_size_gap": {
+    "mean": 0.4916666666666667,
+    "min": 0.2,
+    "max": 0.8,
+    "n": 8
+   },
+   "reads": {
+    "mean": 9.979166666666668,
+    "min": 6.333333333333333,
+    "max": 13.833333333333334,
+    "n": 8
+   }
+  },
+  "oracle": {
+   "genuine": {
+    "mean": 0.7291666666666667,
+    "min": 0.5,
+    "max": 1.0,
+    "n": 8
+   },
+   "false_credit": {
+    "mean": 0.0,
+    "min": 0.0,
+    "max": 0.0,
+    "n": 8
+   },
+   "exact_minimal": {
+    "mean": 0.7166666666666667,
+    "min": 0.5,
+    "max": 1.0,
+    "n": 8
+   },
+   "mean_size_gap": {
+    "mean": 0.33958333333333335,
+    "min": 0.0,
+    "max": 0.75,
+    "n": 8
+   },
+   "reads": {
+    "mean": 42.1875,
+    "min": 31.833333333333332,
+    "max": 52.333333333333336,
+    "n": 8
+   }
+  },
+  "ablation": {
+   "genuine": {
+    "mean": 0.9375,
+    "min": 0.8333333333333334,
+    "max": 1.0,
+    "n": 8
+   },
+   "false_credit": {
+    "mean": 0.0,
+    "min": 0.0,
+    "max": 0.0,
+    "n": 8
+   },
+   "exact_minimal": {
+    "mean": 0.85,
+    "min": 0.6666666666666666,
+    "max": 1.0,
+    "n": 8
+   },
+   "mean_size_gap": {
+    "mean": 0.15,
+    "min": 0.0,
+    "max": 0.3333333333333333,
+    "n": 8
+   },
+   "reads": {
+    "mean": 46.875,
+    "min": 40.666666666666664,
+    "max": 52.333333333333336,
+    "n": 8
+   }
+  },
+  "tool": {
+   "genuine": {
+    "mean": 0.9375,
+    "min": 0.8333333333333334,
+    "max": 1.0,
+    "n": 8
+   },
+   "false_credit": {
+    "mean": 0.0,
+    "min": 0.0,
+    "max": 0.0,
+    "n": 8
+   },
+   "exact_minimal": {
+    "mean": 0.85,
+    "min": 0.6666666666666666,
+    "max": 1.0,
+    "n": 8
+   },
+   "mean_size_gap": {
+    "mean": 0.15,
+    "min": 0.0,
+    "max": 0.3333333333333333,
+    "n": 8
+   },
+   "reads": {
+    "mean": 46.875,
+    "min": 40.666666666666664,
+    "max": 52.333333333333336,
+    "n": 8
+   }
+  }
+ },
+ "suppressor": {
+  "baseline": {
+   "genuine": 0.875,
+   "false_credit": 0.125,
+   "exact_minimal": 0.42857142857142855,
+   "mean_size_gap": 0.5714285714285714,
+   "reads": 7.375
+  },
+  "oracle": {
+   "genuine": 0.0,
+   "false_credit": 0.0,
+   "exact_minimal": null,
+   "mean_size_gap": null,
+   "reads": 7.25
+  },
+  "ablation": {
+   "genuine": 0.0,
+   "false_credit": 0.0,
+   "exact_minimal": null,
+   "mean_size_gap": null,
+   "reads": 7.25
+  },
+  "tool": {
+   "genuine": 1.0,
+   "false_credit": 0.0,
+   "exact_minimal": 1.0,
+   "mean_size_gap": 0.0,
+   "reads": 75.375
+  }
+ },
+ "levers": {
+  "oracle_fc_invariance": {
+   "baseline": 0.1875,
+   "oracle": 0.0,
+   "ablation": 0.0,
+   "tool": 0.0
+  },
+  "identity_genuine_real": 0.20833333333333326,
+  "minimiser_genuine_suppressor": 1.0
+ }
+}

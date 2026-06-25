@@ -1,0 +1,108 @@
+{
+ "suite": "l2_threshold_eval",
+ "scope": "L2 THRESHOLD overfit on real bugs A--F under MODELLED OTA noise",
+ "bugs": [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F"
+ ],
+ "n_same": 360,
+ "n_cross": 360,
+ "real": "A--F base crash dumps + the L2 comparator",
+ "modelled": "per-rep dump variation (DumpModel.emit)",
+ "validates": "the THRESHOLD ONLY (the L2 weights are FIXED + literature-grounded -- their audit is in rdd/l2.py)",
+ "held_out": "none -- A--F is the entire real bug set; Youden is fit-on-A--F (supporting evidence, not a generalization proof)",
+ "auc": 0.9927777777777778,
+ "default_threshold": 0.5,
+ "youden_threshold": 0.5285714285714285,
+ "same": {
+  "mean": 0.9533597883597884,
+  "p5": 0.4444444444444445,
+  "min": 0.3714285714285714
+ },
+ "cross": {
+  "mean": 0.14122402230260284,
+  "p95": 0.4444444444444445,
+  "max": 0.4444444444444445
+ },
+ "sweep": {
+  "0.20": {
+   "recall": 1.0,
+   "reject": 0.6,
+   "balanced": 0.8
+  },
+  "0.30": {
+   "recall": 1.0,
+   "reject": 0.8,
+   "balanced": 0.9
+  },
+  "0.40": {
+   "recall": 0.9972222222222222,
+   "reject": 0.8,
+   "balanced": 0.8986111111111111
+  },
+  "0.45": {
+   "recall": 0.9305555555555556,
+   "reject": 1.0,
+   "balanced": 0.9652777777777778
+  },
+  "0.50": {
+   "recall": 0.9305555555555556,
+   "reject": 1.0,
+   "balanced": 0.9652777777777778
+  },
+  "0.55": {
+   "recall": 0.9277777777777778,
+   "reject": 1.0,
+   "balanced": 0.9638888888888889
+  },
+  "0.60": {
+   "recall": 0.9277777777777778,
+   "reject": 1.0,
+   "balanced": 0.9638888888888889
+  },
+  "0.70": {
+   "recall": 0.925,
+   "reject": 1.0,
+   "balanced": 0.9625
+  },
+  "0.80": {
+   "recall": 0.925,
+   "reject": 1.0,
+   "balanced": 0.9625
+  },
+  "0.90": {
+   "recall": 0.8888888888888888,
+   "reject": 1.0,
+   "balanced": 0.9444444444444444
+  }
+ },
+ "plateau": [
+  0.45,
+  0.8
+ ],
+ "best_balanced": 0.9652777777777778,
+ "band": {
+  "band": 0.05,
+  "cross_escalated_to_l3": 0.4666666666666667,
+  "cross_l2_rejected_below_band": 0.5333333333333333,
+  "same_at_risk_below_band": 0.0,
+  "max_safe_band_same_min": 0.3714285714285714
+ },
+ "stability": {
+  "n_seeds": 5,
+  "auc_min": 0.9916666666666667,
+  "auc_max": 0.9941666666666666,
+  "youden_min": 0.5285714285714285,
+  "youden_max": 0.5285714285714285,
+  "plateau_common": [
+   0.45,
+   0.8
+  ],
+  "default_in_plateau_all_seeds": true
+ },
+ "conclusion": "NOT overfit [to A--F under the MODELLED OTA-noise regime; the threshold is noise-regime dependent per rdd/l2.py -- a deployment recalibrates]: AUC 0.993; the FIXED default 0.5 is ~the (fit-on-A--F, not held-out) Youden-J optimum 0.529, on a flat balanced-accuracy plateau [0.45,0.80] (~0.965); stable across 5 variation seeds (AUC 0.992-0.994, and 0.5 is on the plateau in ALL seeds); the band 0.05 is conservative (far below the same-bug floor 0.37). This validates the THRESHOLD only; the L2 weights' non-tuning rests on their rdd/l2.py design audit."
+}

@@ -1,0 +1,22 @@
+# Bug D — PHY-update doubled-IND assert, captured crash dump
+# Harness: ctrl_phy_update, suite `phy_periph`.
+#
+# Captured: HARNESS_BUG=D HARNESS_SUBSET=24 ./build-phy/testbinary  (test_bug_d; same assert site, exit 255)
+# The SUBSET window (scripts/build-bugD.sh, patches/bugD-phy-window.patch) is the oracle form:
+# a 5-bit channel-OFF window, IND#1 at bit3, IND#2 at bit4 (0x18=24), bits0..2 =
+# transparent drained-local LE-Ping decoys, LL_PHY_REQ precondition auto-injected
+# when any IND is present. true 2-minimal = {IND1,IND2}. LL_ASSERT(ntf) -> mocked
+# bt_ctlr_assert_handle -> exit(-1) -> shell 255. The assert prints its own message.
+
+Running TESTSUITE phy_central
+Running TESTSUITE phy_periph
+ASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437
+Assertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437
+
+# gdb spine (HARNESS_BUG=D HARNESS_SUBSET=24, break at the assert hook): pu_ntf @ ull_llcp_phy.c:437
+#   #0 bt_ctlr_assert_handle  #1 pu_ntf  #2 rp_pu_tx_ntf  #3 rp_pu_st_wait_instant_on_air
+#   #4 rp_pu_execute_fsm  #5 llcp_rp_pu_tx_ntf  #6 llcp_rr_tx_ntf  #7 ull_cp_tx_ntf
+#   #8 event_done  <-  phy_periph_test_bug_d (the SUBSET-window test)
+# Shell exit code: 255. Deterministic 3/3.
+# Exhaustive sweep (32 subsets): crash(255) <=> BOTH IND bits (0x18), 0 violations;
+# each single IND benign; decoys transparent.

@@ -1,0 +1,10 @@
+{
+  "name": "iot-smart-home-security-t39",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "slides:dev": "pnpm --filter ./presentation dev",
+    "slides:build": "pnpm --filter ./presentation build",
+    "slides:export": "pnpm --filter ./presentation export"
+  }
+}

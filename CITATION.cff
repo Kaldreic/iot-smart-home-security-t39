@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+title: 'IoT and Smart Home Security — T39'
+message: >-
+  If you use or reference this work, please cite it using
+  the metadata from this file.
+type: software
+version: '1.0.0'
+date-released: '2026-06-25'
+abstract: >-
+  A study of IoT and smart-home security, focusing on Wi-Fi sensing
+  countermeasures (WiShield, ACSAC 2024) and automated wireless
+  protocol fuzzing for IoT bug reproduction (AirBugCatcher, ACSAC
+  2024). Produced as Data and Network Security (T39) coursework at
+  Sapienza University of Rome, MSc in Cybersecurity. Comprises a
+  presentation, an 8-page report on a future research
+  direction, and a reproducible reference implementation (RDD, the
+  Robust Delta-Debugging tool) with its benchmark suite.
+authors:
+  - given-names: Aldo
+    family-names: Ristori
+    affiliation: Sapienza University of Rome
+  - given-names: Nicole
+    family-names: Sperandini
+    affiliation: Sapienza University of Rome
+repository-code: 'https://github.com/Kaldreic/iot-smart-home-security-t39'
+license: MIT
+keywords:
+  - IoT security
+  - smart home
+  - Wi-Fi sensing
+  - WiShield
+  - AirBugCatcher
+  - wireless fuzzing
+  - delta debugging
+  - bug reproduction
+preferred-citation:
+  type: generic
+  title: 'IoT and Smart Home Security — T39: Future Directions in Wi-Fi Sensing Countermeasures and Automated IoT Bug Reproduction'
+  authors:
+    - given-names: Aldo
+      family-names: Ristori
+      affiliation: Sapienza University of Rome
+    - given-names: Nicole
+      family-names: Sperandini
+      affiliation: Sapienza University of Rome
+  year: 2026
+  institution:
+    name: Sapienza University of Rome
+    address: 'Rome, Italy'
+  notes: >-
+    Data and Network Security, MSc Cybersecurity coursework (topic T39).

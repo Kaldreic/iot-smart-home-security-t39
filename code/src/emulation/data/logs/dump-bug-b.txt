@@ -1,0 +1,38 @@
+# Bug B — CIS divide-by-zero SIGFPE, captured crash dump
+# Harness: ctrl_cis_create, suite `cis_create`.
+#
+# Captured: HARNESS_BUG=B HARNESS_SUBSET=128 ./build-cis/testbinary  (test_bug_b; same site, exit 136)
+# The SUBSET window (scripts/build-bugB.sh, patches/bugB-cis-window.patch) is the oracle form:
+# an 8-bit channel-OFF window, trigger at bit7 (0x80=128), bits0..3 = transparent
+# drained-local LE-Ping decoys. true 1-minimal = {7}. SIGFPE handler -> _exit(136).
+# (VNC/Openbox/debuginfod noise from the docker image entrypoint stripped.)
+
+# --- gdb backtrace: HARNESS_BUG=B HARNESS_SUBSET=128 gdb -batch -ex run -ex bt ./build-cis/testbinary ---
+Program received signal SIGFPE, Arithmetic exception.
+0x565a5cd6 in llcp_rp_cc_tx_rsp ()
+#0  llcp_rp_cc_tx_rsp        <-- the DIV_ROUND_UP(..., iso_interval_us) divide @ ull_llcp_cc.c:177
+#1  rp_cc_send_cis_rsp
+#2  rp_cc_state_wait_tx_cis_rsp
+#3  rp_cc_execute_fsm
+#4  llcp_rp_cc_run
+#5  rr_act_run
+#6  rr_st_active
+#7  rr_execute_fsm
+#8  llcp_rr_run
+#9  ull_cp_run
+#10 event_prepare            <-- test scaffolding enters the controller here
+#11 cis_create_test_bug_b <-- the SUBSET-window test (was cc_probe_periph_accept for the fixed probe)
+#   ... ztest runner (run_test_functions / z_ztest_run_* / test_main / main) ...
+
+# --- SIGFPE handler dump (stderr), same subset; -rdynamic resolves the exported spine ---
+=== CRASH sig=SIGFPE ===
+…/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)
+…/build-cis/testbinary(llcp_rp_cc_run+0x20)
+…/build-cis/testbinary(llcp_rr_run+0x1f)
+…/build-cis/testbinary(ull_cp_run+0x1d)
+…/build-cis/testbinary(event_prepare+0xa6)
+
+# Faulting instruction (the ONLY divide in llcp_rp_cc_tx_rsp):
+#   <llcp_rp_cc_tx_rsp+272>:  divl   -0x10(%ebp)
+# Shell exit code: 136 (= 128 + SIGFPE/8). Deterministic 3/3.
+# Exhaustive sweep (256 subsets): crash(136) <=> bit7, 0 violations; decoys transparent.

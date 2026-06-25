@@ -1,0 +1,77 @@
+--- a/tests/bluetooth/controller/ctrl_data_length_update/src/main.c
++++ b/tests/bluetooth/controller/ctrl_data_length_update/src/main.c
+@@ -915,6 +915,74 @@
+ #endif
+ }
+ 
++
++/* ============================================================================
++ * Bug E -- data-length-update doubled-LL_LENGTH_REQ assert.
++ * Built VERBATIM on test_data_length_update_periph_rem (known-good, exit 0) with
++ * a conditional 2nd LL_LENGTH_REQ injected in its own event between REQ#1 and the
++ * RSP+tx-ack completion. REQ#1 starts rp_comm(DATA_LENGTH), RETAINS node_ref.rx
++ * (ull_llcp_common.c:1010); REQ#2, dispatched to the head ctx1 by llcp_rr_peek->
++ * llcp_rr_rx (ull_llcp_remote.c:240,318), overwrites+clears it; at ctx1's tx-ack
++ * rp_comm_ntf (ull_llcp_common.c:1138) reads NULL -> LL_ASSERT(ntf) (no fallback
++ * alloc) -> exit 255. One REQ keeps the node -> clean. Window bits 0-2 inert
++ * decoys; bit3 = REQ#1; bit4 = REQ#2. True 2-minimal = {3,4} = 0x18. NO-OP unless
++ * HARNESS_BUG==E.
++ * ==========================================================================*/
++#include <stdlib.h>
++#include <string.h>
++
++static bool bug_is(const char *want)
++{
++	const char *s = getenv("HARNESS_BUG");
++	return s && want && s[0] == want[0] && s[1] == '\0';
++}
++
++ZTEST(dle_periph, test_bug_e)
++{
++	if (!bug_is("E")) {
++		return;
++	}
++	unsigned long mask = getenv("HARNESS_SUBSET") ? strtoul(getenv("HARNESS_SUBSET"), NULL, 0) : 0UL;
++	struct node_tx *tx;
++	struct pdu_data_llctrl_length_req remote_length_req = { 27, 328, 201, 1720 };
++	struct pdu_data_llctrl_length_rsp local_length_rsp = { 251, 2120, 211, 1800 };
++	struct pdu_data_llctrl_length_rsp length_ntf = { 201, 1720, 27, 328 };
++	struct node_rx_pdu *ntf;
++
++	if (!(mask & 0x18U)) {
++		return;     /* decoy-only subset -> benign no-op */
++	}
++
++	test_set_role(&conn, BT_HCI_ROLE_PERIPHERAL);
++	ull_cp_state_set(&conn, ULL_CP_CONNECTED);
++	ull_conn_default_tx_octets_set(211);
++	ull_conn_default_tx_time_set(1800);
++	ull_dle_init(&conn, PHY_1M);
++
++	if (mask & 0x08U) {                          /* REQ #1 (bit 3) -- start rp_comm, retain node */
++		event_prepare(&conn);
++		lt_tx(LL_LENGTH_REQ, &conn, &remote_length_req);
++		event_done(&conn);
++	}
++	if (mask & 0x10U) {                          /* REQ #2 (bit 4) -- own event, clobber ctx1 node */
++		event_prepare(&conn);
++		lt_tx(LL_LENGTH_REQ, &conn, &remote_length_req);
++		event_done(&conn);
++	}
++
++	/* Completion (verbatim periph_rem): consume the RSP + tx-ack -> rp_comm_ntf reads node_ref.rx.
++	 * Both REQs -> NULL -> LL_ASSERT(ntf) @ ull_llcp_common.c:1138 -> exit 255 (here). One REQ -> clean. */
++	event_prepare(&conn);
++	lt_rx(LL_LENGTH_RSP, &conn, &tx, &local_length_rsp);
++	lt_rx_q_is_empty(&conn);
++	event_tx_ack(&conn, tx);
++	event_done(&conn);
++
++	ut_rx_pdu(LL_LENGTH_RSP, &ntf, &length_ntf);
++	ut_rx_q_is_empty();
++}
++
++
+ ZTEST_SUITE(dle_central, NULL, NULL, dle_setup, NULL, NULL);
+ ZTEST_SUITE(dle_periph, NULL, NULL, dle_setup, NULL, NULL);
+ ZTEST_SUITE(dle_util, NULL, NULL, dle_setup, NULL, NULL);

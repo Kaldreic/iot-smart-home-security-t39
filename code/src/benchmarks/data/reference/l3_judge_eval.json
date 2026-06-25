@@ -1,0 +1,2311 @@
+{
+ "model": "llama3.1:8b",
+ "bugs": [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F"
+ ],
+ "score": {
+  "l3_residual_recovery": 1.0,
+  "l3_cross_rejection": 0.08139534883720931,
+  "n_residual": 57,
+  "n_cross": 86,
+  "n_judged": 143,
+  "n_cases": 143
+ },
+ "cases": [
+  {
+   "kind": "same_residual",
+   "target_bug": "E",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "d384c58a65ada9e1",
+   "id": 0
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "F",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "5d00aa91a5a10b04",
+   "id": 1
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "C",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nnet: l2cap: tx queue flushed\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "e281a0d4430e052e",
+   "id": 2
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbt: conn: peer disconnected (reason 0x13)\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x68019048]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "567669e4906c20f7",
+   "id": 3
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nbt: conn: peer disconnected (reason 0x13)\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "2da69c19975964a1",
+   "id": 4
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "88aed5a3b7231c14",
+   "id": 5
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "D",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "029286c2f835b5cb",
+   "id": 6
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "0635a8b31a7680ac",
+   "id": 7
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "C",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??\nos: thread 0xc1e0: stack usage 0xff24",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "fdd603805b12c8ab",
+   "id": 8
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "9706082ca540595e",
+   "id": 9
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "B",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "ab8cf633e9c86480",
+   "id": 10
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "B",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "edfe06f6008e9334",
+   "id": 11
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nbt: smp: pairing failed\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "2b2aa42959d6fa7c",
+   "id": 12
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nll: scheduler: slot overrun ticks=0x32cb\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x4e7b5e5e]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "3564114025816f99",
+   "id": 13
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "d3cfb65aadc406cd",
+   "id": 14
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nnet: l2cap: tx queue flushed\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "2a9478f37aa3e3ec",
+   "id": 15
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nbt: hci_core: rx buf 0xf1bb\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "1e828e971fab34bc",
+   "id": 16
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "8005e1ba615839fc",
+   "id": 17
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "F",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nos: thread 0xd5da: stack usage 0x972e\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "3dfaec90e4ec9977",
+   "id": 18
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "C",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "a67a1c51e4d31de1",
+   "id": 19
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "B",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "l2_score": 0.087,
+   "truth_same": false,
+   "hash": "2902fd7a1a90e1c4",
+   "id": 20
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "F",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nll: scheduler: slot overrun ticks=0x401\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "251d59a9d0c1f1e8",
+   "id": 21
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nbt: hci_core: rx buf 0xed6",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "dd7ea2cff5605e53",
+   "id": 22
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "b0cf6949a3e2fc35",
+   "id": 23
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nnet: l2cap: tx queue flushed\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "7de5820fa09e7155",
+   "id": 24
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nos: thread 0x3fab: stack usage 0xbfac\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x467dbc3a]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "b8984dad840dc672",
+   "id": 25
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "B",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "3c77f1e5d077e395",
+   "id": 26
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "E",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nbt: conn: peer disconnected (reason 0x13)",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "9985df250bc09b2a",
+   "id": 27
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x68f48091]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "0c1e76272acaeecf",
+   "id": 28
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "0bcc25f2a9414d99",
+   "id": 29
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nll: scheduler: slot overrun ticks=0x43bb\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "3ca2088d5a77713d",
+   "id": 30
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "D",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nnet: l2cap: tx queue flushed\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "d03f8a3b2859bc8f",
+   "id": 31
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "C",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??\nll: scheduler: slot overrun ticks=0x6cc4",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "d143352c87f63c54",
+   "id": 32
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "513b0773c8afe0a2",
+   "id": 33
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nbt: hci_core: rx buf 0x89d3\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "5b52dc3029baa17e",
+   "id": 34
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x62e43dfb]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "3feb5cf29a47fd6a",
+   "id": 35
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "919f1053d2890173",
+   "id": 36
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nbt: smp: pairing failed\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "f271a85c821e8dd1",
+   "id": 37
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nos: thread 0x8d6d: stack usage 0xb932\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "e4b1cfe0cca033f8",
+   "id": 38
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nbt: conn: peer disconnected (reason 0x13)",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "224e7d4da3d897e3",
+   "id": 39
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nbt: hci_core: rx buf 0x1d\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "d09b7713a280d0cd",
+   "id": 40
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nbt: hci_core: rx buf 0x6582\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "868fe6ff9be4a948",
+   "id": 41
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "45baa81dedb2089b",
+   "id": 42
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nbt: smp: pairing failed\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "0beb0b89b71805c6",
+   "id": 43
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nbt: smp: pairing failed\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x5e69f56e]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "33af113fa875e5e0",
+   "id": 44
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "1d06cdaf42c8edb9",
+   "id": 45
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x678e88b8]\n/work/build-multibug/testbinary(+0x1c205)[0x6f9c6638]\n/work/build-multibug/testbinary(+0x1dbbd)[0x4f4a530a]\n/work/build-multibug/testbinary(+0x1dd99)[0x69be8e9b]\n/work/build-multibug/testbinary(+0x1def9)[0x52f2324a]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x6ea2f02b]\n/work/build-multibug/testbinary(+0x21d3c)[0x6af04cd8]\n/work/build-multibug/testbinary(+0x22527)[0x6bd1c0fb]\n/work/build-multibug/testbinary(+0x226be)[0x6118beac]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x512b9293]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x66132fcd]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x5eed9e15]\n/work/build-multibug/testbinary(+0x12e5f)[0x5d8f005a]\n/work/build-multibug/testbinary(+0x12969)[0x53d99437]\n/work/build-multibug/testbinary(+0x952d)[0x502dc6ba]\n/work/build-multibug/testbinary(+0x99c0)[0x6c1fd7ef]\n/work/build-multibug/testbinary(+0x9d31)[0x4d9eebfd]\n/work/build-multibug/testbinary(+0xa3f4)[0x65181992]\n/work/build-multibug/testbinary(z_impl_ztest_run_test_suites+0x61)[0x54eb778d]\n/work/build-multibug/testbinary(+0xadcb)[0x41344c58]\n/work/build-multibug/testbinary(z_ztest_run_all+0x29)[0x63d54186]\n/work/build-multibug/testbinary(ztest_run_all+0x2e)[0x4e7b6f41]\n/work/build-multibug/testbinary(test_main+0x1d)[0x534cbc58]\n/work/build-multibug/testbinary(main+0x1c)[0x6a96845f]\n/work/build-multibug/libc.so.6(+0x24cb9)[0x6c19ab29]\n/work/build-multibug/libc.so.6(__libc_start_main+0x8c)[0x6fc896e8]\n/work/build-multibug/testbinary(_start+0x27)[0x43a7ccb9]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "l2_score": 0.087,
+   "truth_same": false,
+   "hash": "6364b4609e026a52",
+   "id": 46
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x45e0616e]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "c17f3ded5b099ff6",
+   "id": 47
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "E",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nbt: conn: peer disconnected (reason 0x13)\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "7b4996f341a77ddc",
+   "id": 48
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "D",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nos: thread 0xe242: stack usage 0xd8a5",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "21acb000878c1e91",
+   "id": 49
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "E",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nbt: smp: pairing failed",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "9c9375e1295adc2d",
+   "id": 50
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x6f880efd]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "1bf28d2de985e4e4",
+   "id": 51
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nnet: l2cap: tx queue flushed\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "a666d7989c790544",
+   "id": 52
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nnet: l2cap: tx queue flushed\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x484a6f2e]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "5091c1ade2e36f1b",
+   "id": 53
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "F",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nll: scheduler: slot overrun ticks=0x163d\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "a3c0a90eac652270",
+   "id": 54
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "8fd6408f4cfa7105",
+   "id": 55
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "C",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??\nbt: smp: pairing failed\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "14507e08ec2a0095",
+   "id": 56
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "6735f261599d916a",
+   "id": 57
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x5aed57a8]\n/work/build-multibug/testbinary(+0x1c205)[0x56dff29f]\n/work/build-multibug/testbinary(+0x1dbbd)[0x4938500f]\n/work/build-multibug/testbinary(+0x1dd99)[0x6c0cc42c]\n/work/build-multibug/testbinary(+0x1def9)[0x4e63cd30]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x4e628443]\n/work/build-multibug/testbinary(+0x21d3c)[0x59b3a9d9]\n/work/build-multibug/testbinary(+0x22527)[0x5ab06211]\n/work/build-multibug/testbinary(+0x226be)[0x5d1d4837]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x61699ff0]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x50607466]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x4598728d]\n/work/build-multibug/testbinary(+0x12e5f)[0x5fde25bf]\n/work/build-multibug/testbinary(+0x12969)[0x69d684af]\n/work/build-multibug/testbinary(+0x952d)[0x6d18c280]\n/work/build-multibug/testbinary(+0x99c0)[0x4e83b2c4]\n/work/build-multibug/testbinary(+0x9d31)[0x60a093e4]\n/work/build-multibug/testbinary(+0xa3f4)[0x4cf02b6e]\n/work/build-multibug/testbinary(z_impl_ztest_run_test_suites+0x61)[0x510551ba]\n/work/build-multibug/testbinary(+0xadcb)[0x59d5385c]\n/work/build-multibug/testbinary(z_ztest_run_all+0x29)[0x49f417eb]\n/work/build-multibug/testbinary(ztest_run_all+0x2e)[0x4f9ef4cc]\n/work/build-multibug/testbinary(test_main+0x1d)[0x4f2b577d]\nbt: hci_core: rx buf 0x30ba\n/work/build-multibug/testbinary(main+0x1c)[0x4c115fc3]\n/work/build-multibug/libc.so.6(+0x24cb9)[0x55e5d5e8]\n/work/build-multibug/libc.so.6(__libc_start_main+0x8c)[0x574de0c4]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "3317e480c5105646",
+   "id": 58
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "B",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "5893e8e0d1b85cd7",
+   "id": 59
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "D",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nos: thread 0x5457: stack usage 0xe517\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "2992e148b70ddd43",
+   "id": 60
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "D",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nos: thread 0xda3c: stack usage 0xf3e8\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "8db5efc3c47dec3f",
+   "id": 61
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "B",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nbt: conn: peer disconnected (reason 0x13)\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "2eab7b44fc6f7ff5",
+   "id": 62
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(+0x1dbbd)[0x53025aae]\nbacktrace (top first):\n  #0 fn+0x1dbbd",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "59817e41c436e8a7",
+   "id": 63
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbt: hci_core: rx buf 0x2598\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x628b50d6]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "cd38695cfdaac516",
+   "id": 64
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(+0x1c205)[0x55de40d2]\n/work/build-multibug/testbinary(+0x1dbbd)[0x6f63b7dd]\n/work/build-multibug/testbinary(+0x1dd99)[0x647e4cc8]\n/work/build-multibug/testbinary(+0x1def9)[0x5642dc63]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x4364c6fe]\n/work/build-multibug/testbinary(+0x21d3c)[0x49144ce1]\n/work/build-multibug/testbinary(+0x22527)[0x5446f481]\nnet: l2cap: tx queue flushed\n/work/build-multibug/testbinary(+0x226be)[0x542b2faa]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x493681a8]\nbacktrace (top first):\n  #0 fn+0x1c205\n  #1 fn+0x1dbbd\n  #2 fn+0x1dd99\n  #3 fn+0x1def9\n  #4 llcp_rp_cu_run+0x20\n  #5 fn+0x21d3c\n  #6 fn+0x22527\n  #7 fn+0x226be\n  #8 llcp_rr_run+0x1f",
+   "l2_score": 0.087,
+   "truth_same": false,
+   "hash": "787c892d3d725f74",
+   "id": 65
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "C",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??\nbt: hci_core: rx buf 0x409b\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "b61dd61dfc8cd062",
+   "id": 66
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "B",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\nbt: conn: peer disconnected (reason 0x13)\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "79b7c4041257f950",
+   "id": 67
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "f998aab71ae61d31",
+   "id": 68
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "E",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nbt: hci_core: rx buf 0xa112",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "1ccf7927c86e0d4f",
+   "id": 69
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nnet: l2cap: tx queue flushed\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "e9efe02fb314e3b0",
+   "id": 70
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nbt: conn: peer disconnected (reason 0x13)\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "7c30cf72acf1d5af",
+   "id": 71
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\nll: scheduler: slot overrun ticks=0x7343\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "ba180f2147080f55",
+   "id": 72
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "92de3d83a9f09590",
+   "id": 73
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "C",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??\nos: thread 0x9172: stack usage 0x21ba\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "dd87b956ef624749",
+   "id": 74
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x4df07bb3]\n/work/build-multibug/testbinary(+0x1c205)[0x410206d6]\n/work/build-multibug/testbinary(+0x1dbbd)[0x6cf520cc]\n/work/build-multibug/testbinary(+0x1dd99)[0x4104ddd9]\n/work/build-multibug/testbinary(+0x1def9)[0x49dd0a91]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x5bd9e07a]\n/work/build-multibug/testbinary(+0x21d3c)[0x4f4e6a6a]\n/work/build-multibug/testbinary(+0x22527)[0x409411a8]\n/work/build-multibug/testbinary(+0x226be)[0x6446a0ed]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x4645170e]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x6baa1799]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x50cdac9c]\n/work/build-multibug/testbinary(+0x12e5f)[0x42482117]\n/work/build-multibug/testbinary(+0x12969)[0x40c32337]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "fe795c55a01bdf28",
+   "id": 75
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x4f90084b]\n/work/build-multibug/testbinary(+0x1c205)[0x686c83ed]\n/work/build-multibug/testbinary(+0x1dbbd)[0x52fc0f27]\n/work/build-multibug/testbinary(+0x1dd99)[0x6aa90496]\n/work/build-multibug/testbinary(+0x1def9)[0x6ac9e6e0]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x6ac85cef]\n/work/build-multibug/testbinary(+0x21d3c)[0x66011121]\n/work/build-multibug/testbinary(+0x22527)[0x59596e96]\n/work/build-multibug/testbinary(+0x226be)[0x4dcd0f44]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x40285725]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x56076be9]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x5024ab9c]\n/work/build-multibug/testbinary(+0x12e5f)[0x6798f6bc]\n/work/build-multibug/testbinary(+0x12969)[0x52676536]\n/work/build-multibug/testbinary(+0x952d)[0x43873b28]\n/work/build-multibug/testbinary(+0x99c0)[0x4bff978c]\n/work/build-multibug/testbinary(+0x9d31)[0x412f92ab]\n/work/build-multibug/testbinary(+0xa3f4)[0x67d99c24]\n/work/build-multibug/testbinary(z_impl_ztest_run_test_suites+0x61)[0x6db24a4d]\n/work/build-multibug/testbinary(+0xadcb)[0x582ec5e7]\n/work/build-multibug/testbinary(z_ztest_run_all+0x29)[0x64efde20]\n/work/build-multibug/testbinary(ztest_run_all+0x2e)[0x67f707b9]\n/work/build-multibug/testbinary(test_main+0x1d)[0x667ae9a0]\n/work/build-multibug/testbinary(main+0x1c)[0x4a8fa3f8]\n/work/build-multibug/libc.so.6(+0x24cb9)[0x4c8dcc57]\n/work/build-multibug/libc.so.6(__libc_start_main+0x8c)[0x58ce2841]\n/work/build-multibug/testbinary(_start+0x27)[0x6fe1ce16]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "816a5855ce8e203b",
+   "id": 76
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nnet: l2cap: tx queue flushed\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "434e0c9914f6c76f",
+   "id": 77
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "19816a7d7effdf2f",
+   "id": 78
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x556d455a]\n/work/build-multibug/testbinary(+0x1c205)[0x4a42d1de]\nll: scheduler: slot overrun ticks=0xd177\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "0ac6b48131d6783e",
+   "id": 79
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x61980653]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "5011bcd1668a88a9",
+   "id": 80
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "c4cc2fe3a8ebe7ac",
+   "id": 81
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "F",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nbt: smp: pairing failed",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "008b7a5dbcf2cd1a",
+   "id": 82
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nnet: l2cap: tx queue flushed\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "adac13e318615ad7",
+   "id": 83
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(+0x1dbbd)[0x68ed59ed]\n/work/build-multibug/testbinary(+0x1dd99)[0x4d435c1e]\n/work/build-multibug/testbinary(+0x1def9)[0x5bdb9d51]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x4c9b718e]\n/work/build-multibug/testbinary(+0x21d3c)[0x585c2ba2]\n/work/build-multibug/testbinary(+0x22527)[0x5f1e38a0]\n/work/build-multibug/testbinary(+0x226be)[0x59b0ca61]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x5126f6cc]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x4b399608]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x48d4e44c]\n/work/build-multibug/testbinary(+0x12e5f)[0x65866358]\n/work/build-multibug/testbinary(+0x12969)[0x66223aa5]\n/work/build-multibug/testbinary(+0x952d)[0x62160701]\n/work/build-multibug/testbinary(+0x99c0)[0x636ceb63]\n/work/build-multibug/testbinary(+0x9d31)[0x45fa8c0b]\n/work/build-multibug/testbinary(+0xa3f4)[0x41297135]\n/work/build-multibug/testbinary(z_impl_ztest_run_test_suites+0x61)[0x444b7bbb]\n/work/build-multibug/testbinary(+0xadcb)[0x4a787bc8]\n/work/build-multibug/testbinary(z_ztest_run_all+0x29)[0x5599d8b8]\n/work/build-multibug/testbinary(ztest_run_all+0x2e)[0x4e7aa937]\n/work/build-multibug/testbinary(test_main+0x1d)[0x4880b8dd]\n/work/build-multibug/testbinary(main+0x1c)[0x4b58ff08]\n/work/build-multibug/libc.so.6(+0x24cb9)[0x4546fec3]\n/work/build-multibug/libc.so.6(__libc_start_main+0x8c)[0x64f68d2b]\n/work/build-multibug/testbinary(_start+0x27)[0x578d1332]\nbacktrace (top first):\n  #0 fn+0x1dbbd\n  #1 fn+0x1dd99\n  #2 fn+0x1def9\n  #3 llcp_rp_cu_run+0x20\n  #4 fn+0x21d3c\n  #5 fn+0x22527\n  #6 fn+0x226be\n  #7 llcp_rr_run+0x1f\n  #8 ull_cp_run+0x1d\n  #9 event_prepare+0xa6\n  #10 fn+0x12e5f\n  #11 fn+0x12969\n  #12 fn+0x952d\n  #13 fn+0x99c0\n  #14 fn+0x9d31\n  #15 fn+0xa3f4\n  #16 z_impl_ztest_run_test_suites+0x61\n  #17 fn+0xadcb\n  #18 z_ztest_run_all+0x29\n  #19 ztest_run_all+0x2e\n  #20 test_main+0x1d\n  #21 main+0x1c\n  #22 fn+0x24cb9\n  #23 __libc_start_main+0x8c\n  #24 _start+0x27",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "cc0687e08bff5cda",
+   "id": 84
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nll: scheduler: slot overrun ticks=0x15dd",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "e4ed8b0a1f602f6d",
+   "id": 85
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "F",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nos: thread 0xd33d: stack usage 0xcdd0",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "adb1c897be926305",
+   "id": 86
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "E",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nbt: hci_core: rx buf 0x2af4\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "90414d62c3ff5419",
+   "id": 87
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nbt: hci_core: rx buf 0x420a\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "abe0ae01ddce361d",
+   "id": 88
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(+0x1dbbd)[0x5ed59220]\nbt: hci_core: rx buf 0x2343\n/work/build-multibug/testbinary(+0x1dd99)[0x48bd7753]\n/work/build-multibug/testbinary(+0x1def9)[0x6e0599e5]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x64b99464]\n/work/build-multibug/testbinary(+0x21d3c)[0x46255de3]\n/work/build-multibug/testbinary(+0x22527)[0x43101413]\n/work/build-multibug/testbinary(+0x226be)[0x6de8b9ea]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x606fecdd]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x490cde81]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x49e50c52]\n/work/build-multibug/testbinary(+0x12e5f)[0x6d074bd9]\n/work/build-multibug/testbinary(+0x12969)[0x628acd26]\n/work/build-multibug/testbinary(+0x952d)[0x5795a892]\nbacktrace (top first):\n  #0 fn+0x1dbbd\n  #1 fn+0x1dd99\n  #2 fn+0x1def9\n  #3 llcp_rp_cu_run+0x20\n  #4 fn+0x21d3c\n  #5 fn+0x22527\n  #6 fn+0x226be\n  #7 llcp_rr_run+0x1f\n  #8 ull_cp_run+0x1d\n  #9 event_prepare+0xa6\n  #10 fn+0x12e5f\n  #11 fn+0x12969\n  #12 fn+0x952d",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "4005359c6ae30d40",
+   "id": 89
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "D",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nos: thread 0xfb80: stack usage 0x37f1\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "dfccbcb3c4adf11f",
+   "id": 90
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\nnet: l2cap: tx queue flushed\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "1d0b907284ba8144",
+   "id": 91
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "C",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:??\nnet: l2cap: tx queue flushed",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "82294dcf654f5c55",
+   "id": 92
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x401a43b0]\n/work/build-multibug/testbinary(+0x1c205)[0x45d4d159]\n/work/build-multibug/testbinary(+0x1dbbd)[0x45443b06]\n/work/build-multibug/testbinary(+0x1dd99)[0x530514e3]\n/work/build-multibug/testbinary(+0x1def9)[0x4adeb322]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x63c59cf7]\n/work/build-multibug/testbinary(+0x21d3c)[0x41e5dd84]\n/work/build-multibug/testbinary(+0x22527)[0x683b27b2]\n/work/build-multibug/testbinary(+0x226be)[0x6dfcf765]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x4d029ac2]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x681a4d76]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x58483332]\n/work/build-multibug/testbinary(+0x12e5f)[0x56059ef9]\n/work/build-multibug/testbinary(+0x12969)[0x5785f104]\n/work/build-multibug/testbinary(+0x952d)[0x5cd8ae0f]\n/work/build-multibug/testbinary(+0x99c0)[0x496894bd]\n/work/build-multibug/testbinary(+0x9d31)[0x441bb9ce]\n/work/build-multibug/testbinary(+0xa3f4)[0x61ded08e]\n/work/build-multibug/testbinary(z_impl_ztest_run_test_suites+0x61)[0x5469f674]\n/work/build-multibug/testbinary(+0xadcb)[0x59c57be6]\n/work/build-multibug/testbinary(z_ztest_run_all+0x29)[0x44a68fd1]\n/work/build-multibug/testbinary(ztest_run_all+0x2e)[0x57ea5971]\n/work/build-multibug/testbinary(test_main+0x1d)[0x6ef09902]\n/work/build-multibug/testbinary(main+0x1c)[0x5593adb2]\n/work/build-multibug/libc.so.6(+0x24cb9)[0x541f9eb4]\n/work/build-multibug/libc.so.6(__libc_start_main+0x8c)[0x4b595184]\n/work/build-multibug/testbinary(_start+0x27)[0x6c3288ca]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "l2_score": 0.087,
+   "truth_same": false,
+   "hash": "51892124ea51e83c",
+   "id": 93
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "E",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nnet: l2cap: tx queue flushed",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "6a0d88c87c4743cb",
+   "id": 94
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "ca5fc756b4c8d399",
+   "id": 95
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(+0x1c205)[0x514cfe0f]\nbacktrace (top first):\n  #0 fn+0x1c205",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "df46dfd2a5c156c3",
+   "id": 96
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "D",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nll: scheduler: slot overrun ticks=0x873\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "ccb6d02ba9659ad3",
+   "id": 97
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "f9f0b93882edb694",
+   "id": 98
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nbt: conn: peer disconnected (reason 0x13)\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "6913c700f9d89cb4",
+   "id": 99
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x637e4385]\n/work/build-multibug/testbinary(+0x1c205)[0x48b3f0fa]\n/work/build-multibug/testbinary(+0x1dbbd)[0x6705016f]\n/work/build-multibug/testbinary(+0x1dd99)[0x6f4d19cc]\n/work/build-multibug/testbinary(+0x1def9)[0x45e86cfa]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x53b8ec59]\n/work/build-multibug/testbinary(+0x21d3c)[0x52d333c5]\n/work/build-multibug/testbinary(+0x22527)[0x4239986b]\n/work/build-multibug/testbinary(+0x226be)[0x5023ee59]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x61d21d27]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x5aa88e02]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x427770de]\n/work/build-multibug/testbinary(+0x12e5f)[0x6e00b6d5]\n/work/build-multibug/testbinary(+0x12969)[0x4c3b3c60]\n/work/build-multibug/testbinary(+0x952d)[0x5228a0a5]\n/work/build-multibug/testbinary(+0x99c0)[0x49bc6926]\n/work/build-multibug/testbinary(+0x9d31)[0x59ae0b91]\n/work/build-multibug/testbinary(+0xa3f4)[0x5c57b937]\n/work/build-multibug/testbinary(z_impl_ztest_run_test_suites+0x61)[0x561af68c]\n/work/build-multibug/testbinary(+0xadcb)[0x42faeb59]\n/work/build-multibug/testbinary(z_ztest_run_all+0x29)[0x50719737]\n/work/build-multibug/testbinary(ztest_run_all+0x2e)[0x5eee412a]\n/work/build-multibug/testbinary(test_main+0x1d)[0x41381df0]\n/work/build-multibug/testbinary(main+0x1c)[0x5ea6fffd]\n/work/build-multibug/libc.so.6(+0x24cb9)[0x6d557441]\n/work/build-multibug/libc.so.6(__libc_start_main+0x8c)[0x5368c5a1]\n/work/build-multibug/testbinary(_start+0x27)[0x6238b6af]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "l2_score": 0.087,
+   "truth_same": false,
+   "hash": "07d48d420324d1bb",
+   "id": 100
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nos: thread 0xc79c: stack usage 0x72d4\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "470b44cff94cd331",
+   "id": 101
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(+0x1c205)[0x44c48d9e]\n/work/build-multibug/testbinary(+0x1dbbd)[0x54a76cd2]\n/work/build-multibug/testbinary(+0x1dd99)[0x476a8b8f]\n/work/build-multibug/testbinary(+0x1def9)[0x410e3a87]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x580d82ad]\n/work/build-multibug/testbinary(+0x21d3c)[0x5f71aa0a]\n/work/build-multibug/testbinary(+0x22527)[0x4c273b82]\n/work/build-multibug/testbinary(+0x226be)[0x4dbd0785]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x6bc214d5]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x59d5f23e]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x6cdf4a73]\n/work/build-multibug/testbinary(+0x12e5f)[0x6a6f4179]\n/work/build-multibug/testbinary(+0x12969)[0x45dd17c8]\n/work/build-multibug/testbinary(+0x952d)[0x6c0ca10f]\n/work/build-multibug/testbinary(+0x99c0)[0x632b60bc]\n/work/build-multibug/testbinary(+0x9d31)[0x66a07ed9]\n/work/build-multibug/testbinary(+0xa3f4)[0x55cea5fd]\n/work/build-multibug/testbinary(z_impl_ztest_run_test_suites+0x61)[0x5335e221]\n/work/build-multibug/testbinary(+0xadcb)[0x425fbd31]\n/work/build-multibug/testbinary(z_ztest_run_all+0x29)[0x5b91b0a5]\n/work/build-multibug/testbinary(ztest_run_all+0x2e)[0x466904a5]\n/work/build-multibug/testbinary(test_main+0x1d)[0x5e163664]\n/work/build-multibug/testbinary(main+0x1c)[0x51bf9c01]\n/work/build-multibug/libc.so.6(+0x24cb9)[0x45134482]\n/work/build-multibug/libc.so.6(__libc_start_main+0x8c)[0x65780aee]\n/work/build-multibug/testbinary(_start+0x27)[0x497fda69]\nbacktrace (top first):\n  #0 fn+0x1c205\n  #1 fn+0x1dbbd\n  #2 fn+0x1dd99\n  #3 fn+0x1def9\n  #4 llcp_rp_cu_run+0x20\n  #5 fn+0x21d3c\n  #6 fn+0x22527\n  #7 fn+0x226be\n  #8 llcp_rr_run+0x1f\n  #9 ull_cp_run+0x1d\n  #10 event_prepare+0xa6\n  #11 fn+0x12e5f\n  #12 fn+0x12969\n  #13 fn+0x952d\n  #14 fn+0x99c0\n  #15 fn+0x9d31\n  #16 fn+0xa3f4\n  #17 z_impl_ztest_run_test_suites+0x61\n  #18 fn+0xadcb\n  #19 z_ztest_run_all+0x29\n  #20 ztest_run_all+0x2e\n  #21 test_main+0x1d\n  #22 main+0x1c\n  #23 fn+0x24cb9\n  #24 __libc_start_main+0x8c\n  #25 _start+0x27",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "c937c38df0586020",
+   "id": 102
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "F",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nbt: smp: pairing failed\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "9eb197c97962bbd5",
+   "id": 103
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "f8ae62489a5d127c",
+   "id": 104
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nnet: l2cap: tx queue flushed",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "a878df43af3e4f42",
+   "id": 105
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x581759e4]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "21f1b1b616af79e5",
+   "id": 106
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nbt: smp: pairing failed\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "edcd1e056e08d139",
+   "id": 107
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x578b030b]\n/work/build-multibug/testbinary(+0x1c205)[0x53a7bd07]\n/work/build-multibug/testbinary(+0x1dbbd)[0x6c265e0a]\n/work/build-multibug/testbinary(+0x1dd99)[0x6691d219]\n/work/build-multibug/testbinary(+0x1def9)[0x53adcbe5]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x6d216fe5]\n/work/build-multibug/testbinary(+0x21d3c)[0x5fba54d9]\n/work/build-multibug/testbinary(+0x22527)[0x501022b4]\n/work/build-multibug/testbinary(+0x226be)[0x47451be9]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x6a4028f2]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x5a3a42bc]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x61ad9703]\n/work/build-multibug/testbinary(+0x12e5f)[0x6e9f8344]\n/work/build-multibug/testbinary(+0x12969)[0x6af43bb8]\n/work/build-multibug/testbinary(+0x952d)[0x4789188b]\n/work/build-multibug/testbinary(+0x99c0)[0x4fb826d6]\n/work/build-multibug/testbinary(+0x9d31)[0x51a435b9]\n/work/build-multibug/testbinary(+0xa3f4)[0x6488b5ea]\nbt: hci_core: rx buf 0xc0cf\n/work/build-multibug/testbinary(z_impl_ztest_run_test_suites+0x61)[0x697f4569]\n/work/build-multibug/testbinary(+0xadcb)[0x6ba2e972]\n/work/build-multibug/testbinary(z_ztest_run_all+0x29)[0x4d6d488d]\n/work/build-multibug/testbinary(ztest_run_all+0x2e)[0x5a72b43a]\n/work/build-multibug/testbinary(test_main+0x1d)[0x63b3421f]\n/work/build-multibug/testbinary(main+0x1c)[0x5b612da6]\n/work/build-multibug/libc.so.6(+0x24cb9)[0x5e877c75]\n/work/build-multibug/libc.so.6(__libc_start_main+0x8c)[0x6e58491d]\n/work/build-multibug/testbinary(_start+0x27)[0x4d3b0ca7]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "23d0d8c8f1250fc0",
+   "id": 108
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "055c091e89e6f4ca",
+   "id": 109
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(+0x1c205)[0x6318eb68]\nbacktrace (top first):\n  #0 fn+0x1c205",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "f2fdffd72127c1d0",
+   "id": 110
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "D",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nbt: smp: pairing failed",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "e5de8d4daa74e70e",
+   "id": 111
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(+0x1c205)[0x4e2eafc0]\nbacktrace (top first):\n  #0 fn+0x1c205",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "435ce833dc192119",
+   "id": 112
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nbt: conn: peer disconnected (reason 0x13)\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x4b1a0349]\n/work/build-multibug/testbinary(+0x1c205)[0x672422f3]\n/work/build-multibug/testbinary(+0x1dbbd)[0x62127a27]\n/work/build-multibug/testbinary(+0x1dd99)[0x50ed616a]\n/work/build-multibug/testbinary(+0x1def9)[0x5da3058a]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x416b6697]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "19fb006317342ff5",
+   "id": 113
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x54f9b424]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "211403f20a3b1551",
+   "id": 114
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nnet: l2cap: tx queue flushed",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "369d852a8f1a648a",
+   "id": 115
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nos: thread 0xd189: stack usage 0xd9f3",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "a51c1bb9bdf7ad9b",
+   "id": 116
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "D",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nll: scheduler: slot overrun ticks=0xcfbd\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "ea2646ef010ee811",
+   "id": 117
+  },
+  {
+   "kind": "cross",
+   "target_bug": "C",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nbt: hci_core: rx buf 0x537",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "0ed6ce929b8d0e09",
+   "id": 118
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(+0x1c205)[0x42b58f88]\nos: thread 0x7ed1: stack usage 0xfbe\nbacktrace (top first):\n  #0 fn+0x1c205",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "1010f6379c34be1e",
+   "id": 119
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "B",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\nbt: smp: pairing failed\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "l2_score": 0.087,
+   "truth_same": false,
+   "hash": "05d22d1de60bb4e0",
+   "id": 120
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x543860a7]\nos: thread 0x1bff: stack usage 0x1f02\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "bd3ad9b205e3b9f7",
+   "id": 121
+  },
+  {
+   "kind": "cross",
+   "target_bug": "D",
+   "rep_bug": "B",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\nbt: conn: peer disconnected (reason 0x13)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "46ea4be1f53fbcc3",
+   "id": 122
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "E",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nll: scheduler: slot overrun ticks=0xd81b\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "973fc564efc9e4bc",
+   "id": 123
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "F",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nll: scheduler: slot overrun ticks=0x5374\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "acdaf20330a81512",
+   "id": 124
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(+0x1c205)[0x45549acb]\n/work/build-multibug/testbinary(+0x1dbbd)[0x4da3a5be]\n/work/build-multibug/testbinary(+0x1dd99)[0x52e2f0b7]\n/work/build-multibug/testbinary(+0x1def9)[0x647c7b95]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x6c41b53d]\n/work/build-multibug/testbinary(+0x21d3c)[0x6972790e]\n/work/build-multibug/testbinary(+0x22527)[0x639ec1b6]\n/work/build-multibug/testbinary(+0x226be)[0x61ee9c2b]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x6df04d1e]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x412d25dc]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x549ce79a]\n/work/build-multibug/testbinary(+0x12e5f)[0x42f75514]\n/work/build-multibug/testbinary(+0x12969)[0x67f2d113]\n/work/build-multibug/testbinary(+0x952d)[0x6d25a198]\n/work/build-multibug/testbinary(+0x99c0)[0x555f088b]\n/work/build-multibug/testbinary(+0x9d31)[0x55a43ef7]\nll: scheduler: slot overrun ticks=0x522f\n/work/build-multibug/testbinary(+0xa3f4)[0x426bb781]\n/work/build-multibug/testbinary(z_impl_ztest_run_test_suites+0x61)[0x466a1119]\n/work/build-multibug/testbinary(+0xadcb)[0x57eec932]\n/work/build-multibug/testbinary(z_ztest_run_all+0x29)[0x61fc34ff]\n/work/build-multibug/testbinary(ztest_run_all+0x2e)[0x421fd2c8]\n/work/build-multibug/testbinary(test_main+0x1d)[0x4c80e82d]\n/work/build-multibug/testbinary(main+0x1c)[0x61c3565e]\n/work/build-multibug/libc.so.6(+0x24cb9)[0x5479031e]\n/work/build-multibug/libc.so.6(__libc_start_main+0x8c)[0x45765153]\n/work/build-multibug/testbinary(_start+0x27)[0x45a59b06]\nbacktrace (top first):\n  #0 fn+0x1c205\n  #1 fn+0x1dbbd\n  #2 fn+0x1dd99\n  #3 fn+0x1def9\n  #4 llcp_rp_cu_run+0x20\n  #5 fn+0x21d3c\n  #6 fn+0x22527\n  #7 fn+0x226be\n  #8 llcp_rr_run+0x1f\n  #9 ull_cp_run+0x1d\n  #10 event_prepare+0xa6\n  #11 fn+0x12e5f\n  #12 fn+0x12969\n  #13 fn+0x952d\n  #14 fn+0x99c0\n  #15 fn+0x9d31\n  #16 fn+0xa3f4\n  #17 z_impl_ztest_run_test_suites+0x61\n  #18 fn+0xadcb\n  #19 z_ztest_run_all+0x29\n  #20 ztest_run_all+0x2e\n  #21 test_main+0x1d\n  #22 main+0x1c\n  #23 fn+0x24cb9\n  #24 __libc_start_main+0x8c\n  #25 _start+0x27",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "e9094960a88eead3",
+   "id": 125
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "D",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nnet: l2cap: tx queue flushed\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "9a0e076862c16e0d",
+   "id": 126
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "E",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??\nbt: hci_core: rx buf 0x8bd4\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "09e4a2a1c295797c",
+   "id": 127
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbt: conn: peer disconnected (reason 0x13)\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x5b29d61e]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "e3d473075660cfce",
+   "id": 128
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x4f15812e]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "cac1efe3984cc705",
+   "id": 129
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x65e21e22]\n/work/build-multibug/testbinary(+0x1c205)[0x56ad9e86]\n/work/build-multibug/testbinary(+0x1dbbd)[0x594fdf35]\n/work/build-multibug/testbinary(+0x1dd99)[0x4144d716]\n/work/build-multibug/testbinary(+0x1def9)[0x593ab988]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x4001dd6a]\n/work/build-multibug/testbinary(+0x21d3c)[0x483c3d2b]\n/work/build-multibug/testbinary(+0x22527)[0x41da0ccf]\n/work/build-multibug/testbinary(+0x226be)[0x61554382]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x6971d1d5]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x550bd821]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x6ddc91f1]\n/work/build-multibug/testbinary(+0x12e5f)[0x432f27f5]\n/work/build-multibug/testbinary(+0x12969)[0x5a37fbef]\n/work/build-multibug/testbinary(+0x952d)[0x4dca101b]\n/work/build-multibug/testbinary(+0x99c0)[0x5513bd14]\n/work/build-multibug/testbinary(+0x9d31)[0x467540ee]\n/work/build-multibug/testbinary(+0xa3f4)[0x61f51eb8]\n/work/build-multibug/testbinary(z_impl_ztest_run_test_suites+0x61)[0x454e54fb]\n/work/build-multibug/testbinary(+0xadcb)[0x5dc96e4d]\n/work/build-multibug/testbinary(z_ztest_run_all+0x29)[0x68267c76]\n/work/build-multibug/testbinary(ztest_run_all+0x2e)[0x4f9e5d8f]\n/work/build-multibug/testbinary(test_main+0x1d)[0x4e374a19]\nbt: conn: peer disconnected (reason 0x13)\n/work/build-multibug/testbinary(main+0x1c)[0x5f45613f]\n/work/build-multibug/libc.so.6(+0x24cb9)[0x4ae292ee]\n/work/build-multibug/libc.so.6(__libc_start_main+0x8c)[0x4c568c8e]\n/work/build-multibug/testbinary(_start+0x27)[0x55f2bf77]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "53a046c7317e332f",
+   "id": 130
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "F",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nbt: conn: peer disconnected (reason 0x13)\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "362177c434b6120f",
+   "id": 131
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nnet: l2cap: tx queue flushed\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(+0x1dbbd)[0x6ed7d06d]\n/work/build-multibug/testbinary(+0x1dd99)[0x6689c7bf]\n/work/build-multibug/testbinary(+0x1def9)[0x69faebda]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x6ec58e7a]\n/work/build-multibug/testbinary(+0x21d3c)[0x611bd9e7]\n/work/build-multibug/testbinary(+0x22527)[0x66ffb6d6]\n/work/build-multibug/testbinary(+0x226be)[0x401e8562]\n/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x55c85f08]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x4e5a7925]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x431a6bae]\nbacktrace (top first):\n  #0 fn+0x1dbbd\n  #1 fn+0x1dd99\n  #2 fn+0x1def9\n  #3 llcp_rp_cu_run+0x20\n  #4 fn+0x21d3c\n  #5 fn+0x22527\n  #6 fn+0x226be\n  #7 llcp_rr_run+0x1f\n  #8 ull_cp_run+0x1d\n  #9 event_prepare+0xa6",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "3949dc222febdab9",
+   "id": 132
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x669c77f8]\n/work/build-multibug/testbinary(+0x1c205)[0x4a3ccb90]\n/work/build-multibug/testbinary(+0x1dbbd)[0x40245ed3]\n/work/build-multibug/testbinary(+0x1dd99)[0x6f46331f]\n/work/build-multibug/testbinary(+0x1def9)[0x64a43134]\n/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x6b493ae3]\n/work/build-multibug/testbinary(+0x21d3c)[0x6bd1ee47]\n/work/build-multibug/testbinary(+0x22527)[0x5df07fe6]\n/work/build-multibug/testbinary(+0x226be)[0x47acfd98]\n/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x48003169]\n/work/build-multibug/testbinary(event_prepare+0xa6)[0x61c60ad1]\n/work/build-multibug/testbinary(+0x12e5f)[0x6b2a13c5]\n/work/build-multibug/testbinary(+0x12969)[0x50ed989b]\n/work/build-multibug/testbinary(+0x952d)[0x6032ce96]\n/work/build-multibug/testbinary(+0x99c0)[0x5303aaf1]\n/work/build-multibug/testbinary(+0x9d31)[0x5cb111de]\n/work/build-multibug/testbinary(+0xa3f4)[0x6cde3f4d]\n/work/build-multibug/testbinary(z_impl_ztest_run_test_suites+0x61)[0x46ebcdf4]\n/work/build-multibug/testbinary(+0xadcb)[0x662f6e57]\n/work/build-multibug/testbinary(z_ztest_run_all+0x29)[0x59351389]\n/work/build-multibug/testbinary(ztest_run_all+0x2e)[0x5eb7e177]\n/work/build-multibug/testbinary(test_main+0x1d)[0x5659c3ea]\n/work/build-multibug/testbinary(main+0x1c)[0x5dd4f593]\n/work/build-multibug/libc.so.6(+0x24cb9)[0x6e0348d0]\n/work/build-multibug/libc.so.6(__libc_start_main+0x8c)[0x4c39daf0]\n/work/build-multibug/testbinary(_start+0x27)[0x643bb293]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 ull_cp_run+0x1d\n  #10 event_prepare+0xa6\n  #11 fn+0x12e5f\n  #12 fn+0x12969\n  #13 fn+0x952d\n  #14 fn+0x99c0\n  #15 fn+0x9d31\n  #16 fn+0xa3f4\n  #17 z_impl_ztest_run_test_suites+0x61\n  #18 fn+0xadcb\n  #19 z_ztest_run_all+0x29\n  #20 ztest_run_all+0x2e\n  #21 test_main+0x1d\n  #22 main+0x1c\n  #23 fn+0x24cb9\n  #24 __libc_start_main+0x8c\n  #25 _start+0x27",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "f9d67321e254a620",
+   "id": 133
+  },
+  {
+   "kind": "cross",
+   "target_bug": "A",
+   "rep_bug": "E",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nbt: smp: pairing failed",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "a7c77ef407e4728c",
+   "id": 134
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "f9bc310049197309",
+   "id": 135
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "F",
+   "rep_bug": "F",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nos: thread 0x7a31: stack usage 0xbe2a\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:??",
+   "l2_score": 0.444,
+   "truth_same": true,
+   "hash": "a7509eef6cfbc3b2",
+   "id": 136
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nnet: l2cap: tx queue flushed\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x62663b89]\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "027fcb900ad4c839",
+   "id": 137
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nll: scheduler: slot overrun ticks=0x1056\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "c51abd33190e8a9d",
+   "id": 138
+  },
+  {
+   "kind": "same_residual",
+   "target_bug": "A",
+   "rep_bug": "A",
+   "target_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc\n  #1 fn+0x1c205\n  #2 fn+0x1dbbd\n  #3 fn+0x1dd99\n  #4 fn+0x1def9\n  #5 llcp_rp_cu_run+0x20\n  #6 fn+0x21d3c\n  #7 fn+0x22527\n  #8 fn+0x226be\n  #9 llcp_rr_run+0x1f\n  #10 ull_cp_run+0x1d\n  #11 event_prepare+0xa6\n  #12 fn+0x12e5f\n  #13 fn+0x12969\n  #14 fn+0x952d\n  #15 fn+0x99c0\n  #16 fn+0x9d31\n  #17 fn+0xa3f4\n  #18 z_impl_ztest_run_test_suites+0x61\n  #19 fn+0xadcb\n  #20 z_ztest_run_all+0x29\n  #21 ztest_run_all+0x2e\n  #22 test_main+0x1d\n  #23 main+0x1c\n  #24 fn+0x24cb9\n  #25 __libc_start_main+0x8c\n  #26 _start+0x27",
+   "rep_text": "--- crash report ---\n=== CRASH sig=SIGFPE ===\n/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x685dfadb]\nos: thread 0xcb49: stack usage 0x9155\nbacktrace (top first):\n  #0 ull_conn_update_parameters+0xdc",
+   "l2_score": 0.371,
+   "truth_same": true,
+   "hash": "265ac7e2fcf607c5",
+   "id": 139
+  },
+  {
+   "kind": "cross",
+   "target_bug": "F",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64",
+   "rep_text": "--- crash report ---\nbt: hci_core: rx buf 0x37dd\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:??",
+   "l2_score": 0.233,
+   "truth_same": false,
+   "hash": "8e41d8b8ce2616b8",
+   "id": 140
+  },
+  {
+   "kind": "cross",
+   "target_bug": "B",
+   "rep_bug": "D",
+   "target_text": "--- crash report ---\nProgram received signal SIGFPE, Arithmetic exception.\n0x565a5cd6 in llcp_rp_cc_tx_rsp ()\n=== CRASH sig=SIGFPE ===\n\u2026/build-cis/testbinary(+0x16cd6)         <-- llcp_rp_cc_tx_rsp (static fn: raw offset even w/ -rdynamic)\n\u2026/build-cis/testbinary(llcp_rp_cc_run+0x20)\n\u2026/build-cis/testbinary(llcp_rr_run+0x1f)\n\u2026/build-cis/testbinary(ull_cp_run+0x1d)\n\u2026/build-cis/testbinary(event_prepare+0xa6)",
+   "rep_text": "--- crash report ---\nRunning TESTSUITE phy_central\nRunning TESTSUITE phy_periph\nnet: l2cap: tx queue flushed\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_phy.c:437",
+   "l2_score": 0.0,
+   "truth_same": false,
+   "hash": "cc76038888d84bc7",
+   "id": 141
+  },
+  {
+   "kind": "cross",
+   "target_bug": "E",
+   "rep_bug": "C",
+   "target_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_common.c:1138",
+   "rep_text": "--- crash report ---\nASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nAssertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247\nos: thread 0x1bfe: stack usage 0xbf3e",
+   "l2_score": 0.444,
+   "truth_same": false,
+   "hash": "8c92a92d3b07f0ae",
+   "id": 142
+  }
+ ],
+ "verdicts": {
+  "d384c58a65ada9e1": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "5d00aa91a5a10b04": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "e281a0d4430e052e": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "567669e4906c20f7": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "2da69c19975964a1": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "88aed5a3b7231c14": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "029286c2f835b5cb": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "0635a8b31a7680ac": {
+   "same": false,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "fdd603805b12c8ab": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "9706082ca540595e": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "ab8cf633e9c86480": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "edfe06f6008e9334": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "2b2aa42959d6fa7c": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "3564114025816f99": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "d3cfb65aadc406cd": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "2a9478f37aa3e3ec": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "1e828e971fab34bc": {
+   "same": true,
+   "conf": 0.8,
+   "model": "llama3.1:8b"
+  },
+  "8005e1ba615839fc": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "3dfaec90e4ec9977": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "a67a1c51e4d31de1": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "2902fd7a1a90e1c4": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "251d59a9d0c1f1e8": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "dd7ea2cff5605e53": {
+   "same": true,
+   "conf": 0.8,
+   "model": "llama3.1:8b"
+  },
+  "b0cf6949a3e2fc35": {
+   "same": true,
+   "conf": 0.8,
+   "model": "llama3.1:8b"
+  },
+  "7de5820fa09e7155": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "b8984dad840dc672": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "3c77f1e5d077e395": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "9985df250bc09b2a": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "0c1e76272acaeecf": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "0bcc25f2a9414d99": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "3ca2088d5a77713d": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "d03f8a3b2859bc8f": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "d143352c87f63c54": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "513b0773c8afe0a2": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "5b52dc3029baa17e": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "3feb5cf29a47fd6a": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "919f1053d2890173": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "f271a85c821e8dd1": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "e4b1cfe0cca033f8": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "224e7d4da3d897e3": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "d09b7713a280d0cd": {
+   "same": true,
+   "conf": 0.8,
+   "model": "llama3.1:8b"
+  },
+  "868fe6ff9be4a948": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "45baa81dedb2089b": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "0beb0b89b71805c6": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "33af113fa875e5e0": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "1d06cdaf42c8edb9": {
+   "same": true,
+   "conf": 0.8,
+   "model": "llama3.1:8b"
+  },
+  "6364b4609e026a52": {
+   "same": true,
+   "conf": 0.95,
+   "model": "llama3.1:8b"
+  },
+  "c17f3ded5b099ff6": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "7b4996f341a77ddc": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "21acb000878c1e91": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "9c9375e1295adc2d": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "1bf28d2de985e4e4": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "a666d7989c790544": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "5091c1ade2e36f1b": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "a3c0a90eac652270": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "8fd6408f4cfa7105": {
+   "same": false,
+   "conf": 0.5,
+   "model": "llama3.1:8b"
+  },
+  "14507e08ec2a0095": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "6735f261599d916a": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "3317e480c5105646": {
+   "same": true,
+   "conf": 0.95,
+   "model": "llama3.1:8b"
+  },
+  "5893e8e0d1b85cd7": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "2992e148b70ddd43": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "8db5efc3c47dec3f": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "2eab7b44fc6f7ff5": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "59817e41c436e8a7": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "cd38695cfdaac516": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "787c892d3d725f74": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "b61dd61dfc8cd062": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "79b7c4041257f950": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "f998aab71ae61d31": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "1ccf7927c86e0d4f": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "e9efe02fb314e3b0": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "7c30cf72acf1d5af": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "ba180f2147080f55": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "92de3d83a9f09590": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "dd87b956ef624749": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "fe795c55a01bdf28": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "816a5855ce8e203b": {
+   "same": true,
+   "conf": 0.95,
+   "model": "llama3.1:8b"
+  },
+  "434e0c9914f6c76f": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "19816a7d7effdf2f": {
+   "same": false,
+   "conf": 0.8,
+   "model": "llama3.1:8b"
+  },
+  "0ac6b48131d6783e": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "5011bcd1668a88a9": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "c4cc2fe3a8ebe7ac": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "008b7a5dbcf2cd1a": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "adac13e318615ad7": {
+   "same": false,
+   "conf": 0.8,
+   "model": "llama3.1:8b"
+  },
+  "cc0687e08bff5cda": {
+   "same": true,
+   "conf": 0.95,
+   "model": "llama3.1:8b"
+  },
+  "e4ed8b0a1f602f6d": {
+   "same": false,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "adb1c897be926305": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "90414d62c3ff5419": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "abe0ae01ddce361d": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "4005359c6ae30d40": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "dfccbcb3c4adf11f": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "1d0b907284ba8144": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "82294dcf654f5c55": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "51892124ea51e83c": {
+   "same": true,
+   "conf": 0.95,
+   "model": "llama3.1:8b"
+  },
+  "6a0d88c87c4743cb": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "ca5fc756b4c8d399": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "df46dfd2a5c156c3": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "ccb6d02ba9659ad3": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "f9f0b93882edb694": {
+   "same": false,
+   "conf": 0.8,
+   "model": "llama3.1:8b"
+  },
+  "6913c700f9d89cb4": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "07d48d420324d1bb": {
+   "same": true,
+   "conf": 0.95,
+   "model": "llama3.1:8b"
+  },
+  "470b44cff94cd331": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "c937c38df0586020": {
+   "same": true,
+   "conf": 0.95,
+   "model": "llama3.1:8b"
+  },
+  "9eb197c97962bbd5": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "f8ae62489a5d127c": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "a878df43af3e4f42": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "21f1b1b616af79e5": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "edcd1e056e08d139": {
+   "same": true,
+   "conf": 0.8,
+   "model": "llama3.1:8b"
+  },
+  "23d0d8c8f1250fc0": {
+   "same": true,
+   "conf": 0.95,
+   "model": "llama3.1:8b"
+  },
+  "055c091e89e6f4ca": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "f2fdffd72127c1d0": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "e5de8d4daa74e70e": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "435ce833dc192119": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "19fb006317342ff5": {
+   "same": true,
+   "conf": 0.8,
+   "model": "llama3.1:8b"
+  },
+  "211403f20a3b1551": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "369d852a8f1a648a": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "a51c1bb9bdf7ad9b": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "ea2646ef010ee811": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "0ed6ce929b8d0e09": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "1010f6379c34be1e": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "05d22d1de60bb4e0": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "bd3ad9b205e3b9f7": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "46ea4be1f53fbcc3": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "973fc564efc9e4bc": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "acdaf20330a81512": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "e9094960a88eead3": {
+   "same": true,
+   "conf": 0.95,
+   "model": "llama3.1:8b"
+  },
+  "9a0e076862c16e0d": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "09e4a2a1c295797c": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "e3d473075660cfce": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "cac1efe3984cc705": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "53a046c7317e332f": {
+   "same": true,
+   "conf": 0.95,
+   "model": "llama3.1:8b"
+  },
+  "362177c434b6120f": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "3949dc222febdab9": {
+   "same": true,
+   "conf": 0.95,
+   "model": "llama3.1:8b"
+  },
+  "f9d67321e254a620": {
+   "same": true,
+   "conf": 0.95,
+   "model": "llama3.1:8b"
+  },
+  "a7c77ef407e4728c": {
+   "same": false,
+   "conf": 0.5,
+   "model": "llama3.1:8b"
+  },
+  "f9bc310049197309": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "a7509eef6cfbc3b2": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "027fcb900ad4c839": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "c51abd33190e8a9d": {
+   "same": true,
+   "conf": 1.0,
+   "model": "llama3.1:8b"
+  },
+  "265ac7e2fcf607c5": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "8e41d8b8ce2616b8": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "cc76038888d84bc7": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  },
+  "8c92a92d3b07f0ae": {
+   "same": true,
+   "conf": 0.9,
+   "model": "llama3.1:8b"
+  }
+ }
+}

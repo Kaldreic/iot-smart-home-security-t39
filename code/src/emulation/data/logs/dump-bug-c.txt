@@ -1,0 +1,7 @@
+# Bug C example crash DUMP -- LL_ASSERT(ntf) at ull_llcp_conn_upd.c:247 (cu_ntf)
+# Captured: HARNESS_BUG=C HARNESS_SUBSET=24 (true 2-minimal {IND1,IND2}) on build-multibug/testbinary
+# Shell exit 255 = mocked bt_ctlr_assert_handle -> exit(-1); a DISTINCT crash identity from Bug A
+# (different signal/mechanism AND different site). The controller assert message on stderr:
+# ----------------------------------------------------------------------------------------
+ASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247
+Assertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_conn_upd.c:247

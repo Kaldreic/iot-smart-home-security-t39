@@ -1,0 +1,142 @@
+\section{Related work}\label{sec:related_work}
+
+RDD integrates several established fields: input minimisation, over-the-air
+fuzzing, oracle stabilisation, language models for testing, crash deduplication,
+and commercial tools. While each area is well developed individually, RDD is unique
+in combining them through adaptive minimisation guided by a statistical
+reproduction oracle on a noisy wireless stack.
+
+\subsection{Input minimisation under noisy verdicts}
+
+The primary algorithm, \texttt{ddmin}~\cite{ddmin2002}, is a general-purpose
+reducer that identifies a locally minimal failing input. It has been the standard
+minimiser in compiler testing and bug reproduction for approximately twenty years;
+\textsc{C-Reduce}~\cite{creduce2012} and \textsc{Perses}~\cite{perses2018} are
+prominent syntax-guided refinements for structured source programs.
+Hierarchical Delta Debugging~\cite{hdd2006} adapts \texttt{ddmin} for
+tree-structured inputs, which differs from the noisy verdict problem addressed
+here. Probabilistic Delta Debugging (\textsc{ProbDD})~\cite{probdd2021} employs a
+Bayesian estimate to determine which elements are significant and to reduce oracle
+calls. However, these methods treat the oracle as \emph{deterministic}, making
+assumptions about the input rather than the verdict. Probabilistic Monotonicity
+Assessment (\textsc{PMA})~\cite{pma2025} is the first to depart from this,
+modelling the search space's \emph{monotonicity} probabilistically to avoid
+redundant tests. \textsc{PMA} is the closest related work, but it only accelerates
+\texttt{ddmin} under structural (deterministic) non-monotonicity and does not
+\emph{stabilise} the verdict or use an
+oracle model with sequential tests or bounded error. All these methods assume a
+reliable oracle, which wireless environments do not provide, so \texttt{ddmin}'s
+1-minimality guarantee does not hold. RDD adopts a different strategy: it maintains
+a classical search but prioritises producing a reliable verdict, complementing
+rather than competing with these minimisers. Delta debugging has previously been
+applied to non-deterministic targets. For example, Pontolillo and
+Mousavi~\cite{quantumdd2024} reduce quantum-program regressions using a
+fixed-sample property check on a simulator, not a sequential, bounded-error
+decision on a real channel.
+
+\subsection{Wireless fuzzing: discovery versus reproduction}
+
+Over-the-air protocol fuzzing is a well-established field.
+\textsc{SweynTooth}~\cite{sweyntooth2020} identified twelve BLE vulnerabilities
+across seven vendors, and \textsc{BrakTooth}~\cite{braktooth2022} found sixteen in
+Bluetooth Classic. Both projects conclude at discovery, requiring analysts to
+manually construct a clean PoC. \textsc{U-Fuzz}~\cite{ufuzz2024} advances further:
+after stateful fuzzing of IoT and 5G protocols, it performs a post-fuzzing step to
+identify the minimal set of mutated packets that cause a crash. This makes U-Fuzz
+RDD's closest counterpart, but the distinction lies in the oracle. U-Fuzz uses a
+single backward replay per candidate and records any remaining instability as
+anomalies, while RDD employs a sequential, bounded-error verdict.
+\textsc{AirBugCatcher}~\cite{airbugcatcher2024} is the most direct comparator, as it
+also addresses noisy-verdict problems. However, it examines suspect combinations up
+to a small fixed size and manages non-determinism by repeating trials within a set
+budget, rather than stabilising the verdict. In its study, a plain replay baseline,
+repeated five times to average out the medium, reproduced only 13 to 23 of 190
+crashes~\cite{airbugcatcher2024}. % AirBugCatcher RQ5: replay baseline, 13-23/190 over 5 trials
+RDD builds upon these concepts rather than competing with them. Three improvements
+have been noted: bounded enumeration is replaced by \texttt{ddmin}, and time-budget
+repetition is replaced by a statistical oracle. The third improvement is in the
+identity layer: while \textsc{AirBugCatcher} matches crashes by exact source-line or
+memory-offset, RDD uses a noise-tolerant two-tier cascade.
+
+\subsection{Oracle stabilisation and flaky tests}
+
+The oracle problem --- determining whether an outcome is truly a failure --- has
+been a focus of testing research for over a decade. Barr et
+al.~\cite{oracleproblem2015} review scenarios where no perfect oracle exists, and
+Luo et al.~\cite{flakytests2014} discuss flaky tests where verdicts vary across
+identical runs. Both works identify the issue but do not provide a decision rule
+for noisy \emph{physical} targets. The Sequential Probability Ratio Test
+(SPRT)~\cite{sprt1945} addresses this by offering a rule that makes decisions within
+a set budget while controlling both error rates. Applying SPRT to the reproduction
+oracle introduces Wald's guarantees, reducing false credit from the baseline's
+0.638 to 0.000 in all stress tests, a level not achieved in the flaky-test
+literature. Using a statistical test as an oracle is not new: Guderlei and
+Mayer~\cite{statoracle2007} evaluate random-output programs against a distribution,
+but they do so as a batch decision offline, whereas RDD makes sequential,
+bounded-error verdicts during the reduction process.
+
+\subsection{Language models (LLMs) as testing oracles}
+
+Language models are now applied in testing in various ways.
+\textsc{LPR}~\cite{lpr2024} combines a syntax-guided reducer with LLM-proposed
+rewrites, but the model only suggests changes and the oracle remains a
+deterministic recompile. \textsc{ChatAFL}~\cite{chatafl2024} allows an LLM to guide
+greybox fuzzing of RFC protocols on wired targets, and
+\textsc{Candor}~\cite{candor2025} uses multiple models to reach consensus and
+generate oracles offline. The most structurally similar approach is
+\textsc{DDOR}~\cite{ddor2026}, a recent preprint, which incorporates LLM judging
+within a delta-debugging loop for chatbot over-refusal. While similar to RDD, DDOR
+targets a replayable software endpoint, without wireless noise or a statistical
+reproduction oracle. Another recent effort applies delta debugging to
+LLM-integrated systems~\cite{ddllm2026} with semantic markers, again on replayable
+models without a statistical test. Ensemble frameworks differ:
+self-consistency~\cite{selfconsistency2023} uses a single model's majority vote,
+cross-model voting yields only minor gains once voters are
+correlated~\cite{condorcetllm2024}, LLM-as-a-judge approaches approximate human
+grading~\cite{llmjudge2023}, and unanimous open-weight juries review LLM-written
+code offline~\cite{llmjuries2026}. RDD is fundamentally different: its L3 is a
+\emph{single} crash-identity judge, used only when the deterministic L2 is uncertain,
+similar to FrugalGPT-style escalation~\cite{frugalgpt2023}. The stabiliser is the
+SPRT oracle, not an ensemble, and the model is used to infer identity rather than
+reproduction.
+
+\subsection{Crash identity and deduplication}
+
+An identity layer is required to match crashes across noisy trials. Beyond exact
+stack-hash matching, \emph{Drain}~\cite{drain2017} groups similar logs by mining log
+templates online, and Semantic Crash Bucketing~\cite{scb2018} groups crashes based
+on whether a simple program change resolves them. Igor~\cite{igor2021} clusters by
+root cause using minimised execution traces, offering greater precision, but like
+the others, this is an offline triage step. RDD integrates these concepts into a
+two-tier identity system: a deterministic L2 that considers stack, site, fault
+class, and log templates, and refers only the remaining uncertain cases to an
+open-weight model~\cite{llama3_2024}. This cost-gated cascade is incorporated into
+the reproduction oracle, unlike previous approaches that treat identity as a
+separate triage step. The closest comparison is GPTrace~\cite{gptrace2026}, which
+deduplicates crashes using language-model embeddings offline, whereas RDD's judge
+determines identity during the process as part of the reproduction verdict.
+
+\subsection{The marketplace}
+
+Commercial wireless fuzzing is well established. Defensics~\cite{defensics} provides
+Bluetooth and Wi-Fi suites that transmit malformed traffic over the air, and
+Keysight's IoT Security Assessment offers similar capabilities for radio stacks,
+leveraging \textsc{BrakTooth} research~\cite{keysightiot,braktooth2022}. Both tools
+identify failures but do not perform minimisation. Crash triage is also commercial:
+Google's ClusterFuzz~\cite{clusterfuzz} deduplicates and minimises test cases, but
+only on local instrumented software where results are repeatable. A market review
+found no tool that combines adaptive minimisation with a non-deterministic
+over-the-air target; these features are offered separately.
+
+\subsection{The unoccupied cell}
+
+Input minimisation, wireless discovery, and crash identity are all well-developed
+fields, but have not previously been combined. To our knowledge, no prior tool uses
+\texttt{ddmin} with a \emph{statistical} reproduction oracle that is SPRT-stabilised
+and false-credit-bounded on a non-deterministic wireless target, together with a
+tiered identity cascade for the varied dumps caused by noise. Other tools are
+similar but not equivalent. \textsc{U-Fuzz} minimises wireless crashes, but only
+with a single replay rather than a stabilised verdict. \textsc{PMA} measures
+monotonicity but does not provide a bounded-error verdict. \textsc{DDOR} and
+LLM-system reducers operate on replayable targets. The quantum reducer uses a
+fixed-sample check. RDD occupies this unique position.

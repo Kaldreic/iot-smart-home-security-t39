@@ -1,0 +1,21 @@
+\section{Conclusions}\label{sec:conclusions}
+
+This report addresses a structural limitation in reproducing wireless IoT bugs.
+Channel noise and device variability render the oracle non-deterministic, and once
+either factor enters the test loop, exact minimisation algorithms that rely on a
+stable verdict~\cite{ddmin2002} can no longer converge on the correct minimal
+recipe. We propose that the software-only layer restores the stable-verdict
+assumption, enabling traditional delta debugging at desktop cost with an
+$\alpha$-bounded restriction on false credit. The method achieves 0.863 recovery at
+zero false credit, the baseline 0.759 at 0.137, and it holds this lead under stress.
+The zero-false-credit result comes chiefly from the sequential test withholding
+credit from non-genuine reproductions.
+
+Two limitations of the proof-of-concept stem from the test's design, not the method.
+First, the indifference zone leaves the deepest noise undecidable~\cite{sprt1945}.
+Second, the oracle's effect on \emph{genuine} recovery is intertwined with the
+transition to \texttt{ddmin}, so it is claimed only for false credit, not a clear
+recovery gain. The proposed experiments aim at a field-deployable wireless
+reproduction oracle: real radios for the channel, new protocol stacks and fault
+types, and a panel in place of the single judge. Ultimately, stabilising the verdict
+lets established methods handle the remainder.

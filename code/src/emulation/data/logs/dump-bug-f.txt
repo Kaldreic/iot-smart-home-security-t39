@@ -1,0 +1,10 @@
+# Bug F (cis-create) example crash DUMP -- LL_ASSERT(ntf) at ull_llcp_cc.c:64 (cc_ntf_established)
+# Captured: HARNESS_BUG=F HARNESS_SUBSET=24 (true 2-minimal {CIS_IND1, CIS_IND2}) on build-cisc/testbinary
+# Shell exit 255 = mocked bt_ctlr_assert_handle -> exit(-1). A DISTINCT crash identity: a 2nd LL_CIS_IND
+# during WAIT_INSTANT clobbers the retained CIS_ESTABLISHED notification rx node, so cc_ntf_established
+# asserts on NULL. The crash SITE (ull_llcp_cc.c:64) differs from A (ull_conn_update_parameters), B
+# (ull_llcp_cc divide), C (ull_llcp_conn_upd.c:247), D (ull_llcp_phy.c:437) and E (ull_llcp_common.c:1138),
+# so the L2/L3 site-dedup separates it. Same retained-rx MECHANISM as C/D/E, distinct SITE.
+# ----------------------------------------------------------------------------------------
+ASSERTION FAIL [ntf] @ /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64
+Assertion failed in /work/zephyr/subsys/bluetooth/controller/ll_sw/ull_llcp_cc.c:64

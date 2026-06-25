@@ -1,0 +1,40 @@
+# Bug A example crash DUMP -- CVE-2024-4785 divide-by-zero (SIGFPE)
+# Captured: HARNESS_BUG=A HARNESS_SUBSET=128 (true 1-minimal {7}) on build-multibug/testbinary (-rdynamic -g)
+# Shell exit 136 = 128 + SIGFPE(8); emitted by the in-test signal(SIGFPE,...) handler.
+# Raw backtrace (backtrace_symbols_fd); -rdynamic resolves exported controller symbols;
+# the static handler frame + static-fn frames show as testbinary(+0xNNNN). Faulting site:
+#   ull_conn_update_parameters+0xdc  <-- the conn_interval_old/interval divide (ull_conn.c).
+# STABLE-IDENTITY NOTE: across ASLR-randomized runs the SYMBOL+offset (ull_conn_update_parameters+0xdc,
+# llcp_rp_cu_run+0x20, ...) is the stable part; only the trailing absolute [0xADDR] varies per run.
+# (The dump-variation model keys on symbol+offset, not the absolute address.)
+# ----------------------------------------------------------------------------------------
+=== CRASH sig=SIGFPE ===
+/work/build-multibug/testbinary(+0x1284c)[0x5665a84c]
+linux-gate.so.1(__kernel_sigreturn+0x0)[0xf7ee9250]
+/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x56663338]
+/work/build-multibug/testbinary(+0x1c205)[0x56664205]
+/work/build-multibug/testbinary(+0x1dbbd)[0x56665bbd]
+/work/build-multibug/testbinary(+0x1dd99)[0x56665d99]
+/work/build-multibug/testbinary(+0x1def9)[0x56665ef9]
+/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x56665feb]
+/work/build-multibug/testbinary(+0x21d3c)[0x56669d3c]
+/work/build-multibug/testbinary(+0x22527)[0x5666a527]
+/work/build-multibug/testbinary(+0x226be)[0x5666a6be]
+/work/build-multibug/testbinary(llcp_rr_run+0x1f)[0x5666a789]
+/work/build-multibug/testbinary(ull_cp_run+0x1d)[0x5665c09d]
+/work/build-multibug/testbinary(event_prepare+0xa6)[0x56670c38]
+/work/build-multibug/testbinary(+0x12e5f)[0x5665ae5f]
+/work/build-multibug/testbinary(+0x12969)[0x5665a969]
+/work/build-multibug/testbinary(+0x952d)[0x5665152d]
+/work/build-multibug/testbinary(+0x99c0)[0x566519c0]
+/work/build-multibug/testbinary(+0x9d31)[0x56651d31]
+/work/build-multibug/testbinary(+0xa3f4)[0x566523f4]
+/work/build-multibug/testbinary(z_impl_ztest_run_test_suites+0x61)[0x566524b5]
+/work/build-multibug/testbinary(+0xadcb)[0x56652dcb]
+/work/build-multibug/testbinary(z_ztest_run_all+0x29)[0x56652e0e]
+/work/build-multibug/testbinary(ztest_run_all+0x2e)[0x56652679]
+/work/build-multibug/testbinary(test_main+0x1d)[0x5665269c]
+/work/build-multibug/testbinary(main+0x1c)[0x566526c3]
+/lib/i386-linux-gnu/libc.so.6(+0x24cb9)[0xf7cb9cb9]
+/lib/i386-linux-gnu/libc.so.6(__libc_start_main+0x8c)[0xf7cb9d7c]
+/work/build-multibug/testbinary(_start+0x27)[0x566511d7]

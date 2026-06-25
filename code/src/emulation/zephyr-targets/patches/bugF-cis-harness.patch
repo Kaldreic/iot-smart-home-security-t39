@@ -1,0 +1,120 @@
+--- a/tests/bluetooth/controller/ctrl_cis_create/src/main.c
++++ b/tests/bluetooth/controller/ctrl_cis_create/src/main.c
+@@ -860,4 +860,117 @@
+ }
+ 
+ 
++
++/* ============================================================================
++ * Bug F -- CIS-create retained-rx CIS_ESTABLISHED-ntf assert (ull_llcp_cc.c:64).
++ * Built VERBATIM on test_cc_create_periph_rem_host_accept (known-good, exit 0) with
++ * a conditional 2nd LL_CIS_IND injected in its own event while the peripheral rp_cc
++ * procedure is in RP_CC_STATE_WAIT_INSTANT. CIS_IND #1 enters WAIT_INSTANT and RETAINS
++ * ctx->node_ref.rx (llcp_rx_node_retain, ull_llcp_cc.c:408) for the deferred
++ * CIS_ESTABLISHED host notification. CIS_IND #2, routed to the head ctx by ull_cp_rx's
++ * only-remote-active branch (ull_llcp.c:1792-1798) and stored by llcp_rr_rx
++ * (ull_llcp_remote.c:240) OVER the retained pointer, is dropped by the WAIT_INSTANT
++ * handler (default: break) and then llcp_rr_rx clears node_ref.rx -> NULL
++ * (ull_llcp_remote.c:318-319); ctx->done stays 0 so the procedure survives. At the
++ * explicit established trigger rp_cc_complete -> cc_ntf_established reads the NULL node
++ * -> LL_ASSERT(ntf) @ ull_llcp_cc.c:64 -> mocked bt_ctlr_assert_handle -> exit(-1)
++ * (shell 255). One IND keeps the node -> clean. iso_interval stays 6 (remote_cis_req
++ * default) so the CIS_RSP divide (ull_llcp_cc.c:177) is non-zero -> this is the :64
++ * ASSERT (255), NOT bug B's SIGFPE (136). Same retained-rx MECHANISM as C/D/E, distinct
++ * SITE. Window bits 0-2 = inert decoys; bit3 = CIS_IND #1; bit4 = CIS_IND #2. True
++ * 2-minimal = {3,4} = 0x18. NO-OP unless HARNESS_BUG==F.
++ * ==========================================================================*/
++#include <stdlib.h>
++
++static bool bug_is(const char *want)
++{
++	const char *s = getenv("HARNESS_BUG");
++	return s && want && s[0] == want[0] && s[1] == '\0';
++}
++
++ZTEST(cis_create, test_bug_f)
++{
++	if (!bug_is("F")) {
++		return;
++	}
++	unsigned long mask = getenv("HARNESS_SUBSET") ? strtoul(getenv("HARNESS_SUBSET"), NULL, 0) : 0UL;
++
++	if (!(mask & 0x08U)) {
++		return;     /* no CIS_IND #1 -> nothing retained -> benign no-op (decoy/ind2-only) */
++	}
++
++	struct node_tx *tx;
++	struct node_rx_pdu *ntf;
++	struct node_rx_conn_iso_req cis_req = {
++		.cig_id = 0x01,
++		.cis_handle = 0x00,
++		.cis_id = 0x02
++	};
++	struct pdu_data_llctrl_cis_rsp local_cis_rsp = {
++		.cis_offset_max = { 0, 0, 0},
++		.cis_offset_min = { 0, 0, 0},
++		.conn_event_count = 12
++	};
++	struct node_rx_conn_iso_estab cis_estab = {
++		.cis_handle = 0x00,
++		.status = 0x00
++	};
++
++	ll_conn_iso_stream_get_fake.return_val = &cis_mock;
++	test_set_role(&conn, BT_HCI_ROLE_PERIPHERAL);
++	ull_cp_state_set(&conn, ULL_CP_CONNECTED);
++
++	/* Event: rx LL_CIS_REQ (iso_interval=6 default -> no SIGFPE) */
++	event_prepare(&conn);
++	lt_tx(LL_CIS_REQ, &conn, &remote_cis_req);
++	event_done(&conn);
++
++	ut_rx_node(NODE_CIS_REQUEST, &ntf, &cis_req);
++	ut_rx_q_is_empty();
++	release_ntf(ntf);
++
++	/* Host accepts -> next prepare TXes LL_CIS_RSP */
++	ull_cp_cc_accept(&conn, 0U);
++	event_prepare(&conn);
++	lt_rx(LL_CIS_RSP, &conn, &tx, &local_cis_rsp);
++	lt_rx_q_is_empty(&conn);
++	event_done(&conn);
++
++	/* Event: release RSP tx, rx CIS_IND #1 -> RETAIN node @:408, enter WAIT_INSTANT */
++	event_prepare(&conn);
++	ull_cp_release_tx(&conn, tx);
++	lt_tx(LL_CIS_IND, &conn, &remote_cis_ind);     /* bit3, load-bearing */
++	event_done(&conn);
++
++	if (mask & 0x10U) {                            /* bit4, load-bearing: the clobber */
++		/* CIS_IND #2 in its OWN event while in WAIT_INSTANT: routed to the head ctx,
++		 * dropped by default:break, llcp_rr_rx clears node_ref.rx -> NULL; ctx survives. */
++		event_prepare(&conn);
++		lt_tx(LL_CIS_IND, &conn, &remote_cis_ind);
++		event_done(&conn);
++	}
++
++	/* Pump events until the CIS instant (remote_cis_ind.conn_event_count == 12). */
++	while (!is_instant_reached(&conn, remote_cis_ind.conn_event_count)) {
++		event_prepare(&conn);
++		lt_rx_q_is_empty(&conn);
++		event_done(&conn);
++		ut_rx_q_is_empty();
++	}
++	event_prepare(&conn);
++	event_done(&conn);
++
++	/* Emulate CIS established -> rp_cc_complete -> cc_ntf_established reads node_ref.rx.
++	 * Two INDs -> NULL -> LL_ASSERT(ntf) @ ull_llcp_cc.c:64 -> exit 255 (here). One IND -> clean. */
++	ull_cp_cc_established(&conn, 0);
++	event_prepare(&conn);
++	lt_rx_q_is_empty(&conn);
++	event_done(&conn);
++
++	event_prepare(&conn);
++	ut_rx_node(NODE_CIS_ESTABLISHED, &ntf, &cis_estab);
++	ut_rx_q_is_empty();
++	event_done(&conn);
++}
++
+ ZTEST_SUITE(cis_create, NULL, NULL, cis_create_setup, NULL, NULL);

@@ -1,0 +1,148 @@
+--- a/tests/bluetooth/controller/ctrl_cis_create/src/main.c
++++ b/tests/bluetooth/controller/ctrl_cis_create/src/main.c
+@@ -860,4 +860,145 @@ ZTEST(cis_create, test_cc_create_central_rem_reject)
+ }
+ 
+ 
++
++/* ============================================================================
++ * / Bug B -- SUBSET-selectable CIS divide-by-zero oracle window.
++ *
++ * SINGLE-PACKET minimal (like Bug A). One native unit-test binary; the test is
++ * a NO-OP unless HARNESS_BUG==B (the native unit_testing binary has no per-test CLI
++ * filter -- it runs the WHOLE suite -- so selection is by getenv, the PROBE_ID
++ * pattern). HARNESS_SUBSET is a bitmask over the LL-PDU window; an external minimiser
++ * drives a channel-OFF exhaustive subset sweep by varying it.
++ *
++ * Confirmed injection: on the
++ * peripheral, a remote LL_CIS_REQ with iso_interval=0 AND conn_event_count=0 is
++ * accepted; on the very next event the CIS_RSP TX path llcp_rp_cc_tx_rsp
++ * (ull_llcp_cc.c:177) computes iso_interval_us = iso_interval*ISO_INT_UNIT_US = 0
++ * and DIV_ROUND_UP(delay*conn_interval_us, 0) -> integer divide-by-zero -> SIGFPE.
++ * Both malformed fields are load-bearing (iso_interval=0 is the divisor;
++ * conn_event_count=0 forces delay_conn_events!=0 so the divide is reached).
++ *
++ * The CIS-accept procedure is EXCLUSIVE (like Bug A's conn-update): a packet
++ * injected DURING the pending CIS create perturbs the accept path. So the
++ * malformed LL_CIS_REQ trigger MUST be the most-recent packet -- it sits at the
++ * TOP window bit. Transparent decoys are injected BEFORE it (no CIS pending =>
++ * clean) and must return the LLCP context pool to balance. EMPIRICALLY (sweep
++ * below), a COMPLETE, FULLY-DRAINED *local* LE-Ping is transparent here (same
++ * finding as Bug C): ull_cp_le_ping -> controller TXes LL_LE_PING_REQ -> peer
++ * LL_LE_PING_RSP -> release tx, leaving no pending RX, so the later CIS create
++ * sails through to the divide. HARNESS_SUBSET bit i => window[i]; SIGFPE iff the
++ * trigger bit. Channel-OFF true 1-minimal = {trigger}.
++ *
++ * Window bit layout (HARNESS_SUBSET bit i => window[i]):
++ *   bit0 (0x01) LE_PING decoy #1   transparent: a COMPLETE local LE-Ping
++ *   bit1 (0x02) LE_PING decoy #2   (ull_cp_le_ping -> REQ out, peer RSP in, tx released)
++ *   bit2 (0x04) LE_PING decoy #3   injected BEFORE the CIS_REQ, fully drained
++ *   bit3 (0x08) LE_PING decoy #4   -> ctx pool balanced, no pending RX
++ *   bit7 (0x80) LL_CIS_REQ TRIGGER load-bearing: iso_interval=0, conn_event_count=0
++ *                                  (most-recent) -> accept -> SIGFPE on CIS_RSP TX
++ *
++ * A SIGFPE handler turns the divide into a real DUMP (marker + backtrace) and
++ * _exit(136) so the shell sees the canonical 128+SIGFPE code (a CLEAN exit, NOT
++ * a -8 signal death -- match returncode==136). NO-OP unless HARNESS_BUG==B.
++ * ==========================================================================*/
++#include <stdlib.h>    /* getenv/strtoul for the HARNESS_BUG / HARNESS_SUBSET selectors */
++#include <string.h>    /* strcmp                                              */
++#include <signal.h>    /* signal(SIGFPE,...) crash-dump handler               */
++#include <unistd.h>    /* write/_exit (async-signal-safe dump emit)           */
++#include <execinfo.h>  /* backtrace/backtrace_symbols_fd (dump)               */
++
++/* SIGFPE crash-dump handler (Bug B). On the divide-by-zero the CPU raises
++ * SIGFPE; we print a marker + a real backtrace to STDERR, then _exit(136) so the
++ * shell sees the canonical 128+SIGFPE code and the dump is a real artifact.
++ * async-signal-safe calls only: write, backtrace, backtrace_symbols_fd, _exit. */
++static void sigfpe_handler(int sig)
++{
++	static const char marker[] = "\n=== CRASH sig=SIGFPE ===\n";
++	void *frames[32];
++	int n;
++
++	(void)sig;
++	(void)write(STDERR_FILENO, marker, sizeof(marker) - 1U);
++	n = backtrace(frames, 32);
++	backtrace_symbols_fd(frames, n, STDERR_FILENO);
++	_exit(136);   /* 128 + SIGFPE(8); canonical shell code for a fatal SIGFPE */
++}
++
++static bool bug_is(const char *want)
++{
++	const char *s = getenv("HARNESS_BUG");
++	return s && want && s[0] == want[0] && s[1] == '\0';
++}
++
++ZTEST(cis_create, test_bug_b)
++{
++	if (!bug_is("B")) {
++		return;   /* not selected -> no-op (whole-suite binary) */
++	}
++
++	signal(SIGFPE, sigfpe_handler);   /* emit a real crash dump on div0 */
++
++	const char *s = getenv("HARNESS_SUBSET");
++	unsigned long mask = s ? strtoul(s, NULL, 0) : 0UL;
++	struct node_tx *tx;
++	struct node_rx_pdu *ntf;
++	struct node_rx_conn_iso_req cis_req = {
++		.cig_id = 0x01, .cis_handle = 0x00, .cis_id = 0x02
++	};
++	bool have_trigger = (mask & 0x80U);   /* window[7] = the malformed CIS_REQ (most-recent) */
++
++	/* Mocked CIS stream + peripheral connected. */
++	ll_conn_iso_stream_get_fake.return_val = &cis_mock;
++	test_set_role(&conn, BT_HCI_ROLE_PERIPHERAL);
++	ull_cp_state_set(&conn, ULL_CP_CONNECTED);
++
++	/* window[0..3]: transparent decoys -- a COMPLETE, fully-drained local LE-Ping each
++	 * (ull_cp_le_ping -> controller TXes LL_LE_PING_REQ -> peer LL_LE_PING_RSP -> release tx).
++	 * Injected BEFORE the CIS create (no CIS pending => clean); droppable, not in the minimal. */
++#define B_PING(bit) do { if (mask & (bit)) {                                     \
++		uint8_t e = ull_cp_le_ping(&conn);                                         \
++		zassert_equal(e, BT_HCI_ERR_SUCCESS);                                      \
++		event_prepare(&conn);                                                      \
++		lt_rx(LL_LE_PING_REQ, &conn, &tx, NULL);                                   \
++		lt_tx(LL_LE_PING_RSP, &conn, NULL);                                        \
++		event_done(&conn);                                                         \
++		ull_cp_release_tx(&conn, tx); } } while (0)
++	B_PING(0x01U);      /* window[0] */
++	B_PING(0x02U);      /* window[1] */
++	B_PING(0x04U);      /* window[2] */
++	B_PING(0x08U);      /* window[3] */
++#undef B_PING
++
++	if (have_trigger) {   /* window[7]: the malformed LL_CIS_REQ, injected LAST (most-recent) */
++		struct pdu_data_llctrl_cis_req req = remote_cis_req;
++		req.iso_interval = 0U;        /* divisor = 0 */
++		req.conn_event_count = 0U;    /* delay_conn_events != 0 => divide reached */
++
++		/* Event: remote sends the malformed LL_CIS_REQ */
++		event_prepare(&conn);
++		lt_tx(LL_CIS_REQ, &conn, &req);
++		event_done(&conn);
++
++		/* Exactly one host CIS-request notification */
++		ut_rx_node(NODE_CIS_REQUEST, &ntf, &cis_req);
++		ut_rx_q_is_empty();
++		release_ntf(ntf);
++
++		/* Host accepts -> next prepare runs llcp_rp_cc_tx_rsp -> the divide.
++		 * With iso_interval=0 the SIGFPE fires HERE (before the lt_rx below). */
++		ull_cp_cc_accept(&conn, 0U);
++		event_prepare(&conn);
++		{
++			struct pdu_data_llctrl_cis_rsp local_cis_rsp = {
++				.cis_offset_max = { 0, 0, 0 },
++				.cis_offset_min = { 0, 0, 0 },
++				.conn_event_count = 12
++			};
++			lt_rx(LL_CIS_RSP, &conn, &tx, &local_cis_rsp);   /* control path only */
++			ull_cp_release_tx(&conn, tx);
++		}
++		event_done(&conn);
++	}
++}
++
+ ZTEST_SUITE(cis_create, NULL, NULL, cis_create_setup, NULL, NULL);
