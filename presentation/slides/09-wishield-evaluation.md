@@ -19,4 +19,4 @@
 </div>
 </div>
 
-<div style="display: flex; align-items: center; gap: 0.9rem; margin: 1rem auto 0 auto; max-width: 56rem; padding: 0 1rem;"><div style="flex: 1; min-width: 2rem; height: 1.5px; background: linear-gradient(90deg, transparent, var(--sapienza-red));"></div><div style="font-size: 0.92rem; color: var(--sapienza-ink); text-align: center; white-space: nowrap; flex-shrink: 0;">Both state-of-the-art sensing attacks <strong style="color: var(--sapienza-red);">defeated</strong> · quantitatively and visibly</div><div style="flex: 1; min-width: 2rem; height: 1.5px; background: linear-gradient(90deg, var(--sapienza-red), transparent);"></div></div>
+<div class="rule-line"><div class="rule"></div><div class="rule-text">Both state-of-the-art sensing attacks <strong>defeated</strong> · quantitatively and visibly</div><div class="rule"></div></div>

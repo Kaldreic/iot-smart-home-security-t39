@@ -13,4 +13,7 @@
 </div>
 </div>
 
-<div style="text-align: center; margin: 1rem auto 0 auto; max-width: 54rem;"><div style="font-size: 0.62rem; color: var(--sapienza-red); font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 0.35rem;">Why it defeats AoA</div><div style="font-size: 0.88rem; color: var(--sapienza-ink); line-height: 1.5;">The phase-difference pattern across antennas is the <strong style="color: var(--sapienza-red);">only signal AoA estimation has</strong> — per-antenna independence destroys it.</div></div>
+<div class="aoa-why">
+  <div class="kicker">Why it defeats AoA</div>
+  <div class="text">The phase-difference pattern across antennas is the <strong>only signal AoA estimation has</strong> — per-antenna independence destroys it.</div>
+</div>
