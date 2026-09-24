@@ -4,16 +4,16 @@ message: >-
   If you use or reference this work, please cite it using
   the metadata from this file.
 type: software
-version: '1.0.0'
-date-released: '2026-06-25'
+version: '1.0.1'
+date-released: '2026-09-24'
 abstract: >-
   A study of IoT and smart-home security, focusing on Wi-Fi sensing
   countermeasures (WiShield, ACSAC 2024) and automated wireless
   protocol fuzzing for IoT bug reproduction (AirBugCatcher, ACSAC
   2024). Produced as Data and Network Security (T39) coursework at
   Sapienza University of Rome, MSc in Cybersecurity. Comprises a
-  presentation, an 8-page report on a future research
-  direction, and a reproducible reference implementation (RDD, the
+  presentation, an IEEEtran report (eight pages plus references) on a
+  future research direction, and a reproducible reference implementation (RDD, the
   Robust Delta-Debugging tool) with its benchmark suite.
 authors:
   - given-names: Aldo

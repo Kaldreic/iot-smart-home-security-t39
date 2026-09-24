@@ -10,8 +10,16 @@ A deep-dive into Wi-Fi sensing defences and automated IoT bug reproduction, with
 [![Slides](https://img.shields.io/badge/slides-live-blue)](https://kaldreic.github.io/iot-smart-home-security-t39/)
 [![Report](https://img.shields.io/badge/report-live-blue)](https://kaldreic.github.io/iot-smart-home-security-t39/report.pdf)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+[![Status: complete](https://img.shields.io/badge/status-complete-success)](#project-status)
 
 </div>
+
+## Project status
+
+**Complete.** The coursework was delivered and graded in June 2026 (release `v1.0.0`); the repository is kept as an
+archival record and is not under active development. A final audit in September 2026 (release `v1.0.1`) re-verified
+every link and reference, rebuilt all three deliverables from a clean clone, and confirmed that the benchmark suite
+reproduces the report's numbers exactly.
 
 ## Deliverables
 
@@ -78,6 +86,8 @@ The [`presentation/`](./presentation) and [`code/`](./code) deliverables each ha
 ## License
 
 Released under the [MIT License](./LICENSE) — code, report, and slides alike.
+
+To cite this work, use the metadata in [`CITATION.cff`](./CITATION.cff) (GitHub's _Cite this repository_ button).
 
 ## Acknowledgements
 
