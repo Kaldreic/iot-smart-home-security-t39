@@ -5,8 +5,9 @@ proof-of-concept evidence for a research direction, not as a field result. The
 comparison is against a re-implementation of \textsc{AirBugCatcher}'s reproduction
 strategy~\cite{airbugcatcher2024}: bounded enumeration of suspect-packet
 combinations up to three packets, in order of proximity to the crash, one
-attempt per candidate, accepting the first candidate whose crash carries the
-expected signature. It is our reading of the published method, not the authors'
+attempt per candidate (a crash costs a second read to check that its identifier
+repeats), accepting the first candidate whose crash carries the expected
+signature. It is our reading of the published method, not the authors'
 tool, and it runs with no trial-time budget, so it enumerates more candidates
 than the original would. Both tools face the same simulated device and channel,
 so a difference between them is a difference between the two strategies
@@ -264,7 +265,7 @@ correlated attempts, which violate the sequential test's precondition, is not
 evaluated.
 
 \textbf{The baseline.} It is our re-implementation of one published strategy at
-a fifth to a quarter of RDD's reads. The confirmation control shows that one confirming
+a fifth to three tenths of RDD's reads. The confirmation control shows that one confirming
 re-run removes almost all of its false credit; a budget-matched variant with a
 different search was not run.
 
@@ -278,7 +279,7 @@ calibration set. No experiment here presents a different bug's report to the
 in-loop oracle, because each harness emits only its target's crash; the resulting
 risk, crediting a recipe that reproduces a different bug, is unmeasured. The
 judge's verdicts are replayed from a committed cache; live inference is not
-guaranteed bit-reproducible, although re-judging all 386 cached pairs with the
+guaranteed bit-reproducible, although re-judging all 386 cached verdicts (351 distinct pairs) with the
 same model tag (Ollama 0.34.2, 24 September 2026) returned every verdict
 unchanged.
 

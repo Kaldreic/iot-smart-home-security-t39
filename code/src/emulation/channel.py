@@ -8,13 +8,14 @@ against realistic noise.
 
 The RF chain is a two-state Gilbert-Elliott Markov chain (GOOD/BAD) with a
 geometric BAD burst. Each state has its own miss, phantom and invalid rates:
-misses (false negatives) come from the FlakeFlagger rerun corpus, phantoms are
+misses (false negatives) dominate, phantoms are
 rare, and an invalid (a connection-establishment failure) is discarded, never
 counted as a miss. A sticky device-error term ``rho_dev`` (default 0; not swept by the committed benchmarks)
 adds ordered-rerun autocorrelation the RF state cannot represent. Two knobs,
 ``reset`` and ``dev_settle``, de-correlate reps while preserving the marginal
-loss rate. Calibration target: an among-valid miss rate of 0.44 (the FlakeFlagger
-anchor). All randomness flows through an injected ``random.Random``.
+loss rate. The defaults give an among-valid miss rate of 0.44, our choice, in the upper
+range of the per-test failure frequencies of the FlakeFlagger rerun corpus (Alshammari et
+al., ICSE 2021). All randomness flows through an injected ``random.Random``.
 """
 
 from __future__ import annotations
@@ -41,10 +42,10 @@ OUT2REP = {Outcome.REPRODUCED: Rep.YES, Outcome.NOT_REPRODUCED: Rep.NO, Outcome.
 
 @dataclass(frozen=True)
 class GEChannelParams:
-    """Gilbert-Elliott RF, FlakeFlagger flakiness, device persistence and BLE invalids.
+    """Gilbert-Elliott RF, flaky-device misses, device persistence and BLE invalids.
 
     Defaults: stationary P(BAD)=0.2, mean BAD burst 1/p_bg=5 reps; among-valid
-    false-negative ~0.44 (the FlakeFlagger anchor), false-positive ~0.03, invalid
+    false-negative ~0.44 (our choice, see the module docstring), false-positive ~0.03, invalid
     ~0.07; rho_dev=0 (raise it to sweep observable burstiness); dev_settle is a
     boolean policy in {0,1} (a fractional rate is rejected -- it biases the marginal).
     """
@@ -52,9 +53,9 @@ class GEChannelParams:
     # --- Gilbert-Elliott RF channel (2-state Markov) ---
     p_gb: float = 0.05   # P(GOOD -> BAD)
     p_bg: float = 0.20   # P(BAD  -> GOOD); mean burst length = 1/p_bg = 5
-    # --- device flakiness per RF state (FlakeFlagger-calibrated, FN-dominant) ---
-    p_fn_good: float = 0.366   # calibrated so the among-valid FN ~ 0.44
-    p_fn_bad: float = 0.836    #   (the FlakeFlagger anchor)
+    # --- device flakiness per RF state (FN-dominant) ---
+    p_fn_good: float = 0.366   # set so the among-valid FN ~ 0.44
+    p_fn_bad: float = 0.836    #   (see the module docstring)
     p_fp_good: float = 0.02
     p_fp_bad: float = 0.07
     # --- wireless connection-establishment failure -> invalid trial ---

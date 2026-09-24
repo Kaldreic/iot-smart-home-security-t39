@@ -6,8 +6,8 @@
   python -m benchmarks.run freeze             # regenerate data/reference/anchor.json
 
 The anchor is the model-free truth-table reproduction of the six real bugs A-F and the LL_LENGTH_REQ
-suppressor (``run_real`` / ``run_suppressor``): arms baseline, baseline_confirm, tool, ablation and oracle,
-with the tool's L3 served from the committed cache. B1 and B3 need the built binaries; the self-test
+suppressor (``run_real`` / ``run_suppressor``): arms baseline, baseline_confirm and tool, plus ablation on the
+suppressor, with the tool's L3 served from the committed cache. B1 and B3 need the built binaries; the self-test
 reproduces them where the binaries exist. Run after ``pip install -e code/`` with PYTHONHASHSEED=0.
 """
 

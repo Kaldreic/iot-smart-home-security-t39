@@ -40,7 +40,7 @@ except the commands marked as needing the live judge.
 ```bash
 PYTHONHASHSEED=0 python -m rdd.tests.test_rdd                # the tool's 18 invariants (seconds)
 PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks  # the suite self-test (under a minute without binaries)
-PYTHONHASHSEED=0 python -m benchmarks.run coherence          # reproduce the committed numbers (four to seven minutes)
+PYTHONHASHSEED=0 python -m benchmarks.run coherence          # reproduce the committed numbers (a few minutes; seven on a GitHub runner)
 PYTHONHASHSEED=0 python -m benchmarks.run sensitivity        # the same anchor with the noise models switched off
 ```
 
@@ -55,7 +55,7 @@ within ±0.02 (it reproduces exactly, delta 0.000) and the synthetic sweep leaf 
 
 | Command       | What it measures                                                       | Genuine recovery, RDD vs. baseline |
 | ------------- | ---------------------------------------------------------------------- | ---------------------------------- |
-| `b1`          | six real Zephyr bugs through the full pipeline (frozen judge cache)    | 0.848 vs. 0.759; false credit 0.000 vs. 0.137 |
+| `b1`          | six real Zephyr bugs through the full pipeline (`--frozen`: judge cache) | 0.848 vs. 0.759; false credit 0.000 vs. 0.137 |
 | `b2`          | 75,000-campaign, six-regime synthetic sweep (model-free)               | 0.824 vs. 0.266; false credit 0.000 (one campaign in 75,000) vs. 0.632 |
 | `b3`          | real-bug lever decomposition (oracle, identity, minimiser)             | one arm per lever                  |
 | `coherence`   | the model-free reproducibility gate (real anchor + B2)                 | delta 0.000                        |

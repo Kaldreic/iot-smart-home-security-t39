@@ -220,8 +220,8 @@ def _print(out: dict) -> None:
           f"{lv['oracle_fc_invariance']['tool']:.3f});")
     print(f"          identity (genuine, A--F) oracle->ablation {lv['identity_genuine_real']:+.3f};  "
           f"robust minimiser (genuine, suppressor) ablation->tool {lv['minimiser_genuine_suppressor']:+.3f}")
-    print("  RDD L2/L3 arms (ablation, tool) = live open-model L3 (range over seeds; frozen to the cache for a reproducible CI point);")
-    print("  baseline + oracle = exact-id (bit-reproducible). Scored vs the channel-off virtual-perfect. host-native binary + MODELLED channel.")
+    print("  RDD arms (ablation, tool) = live open-model L3 (verdicts frozen to the cache for a reproducible replay);")
+    print("  baseline + oracle = exact id, no model. Scored against the channel-off truth; host-native binary, modelled channel.")
 
 
 def main() -> int:
