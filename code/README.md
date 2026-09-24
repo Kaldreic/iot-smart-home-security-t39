@@ -170,11 +170,6 @@ conservative "different bug", and the coherence gate checks that no miss occurre
   genuine 0.850, no false credit, 29 live judgments; over eight seeds genuine 0.859 in
   [0.825, 0.900], dedup 0.931 in [0.850, 0.975], no false credit). Those live figures are
   indicative, not references.
-- `l3_judge_eval.json` predates the canonicalisation of foreign-frame offsets in the rendered
-  reports, so 45 of its 143 pair texts differ from what the code renders today (bug A's
-  libc frames). Its score re-derives offline from the stored verdicts, and re-judging its
-  stored texts live changed one verdict, on a pair below the escalation band. Regenerate it
-  with `python -m benchmarks.eval.l3_eval eval` (live judge, about 15 minutes).
 
 ## License and citation
 
