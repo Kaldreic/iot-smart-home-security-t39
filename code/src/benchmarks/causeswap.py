@@ -1,51 +1,25 @@
-"""benchmarks.causeswap — a Mode-2 CAUSE-SWAP demonstration of RDD's identity re-check.
+"""benchmarks.causeswap — a cause-swap demonstration of RDD's identity guard (Mode 2).
 
-RDD's identity guard (``rdd.minimizer`` ``identity_check``, getattr-probed from ``oracle.identity_truth`` in
-``rdd.pipeline``) re-checks, at FINAL-VALIDATION, that the recovered recipe reproduces the TARGET bug's
-identity -- not merely SOME crash. This module demonstrates the deployment the guard is FOR (its docstring:
-"the final-validation ``raw`` confirms the recipe CRASHES, not that it crashes the TARGET"): a CO-PRESENT
-multi-bug binary minimised under a CRASH-ONLY reproduction oracle, where a minimiser targeting bug X reduces
-onto a DIFFERENT co-present bug Y, the crash-only ``raw_test`` credits the wrong-bug recipe as X, and the guard
-DEMOTES it by parsing the REAL dump of the bug that actually fired. The co-present device (the oracle + its
-crash-only in-loop + the guard's full-dump read) lives in ``emulation.causeswap``; this module owns the demo
-arms + scoring and INJECTS the guard's real identity cascade (``benchmarks.identity_cache.id_l2l3``).
+``rdd.minimizer`` re-checks at final validation that the recipe reproduces the target bug, not merely some
+crash, through the oracle's optional ``identity_truth`` hook. This module runs the deployment the hook is
+for: bugs A and C co-present in one window, minimised under a crash-only in-loop oracle (the loop sees a
+crash/no-crash bit, not which bug fired), so a minimiser targeting A can converge onto C's recipe; the guard
+reads the full dump of the bug that fired and demotes it.
 
-WHY a SEPARATE demo (and why the guard is a no-op elsewhere): the cached-real benchmark's in-loop oracle is
-IDENTITY-AWARE -- ``benchmarks.identity_cache.id_l2l3`` runs INSIDE the reproduction loop, so a wrong-bug recipe is
-rejected in-loop and the guard never has anything to demote (verified no-op). The guard's value appears only
-when the in-loop reproduction is CRASH-ONLY -- a cheap crash/no-crash signal (exit code / watchdog) replayed
-many times under SPRT, with the EXPENSIVE dump-identity check amortised to ONCE at final-validation (the
-FrugalGPT cost-gating this project already uses for L3). This demo models exactly that deployment.
+Real: the A and C dumps (``emulation.multibug.MODEL``) and the guard's decision, made by the L2/L3 cascade
+in ``benchmarks.identity_cache.id_l2l3`` (L2 settles A vs C). Modelled: the co-presence (the real binary keeps
+A and C in separate harnesses), the crash-only in-loop oracle and the OTA channel; the device is
+``emulation.causeswap``. On the cached-real benchmark the in-loop oracle is identity-aware, so the guard has
+nothing to demote there. Arms: swap (target A, reachable C), genuine_A, genuine_C; each guard off and on.
 
-REAL vs MODELLED (the honesty boundary):
-  * REAL: the A and C crash dumps are the committed Zephyr samples (``emulation.multibug.MODEL``, captured from
-    build-multibug), and the GUARD's identity decision is made by the REAL identity cascade
-    (``benchmarks.identity_cache.id_l2l3``): A (``ull_conn_update_parameters`` SIGFPE, has a stack) vs C (an ``LL_ASSERT``
-    exit, no stack) is settled by L2 -- the dumps are too different for L3 to escalate (the correct FrugalGPT
-    behaviour), so this demo exercises the guard's CAUSE-DISCRIMINATION, not L2/L3's robustness to dump VARIATION
-    (which is the in-loop / l3_eval's domain). The reduction runs through the REAL pipeline (SPRT + robust minimiser).
-  * MODELLED (disclosed): (1) the CO-PRESENCE of A and C in one PDU window -- the real build-multibug binary
-    keeps A and C in SEPARATE per-bug harnesses on DISJOINT windows (a real cause-swap is not reachable on
-    it without a C-level rebuild; that binary is also gitignored), but real firmware routinely ships co-present
-    bugs in one image; (2) the in-loop reproduction is CRASH-ONLY -- it sees only a crash/no-crash BIT (NOT which
-    bug), as in exit-code fuzzing; the GUARD, at final-validation, runs the binary ONCE and READS the FULL real
-    dump of whatever fired, then ``id_l2l3`` INFERS the identity (cheap crash-only loop + one expensive full-dump
-    guard -- the FrugalGPT cost-gating); (3) the OTA channel noise, as elsewhere. The in-loop is NOT identity-aware
-    here BY DESIGN -- that is the precondition for the guard to be load-bearing (a verified no-op when it is, as on
-    the cached-real benchmark whose in-loop ``id_l2l3`` runs every replay).
-
-THE RESULT (per arm, guard OFF vs ON):
-  * swap      (target A, the window's reachable crash is really C -- a co-present mis-target): guard OFF
-    FALSE-CREDITS the C-recipe as an A reproduction; guard ON DEMOTES it (false_credit -> 0).
-  * genuine_A (target A, reachable A) and genuine_C (target C, reachable C): the guard is a NO-OP -- it never
-    reduces a genuine reproduction (demote-only, and the real dump matches the target).
-
-  python -m benchmarks.causeswap [--seeds 30]
+  python -m benchmarks.causeswap [--seeds 30] [--freeze]
 """
 
 from __future__ import annotations
 
 import argparse
+import json
+from pathlib import Path
 import random
 import sys
 
@@ -55,19 +29,19 @@ from benchmarks import identity_cache as idc
 from benchmarks import scoring
 from emulation.causeswap import _Bug, _CoPresentOracle, _NoGuardOracle, _WINDOW
 
-# the three arms: (label, target bug, the bug actually reachable in the window)
-_ARMS = [("swap", "A", "C"),                       # mis-target a co-present C crash as A -> the cause-swap
-         ("genuine_A", "A", "A"),                  # correctly target A          -> guard is a no-op
-         ("genuine_C", "C", "C")]                  # correctly target C          -> guard is a no-op
+# (label, target bug, the bug that actually fires in the window)
+_ARMS = [("swap", "A", "C"),                       # target A, only C fires: the cause-swap
+         ("genuine_A", "A", "A"),                  # target A, A fires
+         ("genuine_C", "C", "C")]                  # target C, C fires
 
 
 def _arm(target: str, reachable: str, seeds: list[int], guard: bool) -> dict:
     Oracle = _CoPresentOracle if guard else _NoGuardOracle
     bug, rows = _Bug(bug=target, crash_sig=f"bug-{target}"), []
     for s in seeds:
-        o = Oracle(reachable=reachable, identity=idc.id_l2l3)   # inject the guard's real L2/L3 identity cascade
+        o = Oracle(reachable=reachable, identity=idc.id_l2l3)   # the guard's identity cascade
         rows.append(scoring.run_tool_campaign(o, [bug], random.Random(s), decorrelate=True)[0])
-    g = lambda k: float(np.mean([float(bool(r.get(k))) for r in rows]))   # noqa: E731
+    g = lambda k: float(np.mean([float(bool(r.get(k))) for r in rows]))
     return {"genuine": g("true_reproduced"), "false_credit": g("false_credit"), "n": len(rows)}
 
 
@@ -87,11 +61,18 @@ def run(seeds: int = 30) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser(prog="benchmarks.causeswap",
-                                 description="Mode-2 cause-swap guard demo on a co-present A+C deployment binary")
+                                 description="the identity guard on a modelled binary that ships two bugs (A and C) in one window")
     ap.add_argument("--seeds", type=int, default=30)
+    ap.add_argument("--freeze", action="store_true", help="regenerate the committed reference (causeswap.json)")
     a = ap.parse_args()
+    if a.seeds < 1:
+        ap.error("--seeds must be at least 1")
     out = run(a.seeds)
-    print(f"=== Mode-2 cause-swap identity-guard demo — {a.seeds} seeds, co-present A+C window ===")
+    if a.freeze:
+        ref = Path(__file__).resolve().parent / "data" / "reference" / "causeswap.json"
+        ref.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n", encoding="utf-8")
+        print(f"  -> {ref}")
+    print(f"=== identity guard, cause-swap demonstration — {a.seeds} seeds, co-present A+C window ===")
     print("  (REAL: A/C dumps + the guard's L2+L3 identity + the pipeline.  MODELLED: A+C co-present + a")
     print("   CRASH-ONLY in-loop oracle -- identity checked only at the guard, the case the guard is FOR.)")
     print(f"  {'arm':10} {'target->reachable':18} {'guard OFF g/fc':>16} {'guard ON g/fc':>16}")

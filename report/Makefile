@@ -1,18 +1,13 @@
 .PHONY: all watch clean distclean
 
-MAIN := main
-LATEXMK := latexmk
-LATEXMK_FLAGS :=
-
 all:
-	$(LATEXMK) $(LATEXMK_FLAGS) $(MAIN).tex
+	latexmk main.tex
 
 watch:
-	$(LATEXMK) $(LATEXMK_FLAGS) -pvc $(MAIN).tex
+	latexmk -pvc main.tex
 
 clean:
-	$(LATEXMK) -c
+	latexmk -c
 
 distclean:
-	$(LATEXMK) -C
-	rm -f $(MAIN).pdf
+	latexmk -C

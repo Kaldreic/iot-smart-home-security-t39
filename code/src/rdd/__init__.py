@@ -1,20 +1,17 @@
-"""RDD — Robust Delta-Debugging.
+"""Robust delta debugging: a bug-reproduction minimiser for noisy wireless-IoT fuzzing oracles.
 
-A non-monotone-robust bug-reproduction minimiser for noisy wireless-IoT fuzzing oracles. Given a flaky
-reproduction target and a reference crash, RDD recovers a minimal reproducing packet subset (PoC) that
-classical delta-debugging (the AirBugCatcher ``baseline``) misses, at far lower false-credit — by wrapping
-the reduction in statistical-testing-in-the-loop:
+Given a flaky reproduction target and a reference crash, ``minimize`` recovers a minimal reproducing
+packet subset while keeping the chance of crediting a non-reproducing subset small. Modules:
 
-    channel  — the L1 Gilbert–Elliott OTA-flakiness model (in the ``emulation`` test-bed, not an rdd module)
-    sprt     — a truncated SPRT reproduction oracle + monotone result cache
-    l2 / l3  — fuzzy L2 + a single open-model LLM judge (L3): crash-identity (is this the *same* bug?)
-    minimiser— the robust delta-debugging core: seed-find → ddmin-in-seed → undoing-change verify →
-               raw final-validation (non-monotone-/suppressor-robust)
-    pipeline — the wired tool: SPRT-trusted probes, in-seed cache, final-validation
+    sprt       truncated sequential probability ratio test over noisy reproduction attempts
+    cache      monotone-closure result cache used by ddmin inside the seed
+    ddmin      Zeller & Hildebrandt 2002 one-minimisation
+    minimizer  seed-finding, ddmin inside the seed, suppressor verification, final validation
+    l2, l3     crash identity: a fuzzy comparator and an open-model judge
+    identity   ``LiveL2L3Identity``, the L2/L3 cascade with a memoised live judge
+    pipeline   ``minimize``, which wires the SPRT oracle and the cache around the minimiser
 
-``LiveL2L3Identity`` is the off-the-shelf
-crash-identity to wire in (L2 + a LIVE, memoised open-model L3). Concrete device oracles live in the
-``emulation`` test-bed and the benchmark runners in ``benchmarks``; this package is the self-contained, importable tool.
+Device oracles live in the ``emulation`` test-bed and the benchmark runners in ``benchmarks``.
 """
 
 from __future__ import annotations

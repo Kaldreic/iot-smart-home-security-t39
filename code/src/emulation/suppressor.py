@@ -1,11 +1,13 @@
-"""emulation.suppressor — the real non-monotone LL_LENGTH_REQ suppressor target as a HW-free oracle.
+"""emulation.suppressor — the real non-monotone LL_LENGTH_REQ suppressor target as a hardware-free oracle.
 
-crash <=> trigger (bit3) present AND LL_LENGTH_REQ (bit4) absent — a genuine non-monotone real bug (masks
-8-15 SIGFPE, 24-31 suppressed). The crash IS bug A's conn-update SIGFPE, so it emits bug A's real dump and
-uses bug A's identity (reuses ``emulation.multibug``'s MODEL + MBug); only the non-monotone reachability is
-new. The identity matcher (the baseline's exact-id, or the tool's L2/L3) is INJECTED by the benchmark
-runner. Device data (the Docker-captured truth table) lives in emulation/data/. Replace this module with a
-real radio + device and the RDD tool is unchanged (the benchmark re-wires its oracle)."""
+Crashes iff the trigger (bit 3) is present and LL_LENGTH_REQ (bit 4) is absent -- a genuinely non-monotone
+bug (masks 8-15 SIGFPE, 24-31 suppressed). The crash is bug A's conn-update SIGFPE, so this reuses bug A's
+captured dump (the lengthreq harness installs no SIGFPE handler and prints no backtrace of its own) and bug
+A's identity (``emulation.multibug``'s MODEL + MBug); only the non-monotone reachability is new. The identity
+matcher (the baseline's exact-id or the tool's L2/L3) is injected by the benchmark runner. Device data (the
+Docker-captured truth table) lives in emulation/data/. Replacing this module with a real radio and device
+leaves the RDD tool unchanged; the benchmark re-wires its oracle.
+"""
 
 from __future__ import annotations
 
@@ -18,9 +20,9 @@ from emulation.multibug import MODEL, MBug
 from rdd.sprt import Rep
 
 _DATA = Path(__file__).resolve().parent / "data"
-# the REAL length_req-suppressor truth, Docker-captured on the vulnerable Zephyr binary (src/emulation/zephyr-targets recipe):
-# 5-PDU window, crash iff bit3 (interval=0 trigger) set AND bit4 (LL_LENGTH_REQ) NOT set => non-monotone.
-_LR_TRUTH = {int(k): v for k, v in json.loads((_DATA / "truth-lengthreq.json").read_text()).items()}
+# the length_req-suppressor truth, Docker-captured on the vulnerable Zephyr binary (src/emulation/zephyr-targets recipe):
+# 5-PDU window, crash iff bit3 (interval=0 trigger) set and bit4 (LL_LENGTH_REQ) not set => non-monotone.
+_LR_TRUTH = {int(k): v for k, v in json.loads((_DATA / "truth-lengthreq.json").read_text(encoding="utf-8")).items()}
 
 
 def lr_which_crash(subset) -> bool:
@@ -29,9 +31,9 @@ def lr_which_crash(subset) -> bool:
 
 @dataclass
 class LengthReqOracle:
-    """The real length_req suppressor: 5-PDU window, crash iff trigger (bit 3) present AND LL_LENGTH_REQ
-    (bit 4) absent. The crash IS bug A's conn-update SIGFPE -> emits bug A's real dump + uses bug A's
-    identity (same oracle interface as MultibugOracle, so the arms run verbatim)."""
+    """The length_req suppressor: 5-PDU window, crashes iff the trigger (bit 3) is present and LL_LENGTH_REQ
+    (bit 4) is absent. The crash is bug A's conn-update SIGFPE, so it emits bug A's real dump and uses bug
+    A's identity (same oracle interface as MultibugOracle, so the arms run verbatim)."""
 
     identity: object
     params: GEChannelParams = field(default_factory=GEChannelParams)

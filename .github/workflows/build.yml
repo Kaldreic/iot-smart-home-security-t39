@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - uses: ./.github/actions/setup-pnpm
       - run: pnpm slides:build
 
@@ -27,37 +27,50 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - uses: xu-cheng/latex-action@6549dc21effb2730855a1281407ecfcececc6c1b # 4.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: xu-cheng/latex-action@6549dc21effb2730855a1281407ecfcececc6c1b  # 4.1.0
         with:
           root_file: main.tex
           working_directory: report
 
-  pycode:
-    name: code (python)
+  pytests:
+    name: code (python ${{ matrix.python }})
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python: ["3.11", "3.12"]
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
-          python-version: "3.12"
-      - name: Install the RDD tool + benchmarks (editable)
-        run: python -m pip install -e code/
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e code/
       - name: Tool invariants
         run: PYTHONHASHSEED=0 python -m rdd.tests.test_rdd
       - name: Benchmark suite self-test (binary-dependent tests skip without upstream/)
         run: PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks
-      - name: Reproducibility gate — the real anchor + the B2 sweep reproduce the committed references (model-free, ~3 min)
-        # `run coherence` is the unified model-free gate (real anchor + B2 exact). B1 + B3 are binary-gated -> the
-        # self-test above reproduces them only where the native_sim binaries are built (absent in CI -> they SKIP).
+
+  gate:
+    name: code (reproducibility gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e code/ ruff==0.16.8
+      - run: ruff check code/
+      - name: The real anchor and the B2 sweep reproduce the committed references (model-free)
         run: PYTHONHASHSEED=0 python -m benchmarks.run coherence
 
   ci-ok:
     name: CI green
     if: always()
-    needs: [slides, report, pycode]
+    needs: [slides, report, pytests, gate]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - run: |
           if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then

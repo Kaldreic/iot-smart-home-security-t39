@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rdd"
-version = "0.1.0"
+version = "1.0.1"
 description = "Robust Delta-Debugging: a noise-robust bug-reproduction minimiser for wireless IoT fuzzing"
 readme = "README.md"
 requires-python = ">=3.11"
-license = "MIT"
+license = "MIT"                # code/LICENSE is a copy of the root LICENSE: setuptools reads it from here
 authors = [
   { name = "Aldo Ristori" },
   { name = "Nicole Sperandini" },
@@ -25,12 +25,15 @@ dependencies = [
 Repository = "https://github.com/Kaldreic/iot-smart-home-security-t39"
 Report = "https://github.com/Kaldreic/iot-smart-home-security-t39/tree/main/report"
 
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]   # pyflakes plus the pycodestyle errors
+ignore = ["E731"]                     # small lambdas are used on purpose
+
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["rdd*", "emulation*", "benchmarks*"]
-exclude = ["*.tests", "*.tests.*"]
+include = ["rdd*", "emulation*", "benchmarks*"]   # tests ship too: the README runs them from an install
 
-# Ship the committed reference data + real crash dumps so a wheel install is self-contained.
+# The committed reference data and crash dumps ship with the wheel.
 [tool.setuptools.package-data]
 emulation = ["data/**/*.json", "data/**/*.txt"]
 benchmarks = ["data/**/*.json"]

@@ -1,29 +1,13 @@
-"""benchmarks.eval.l2_threshold_eval — an OVERFIT / sensitivity validation of the L2 identity THRESHOLD.
+"""benchmarks.eval.l2_threshold_eval — sensitivity of the L2 identity threshold on the real bugs A--F.
 
-The RDD identity cascade decides "same bug?" with an L2 similarity threshold (``rdd.l2.L2Comparator`` default
-0.5; ``rdd.identity.L2Matcher``) and escalates the uncertain band (similarity in [band, threshold), band=0.05)
-to L3. A fair reviewer asks: is the 0.5 threshold TUNED to the real bugs A--F, making genuine/false-credit
-optimistic? This eval validates the THRESHOLD (NOT the L2 weights -- their design audit is in ``rdd/l2.py``;
-they are FIXED, literature-grounded, not fit to A--F) on the real-bug dumps, and answers NO four ways:
-
-  1. SEPARATION -- same-bug vs cross-bug L2 similarity are far apart (ROC AUC ~0.99): the layer discriminates
-     the real bugs near-perfectly, so the verdict is not threshold-fragile.
-  2. CALIBRATION (fit-on-A--F, NOT held-out) -- the data-optimal threshold (Youden's J on the SAME labelled
-     same/cross set) is ~0.53, essentially the FIXED default 0.5: the default is near the data-optimum. This is
-     measured ON A--F's distribution (A--F is the ENTIRE real bug set, so a held-out FAMILY split is not
-     possible) -- it is supporting evidence that 0.5 is not arbitrary, not a held-out generalization proof.
-  3. PLATEAU -- balanced accuracy is FLAT (~0.96) across a wide threshold band [~0.45, 0.80]; moving the
-     threshold off 0.5 barely changes it. A fragile (tuned) threshold would show a sharp peak; this is a plateau.
-  4. STABILITY + BAND -- (1)-(3) hold across independent variation seeds (not a seed-0 fluke), and the L3 band
-     0.05 is CONSERVATIVE: it sits far below the same-bug score floor (~0.37), so it escalates essentially the
-     whole uncertain region to L3 and risks NO same-bug miss; it could rise to ~that floor before any miss.
-
-SCOPE + LIMITS (disclosed): the BASE crash dumps are the committed real A--F samples (``benchmarks.real.MODEL``);
-the per-rep dump VARIATION is the modelled ``DumpModel.emit`` (truncation/reorder/address churn/log noise). So
-the separation/plateau are measured under the MODELLED OTA-noise regime -- the L2 threshold is NOISE-REGIME
-DEPENDENT (``rdd/l2.py``), so heavier deployment noise can compress the separation and a deployment should
-recalibrate. The claim here is the narrow, honest one: the threshold is NOT tuned-to-fit A--F, not that it is
-optimal for every deployment. Deterministic (seeded) -> the metrics re-derive byte-for-byte.
+The identity cascade decides "same bug?" with an L2 similarity threshold (``rdd.l2.L2Comparator`` default
+0.5) and escalates the band [0.05, threshold) to L3. This eval measures, on the real base dumps under the
+modelled per-rep dump variation (``DumpModel.emit``): the same-bug vs cross-bug separation (ROC AUC), the
+Youden-J optimal threshold (fit on A--F, which is the entire real set, so there is no held-out family), the
+balanced-accuracy plateau around the default, the stability of all three across variation seeds, and how
+far the L3 band sits below the same-bug score floor. It covers the threshold only; the L2 weights are fixed
+(see ``rdd/l2.py``). The separation depends on the noise regime, so a deployment with heavier noise should
+recalibrate. Deterministic (seeded).
 
   python -m benchmarks.eval.l2_threshold_eval            # prints the report + writes the committed reference
 """
@@ -37,15 +21,16 @@ from pathlib import Path
 from rdd.l2 import L2Comparator
 
 from .. import real
+from .. import identity_cache as idc
 
 _DATA = Path(__file__).resolve().parent.parent / "data"
 _SWEEP = [0.2, 0.3, 0.4, 0.45, 0.5, 0.55, 0.6, 0.7, 0.8, 0.9]   # L2 thresholds to sweep
-_BAND = 0.05                                                    # the L3-escalation floor (benchmarks.real L3_BAND_LO)
+_BAND = idc.L3_BAND_LO                                         # the L3 escalation floor (shared constant)
 
 
 def _scores(n_same: int, n_cross: int, seed: int):
-    """The same-bug and cross-bug L2 similarity lists over the REAL bugs A--F (real base dumps + the modelled
-    DumpModel.emit per-rep variation). A comparator fit on the base set (deterministic)."""
+    """Same-bug and cross-bug L2 similarity lists over A--F (real base dumps, modelled per-rep variation), with
+    the comparator fit on the base set."""
     bugs = list(real.BUGS)
     rng = random.Random(seed)
     base = {b: real.MODEL.clean_obs(b).to_crash_observation() for b in bugs}
@@ -87,7 +72,7 @@ def _pct(xs, q):
 
 def evaluate(n_same: int = 60, n_cross: int = 12, seed: int = 0, default_threshold: float = 0.5,
              stability_seeds: int = 5) -> dict:
-    """Compute the L2-THRESHOLD overfit/sensitivity report on the real A--F bugs (deterministic)."""
+    """The threshold report on the real A--F bugs (deterministic)."""
     same, cross = _scores(n_same, n_cross, seed)
     auc, youden = _auc(same, cross), _youden(same, cross)
     sweep = {}
@@ -98,17 +83,16 @@ def evaluate(n_same: int = 60, n_cross: int = 12, seed: int = 0, default_thresho
     best = max(v["balanced"] for v in sweep.values())
     plateau = [float(t) for t, v in sweep.items() if best - v["balanced"] <= 0.02]
     same_min = min(same)
-    band = {                                                   # L3-band (0.05) conservativeness, NOT swept-as-overfit
+    band = {                                                   # the L3 band
         "band": _BAND,
         "cross_escalated_to_l3": sum(_BAND <= s < default_threshold for s in cross) / len(cross),
         "cross_l2_rejected_below_band": sum(s < _BAND for s in cross) / len(cross),
-        "same_at_risk_below_band": sum(s < _BAND for s in same) / len(same),    # same-bug L2-rejected w/o L3 (~0)
-        "max_safe_band_same_min": same_min,                   # band could rise to ~here before a same-bug miss
+        "same_at_risk_below_band": sum(s < _BAND for s in same) / len(same),    # same-bug scores L2 would reject
+        "max_safe_band_same_min": same_min,                   # the band could rise to here before a same-bug miss
     }
-    # STABILITY across independent variation seeds (a form of cross-validation over the modelled noise): the
-    # SEPARATION (auc), CALIBRATION (youden) AND the PLATEAU are all recomputed per seed -- not a seed-0 fluke.
+    # separation, calibration and plateau recomputed per variation seed
     aucs, youdens = [auc], [youden]
-    plat_los, plat_his = [min(plateau)], [max(plateau)]    # seed-0 plateau MIN/MAX (plateau is the list of thresholds)
+    plat_los, plat_his = [min(plateau)], [max(plateau)]    # seed-0 plateau min/max
     for s in range(1, stability_seeds):
         sa, cr = _scores(n_same, n_cross, seed + s)
         aucs.append(_auc(sa, cr))
@@ -118,9 +102,11 @@ def evaluate(n_same: int = 60, n_cross: int = 12, seed: int = 0, default_thresho
         pl = [t for t, v in sw.items() if bst - v <= 0.02]
         plat_los.append(min(pl))
         plat_his.append(max(pl))
+    ok = (auc >= 0.95 and abs(youden - default_threshold) <= 0.1 and same_min > _BAND
+          and all(lo <= default_threshold <= hi for lo, hi in zip(plat_los, plat_his)))   # the verdict below is derived
     stability = {"n_seeds": stability_seeds, "auc_min": min(aucs), "auc_max": max(aucs),
                  "youden_min": min(youdens), "youden_max": max(youdens),
-                 "plateau_common": [max(plat_los), min(plat_his)],          # the band that is a plateau in EVERY seed
+                 "plateau_common": [max(plat_los), min(plat_his)],          # the band that is a plateau in every seed
                  "default_in_plateau_all_seeds": all(lo <= default_threshold <= hi for lo, hi in zip(plat_los, plat_his))}
     return {
         "suite": "l2_threshold_eval", "scope": "L2 THRESHOLD overfit on real bugs A--F under MODELLED OTA noise",
@@ -133,7 +119,7 @@ def evaluate(n_same: int = 60, n_cross: int = 12, seed: int = 0, default_thresho
         "cross": {"mean": sum(cross) / len(cross), "p95": _pct(cross, 95), "max": max(cross)},
         "sweep": sweep, "plateau": [min(plateau), max(plateau)] if plateau else None, "best_balanced": best,
         "band": band, "stability": stability,
-        "conclusion": (f"NOT overfit [to A--F under the MODELLED OTA-noise regime; the threshold is noise-regime "
+        "conclusion": (("NOT overfit" if ok else "OVERFIT RISK") + " [to A--F under the MODELLED OTA-noise regime; the threshold is noise-regime "
                        f"dependent per rdd/l2.py -- a deployment recalibrates]: AUC {auc:.3f}; the FIXED default "
                        f"{default_threshold} is ~the (fit-on-A--F, not held-out) Youden-J optimum {youden:.3f}, on "
                        f"a flat balanced-accuracy plateau [{min(plateau):.2f},{max(plateau):.2f}] (~{best:.3f}); "
@@ -148,12 +134,12 @@ def main() -> int:
     out = evaluate()
     ref = _DATA / "reference" / "l2_threshold_eval.json"
     ref.parent.mkdir(parents=True, exist_ok=True)
-    ref.write_text(json.dumps(out, indent=1) + "\n")
+    ref.write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
     print(f"=== L2-THRESHOLD overfit/sensitivity eval (real A--F bugs, modelled noise; {out['n_same']} same / {out['n_cross']} cross) ===")
     print(f"  ROC AUC (same vs cross)        : {out['auc']:.4f}   (stable {out['stability']['auc_min']:.3f}-{out['stability']['auc_max']:.3f} over {out['stability']['n_seeds']} seeds)")
     print(f"  same  similarity  mean {out['same']['mean']:.3f}  min {out['same']['min']:.3f}   cross mean {out['cross']['mean']:.3f}  max {out['cross']['max']:.3f}")
-    print(f"  fixed default 0.5  vs  Youden-J (fit-on-A--F) {out['youden_threshold']:.3f}   -> ~equal, not arbitrary")
-    print(f"  balanced-accuracy plateau      : [{out['plateau'][0]:.2f}, {out['plateau'][1]:.2f}]  (~{out['best_balanced']:.3f}, flat -> not a tuned peak)")
+    print(f"  fixed default 0.5  vs  Youden-J (fit-on-A--F) {out['youden_threshold']:.3f}")
+    print(f"  balanced-accuracy plateau      : [{out['plateau'][0]:.2f}, {out['plateau'][1]:.2f}]  (~{out['best_balanced']:.3f})")
     print(f"  L3 band {out['band']['band']}: {out['band']['cross_escalated_to_l3']:.2f} of cross escalated to L3, "
           f"{out['band']['same_at_risk_below_band']:.2f} same-bug at risk (conservative; safe up to ~{out['band']['max_safe_band_same_min']:.2f})")
     print(f"  -> {out['conclusion']}")

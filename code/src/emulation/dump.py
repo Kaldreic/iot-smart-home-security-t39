@@ -1,19 +1,24 @@
-"""The crash-report (dump) VARIATION model.
+"""The crash-report (dump) variation model.
 
-The signature-space analogue of the L1 channel. The L1 channel models whether a bug FIRES
-(YES/NO/INVALID flakiness); this models how its crash REPORT varies *when* it fires. On a real device
-the same bug emits a DIFFERENT dump each time — ASLR addresses, a backtrace truncated by a UART/log
-buffer, frames lost to a watchdog mid-dump, interleaved log lines, occasionally a severely garbled
-report. The bug identity is fixed (the crash SITE is deterministic); only the REPORT varies.
+The signature-space analogue of the L1 channel: L1 models whether a bug fires,
+this models how its crash report varies when it does. On a real device the same
+bug emits a different dump each time -- ASLR addresses, a truncated backtrace,
+frames lost to a watchdog, interleaved log lines, sometimes a garbled report.
+The bug identity is fixed (the crash site is deterministic); only the report
+varies. That variation is what AirBugCatcher's exact ``is_same_crash_id`` misses,
+while L2 (fuzzy stack-LCS + site) and L3 (the LLM, for the garbled tail) see
+through it.
 
-Why it matters: AirBugCatcher's `is_same_crash_id` is an EXACT match, so report variation makes it MISS
-same-bug reproductions (false negatives → it stops at max_try). Our L2 (fuzzy: stack-LCS + site) sees
-through structural variation; L3 (LLM) handles the severely garbled tail. The BASE dumps are REAL,
-captured from the real binary (the committed dump logs ``emulation/data/logs/dump-bug-*.txt``); only the
-per-rep VARIATION is modelled — and every variation models a concrete real-device effect (named below).
+The base dumps are real, captured from the binary (the committed logs
+``emulation/data/logs/dump-bug-*.txt``); only the per-rep variation is modelled,
+each one a concrete real-device effect (named below). The committed Bug-B log is
+abbreviated and its frame lines carry no bracketed return address, so
+``parse_base_dump`` yields a header-only report (no stack) for B and the model
+has no frames to perturb there (see code/README.md, "Known limitations").
 
-Output: ``rdd.observation.DumpObs`` — field-compatible with the L2 ``CrashObservation`` —
-plus the ground-truth ``bug`` id for scoring. ``to_crash_observation`` adapts it to the real L2.
+Output is ``rdd.observation.DumpObs``, field-compatible with the L2
+``CrashObservation`` and adapted by ``to_crash_observation``; the ground-truth
+bug id is carried by the oracle, not here.
 """
 
 from __future__ import annotations
@@ -35,7 +40,7 @@ class Frame:
 
 @dataclass(frozen=True)
 class BaseDump:
-    bug: str                       # "A" / "C"
+    bug: str                       # "A".."F" (or a synthetic bNNNN id)
     fault: str                     # coarse fault token ("SIGFPE", "ASSERTION FAIL [ntf]")
     site: str | None               # canonical file:line if the report carries one (asserts do)
     frames: tuple[Frame, ...]      # backtrace, top-first (empty for a site-only assert report)
@@ -45,12 +50,12 @@ class BaseDump:
 _FRAME_RE = re.compile(r"^(?P<path>[^()]+)\((?P<inner>[^)]*)\)\s*\[(?P<addr>0x[0-9a-fA-F]+)\]")  # `\s*`: live glibc emits `) [0x..]`, the captured logs `)[0x..]`
 _ASSERT_RE = re.compile(r"(?P<fault>ASSERTION FAIL[^@]*?)\s*@\s*(?P<path>\S+):(?P<line>\d+)")
 _SIGHDR_RE = re.compile(r"sig=(?P<sig>[A-Z]+)")
-# signal-handler scaffolding frames that are an artefact of OUR handler, not the fault path:
+# signal-handler scaffolding frames -- an artefact of the crash handler, not the fault path:
 _SCAFFOLD = ("__kernel_sigreturn", "linux-gate")
 
 
 def parse_base_dump(text: str, bug: str) -> BaseDump:
-    """Parse a captured real dump (Bug A backtrace OR Bug C assert message) into a BaseDump."""
+    """Parse a captured real dump (a SIGFPE-handler backtrace as for A and B, or an assert message as for C to F) into a BaseDump."""
     lines = [ln.rstrip("\n") for ln in text.splitlines() if ln.strip() and not ln.lstrip().startswith("#")]
     fault, site, header, frames = "UNKNOWN", None, [], []
     for ln in lines:
@@ -79,15 +84,14 @@ def parse_base_dump(text: str, bug: str) -> BaseDump:
             frames.append(Frame(sym=sym, off=off, module=module))
         elif "===" not in ln:
             header.append(ln)
-    # drop the leading handler frame(s) before the real fault site (first named controller frame), then
-    # CANONICALISE every FOREIGN-module frame's offset to 0x0. Only the testbinary controller frames are
+    # drop the leading handler frame(s) before the real fault site (the first named controller frame), then
+    # canonicalise every foreign-module frame's offset to 0x0. Only the testbinary controller frames are
     # build-reproducible; a foreign frame's symbol offset is the running system's libc (e.g.
-    # __libc_start_main+0x8e on one glibc vs +0x8c on another), which would otherwise leak into the L3
-    # dump-hash and make the frozen-cache replay non-portable across machines. The frame is KEPT (only its
-    # offset is zeroed), so the dump-variation model -- which draws one jittered address PER frame -- sees an
-    # unchanged frame count and the noise realisation (hence every committed number) is preserved; only the
-    # libc-dependent offset text changes. L2 already ignores these (it keys on the top-N controller frames and
-    # normalises offsets); this extends the same libc-invariance to the L3 path.
+    # __libc_start_main+0x8e on one glibc vs +0x8c on another) and would otherwise leak into the L3 dump-hash,
+    # making the frozen-cache replay non-portable across machines. The frame is kept and only its offset is
+    # zeroed, so the dump-variation model (one jittered address per frame) sees an unchanged frame count and
+    # the committed noise realisation is preserved. L2 already ignores these (it keys on the top-N controller
+    # frames and normalises offsets); this extends the same libc-invariance to the L3 path.
     first_named = next((i for i, f in enumerate(frames) if f.sym and f.module.startswith("testbinary")), 0)
     frames = [f if f.module.startswith("testbinary") else replace(f, off="0x0") for f in frames[first_named:]]
     return BaseDump(bug=bug, fault=fault, site=site, frames=tuple(frames), header=tuple(header))
@@ -101,10 +105,10 @@ class DumpParams:
     point; sweep them to stress L2/L3. (Probabilities are per-emit.)"""
     p_truncate: float = 0.35      # UART/log-buffer cutoff: drop a tail of the backtrace
     trunc_keep_min: int = 2       # keep at least this many top frames when truncating
-    p_lose_top: float = 0.20      # watchdog/handler couldn't unwind the top: drop 1-2 TOP frames
+    p_lose_top: float = 0.20      # watchdog/handler couldn't unwind the top: drop 1-2 top frames
     p_perturb: float = 0.15       # an inlined/tail-called frame appears or vanishes mid-stack
     p_lognoise: float = 0.40      # other subsystems interleave a log line into the report
-    p_garble: float = 0.08        # severe: only 1-2 frames survive AND the site token is corrupted
+    p_garble: float = 0.08        # severe: only 1-2 frames survive and the site token is corrupted
     addr_jitter: bool = True      # ASLR: the absolute [0xADDR] differs every run (offsets stay)
 
 
@@ -123,7 +127,7 @@ class DumpModel:
     @classmethod
     def from_logs(cls, logdir, params: DumpParams | None = None, bugs=("A", "C")) -> "DumpModel":
         logdir = Path(logdir)
-        base = {b: parse_base_dump((logdir / f"dump-bug-{b.lower()}.txt").read_text(), b)
+        base = {b: parse_base_dump((logdir / f"dump-bug-{b.lower()}.txt").read_text(encoding="utf-8"), b)
                 for b in bugs}
         return cls(base=base, params=params or DumpParams())
 
@@ -141,7 +145,7 @@ class DumpModel:
         return f"/work/build-multibug/{f.module}({inner})[{self._addr(rng)}]"
 
     def emit(self, bug: str, rng) -> DumpObs:
-        """Emit ONE varied report for ``bug`` as a DumpObs."""
+        """Emit one varied report for ``bug`` as a DumpObs."""
         p, bd = self.params, self.base[bug]
         frames = list(bd.frames)
 

@@ -1,24 +1,21 @@
-"""benchmarks.eval.l3_eval — the offline L3 judging campaign + judge evaluation.
+"""benchmarks.eval.l3_eval — the offline L3 judging campaign and the judge evaluation.
 
-The L3 judge is an OPEN model (Ollama, via ``rdd.l3.judge_ollama``) — the academic-standard, no-API-key,
-anyone-can-rerun choice — run at temperature 0 + fixed seed. Reproducibility of the BENCHMARK rests on the
-committed verdict cache, not on live-model determinism: the in-loop oracle reads the frozen cache, and the
-same-bug judgments that fill it are stable across re-runs (verified identical — 96/96 pairs, 0 flips). GPU
-inference is not bit-deterministic on borderline cross-bug judgments, so the ``eval`` cross-rejection varies
-slightly run-to-run (~0.04-0.08); ``l3_judge_eval.json`` freezes one run so the number re-scores offline.
-Two modes:
+The L3 judge is an open model (Ollama, ``rdd.l3.judge_ollama``) at temperature 0 with a fixed seed. The
+benchmark's reproducibility rests on the committed verdict cache, which the in-loop oracle reads, not on
+live-model determinism: GPU inference is not bit-deterministic on borderline cross-bug pairs, so the ``eval``
+cross-rejection varies slightly run to run, and ``l3_judge_eval.json`` freezes one run so the number
+re-scores offline. Two modes:
 
   python -m benchmarks.eval.l3_eval judge --model llama3.1:8b --seeds 30
-      THE CAMPAIGN: collect every L2-uncertain dump pair the real + suppressor benchmark hits and judge
-      each with the open model, ITERATING to a fixed point (populating the cache exposes fresh residual
-      pairs), then write the verdict cache the benchmark reads (data/llm_cache/l3_verdicts.json). Collect at
-      --seeds 30 to match the model-free gate's real anchor, then verify with `benchmarks.run coherence`.
+      Collect every L2-uncertain dump pair the real and suppressor benchmarks hit, judge each with the model,
+      iterating to a fixed point (a fuller cache changes the minimiser's control flow and exposes new pairs),
+      and write data/llm_cache/l3_verdicts.json. Use --seeds 30 to match the anchor, then run
+      `benchmarks.run coherence`.
 
   python -m benchmarks.eval.l3_eval eval --model llama3.1:8b
-      QUALITY: judge a synthetic L2-residual + cross-bug set and score the judge's recovery + cross-bug
-      rejection (the L3's own numbers, reported alongside the benchmark).
+      Judge a synthetic set of L2-residual and cross-bug pairs and score the judge's recovery and rejection.
 
-Run after `pip install -e .`, with Ollama serving the model.
+Run with Ollama serving the model.
 """
 
 from __future__ import annotations
@@ -37,14 +34,11 @@ _DATA = _HERE.parent / "data"
 
 
 def collect_cases(seeds: int = 30, base_cache: dict | None = None) -> list[dict]:
-    """Run the tool over the real bugs + the suppressor, recording every L2-uncertain dump pair the run
-    hits that is NOT already in ``base_cache`` (exactly the cases the open-model judge still must decide).
-    Deterministic (seeded), so the collected hashes match the benchmark's runtime lookups.
-
-    ``base_cache=None`` (default) clears the L3 cache, so EVERY uncertain pair is collected — used by the
-    determinism self-test. When the campaign passes the verdicts judged so far, those pairs HIT (and are not
-    re-collected) while the now-different oracle answers expose any FRESH residual pairs, which is what lets
-    the campaign iterate to a fixed point. Returns the unique new cases."""
+    """Run the tool over the real bugs and the suppressor and return every L2-uncertain dump pair not already in
+    ``base_cache`` (the pairs the judge still has to decide); deterministic, so the hashes match the
+    benchmark's runtime lookups. With ``base_cache=None`` the cache is cleared and every uncertain pair is
+    collected; with the verdicts judged so far, those pairs hit and the changed control flow exposes any new
+    pairs, which is what lets the campaign iterate to a fixed point."""
     from benchmarks import scoring
 
     from .. import real
@@ -52,15 +46,17 @@ def collect_cases(seeds: int = 30, base_cache: dict | None = None) -> list[dict]
     from benchmarks import identity_cache as idc
     saved = dict(idc.L3CACHE)
     idc.L3CACHE.clear()
-    if base_cache:
-        idc.L3CACHE.update(base_cache)                         # already-judged pairs HIT; only new pairs are misses
-    idc.L3_STATS.update(calls=0, hits=0, misses=[])
-    real._run(scoring.run_tool_campaign, idc.id_l2l3, list(real.BUGS), list(range(seeds)), decorrelate=True)
-    for s in range(seeds):                                     # the suppressor reuses idc.id_l2l3 -> same L3_STATS
-        o = suppressor.LengthReqOracle(identity=idc.id_l2l3)
-        scoring.run_tool_campaign(o, [suppressor.LRBUG], random.Random(s), decorrelate=True)
-    idc.L3CACHE.clear()
-    idc.L3CACHE.update(saved)                                  # fully restore global state for any later run
+    try:
+        if base_cache:
+            idc.L3CACHE.update(base_cache)                     # judged pairs hit; only new pairs miss
+        idc.L3_STATS.update(calls=0, hits=0, misses=[])
+        real._run(scoring.run_tool_campaign, idc.id_l2l3, list(real.BUGS), list(range(seeds)), decorrelate=True)
+        for s in range(seeds):                                 # the suppressor reuses idc.id_l2l3 -> same L3_STATS
+            o = suppressor.LengthReqOracle(identity=idc.id_l2l3)
+            scoring.run_tool_campaign(o, [suppressor.LRBUG], random.Random(s), decorrelate=True)
+    finally:
+        idc.L3CACHE.clear()
+        idc.L3CACHE.update(saved)                              # restore the process-wide cache on every path
     seen, uniq = set(), []
     for c in idc.L3_STATS["misses"]:
         if c["hash"] not in seen:
@@ -71,7 +67,7 @@ def collect_cases(seeds: int = 30, base_cache: dict | None = None) -> list[dict]
 
 
 def judge_cases(cases: list[dict], *, model: str, host: str | None = None) -> dict:
-    """Judge each case with the open model (``rdd.l3.judge_ollama``) -> ``{hash: {same, conf, model}}``."""
+    """Judge each case with the open model; returns ``{hash: {same, conf, model[, parse_error]}}``."""
     kw = {"model": model} if host is None else {"model": model, "host": host}
     out: dict[str, dict] = {}
     for c in cases:
@@ -84,8 +80,8 @@ def judge_cases(cases: list[dict], *, model: str, host: str | None = None) -> di
 
 
 def gen_cases(model: DumpModel, n_same: int = 20, n_cross: int = 20, seed: int = 1) -> list[dict]:
-    """A synthetic L2 residual (same-bug dumps L2 MISSED) + cross-bug pairs (L2 rejected) — for scoring the
-    judge's recovery + rejection, independent of the benchmark run."""
+    """A synthetic set of same-bug pairs L2 missed (residuals) and cross-bug pairs, for scoring the judge
+    independently of the benchmark run."""
     rng = random.Random(seed)
     bugs = list(model.base)
     l2 = L2Matcher({b: model.clean_obs(b) for b in bugs})
@@ -111,8 +107,8 @@ def gen_cases(model: DumpModel, n_same: int = 20, n_cross: int = 20, seed: int =
                               "target_text": target_text[b], "rep_text": render_dump(obs),
                               "l2_score": round(score_, 3), "truth_same": False})
     rng.shuffle(cases)
-    seen, uniq = set(), []                                      # de-dup by hash so score() denominators are
-    for c in cases:                                             # UNIQUE pairs, not repeated instances
+    seen, uniq = set(), []                                      # de-dup by hash so score() counts unique pairs
+    for c in cases:
         h = _pair_hash(c["target_text"], c["rep_text"])
         if h in seen:
             continue
@@ -123,7 +119,7 @@ def gen_cases(model: DumpModel, n_same: int = 20, n_cross: int = 20, seed: int =
 
 
 def score(cases: list[dict], verdicts: dict[str, dict]) -> dict:
-    """verdicts: hash -> {same, conf}. Returns the L3 recovery / cross-rejection."""
+    """``verdicts``: hash -> {same, conf}. Returns the judge's residual recovery and cross-bug rejection."""
     def rate(kind, want):
         sel = [c for c in cases if c["kind"] == kind]
         hit = sum(1 for c in sel if verdicts.get(c["hash"], {}).get("same") == want)
@@ -137,15 +133,10 @@ def score(cases: list[dict], verdicts: dict[str, dict]) -> dict:
 
 
 def _judge_to_fixed_point(model: str, host, seeds: int, max_iters: int = 10, seed_cache: dict | None = None):
-    """Iterate collect->judge until a pass exposes no new L2-residual pair. Populating the L3 cache changes
-    the minimiser's control flow, so a single pass leaves freshly-exposed pairs unjudged (-> conservative
-    NO -> silent under-credit); iterating to a fixed point closes that. Returns
-    ``(verdicts, cases_by_hash, converged)`` and does NO file I/O — the caller persists it (and it is unit-
-    testable model-free by monkeypatching ``judge_cases``).
-
-    ``seed_cache`` (incremental re-judge): pre-load these verdicts so their pairs HIT and are NEVER re-judged
-    -- used to GROW the committed cache with new bugs while preserving prior verdicts byte-exact (the
-    open-model judge is GPU-nondeterministic on borderline pairs, so re-judging A-D would risk flips)."""
+    """Iterate collect -> judge until a pass exposes no new pair; a single pass leaves the pairs a fuller cache
+    exposes unjudged (they would read as conservative NO). Returns ``(verdicts, cases_by_hash, converged)``
+    and does no file I/O. ``seed_cache`` pre-loads verdicts whose pairs then hit and are never re-judged, so
+    the committed cache can be grown with new bugs while prior verdicts are preserved byte-exact."""
     accumulated: dict[str, dict] = dict(seed_cache) if seed_cache else {}
     preserved = set(accumulated)
     cases_by_hash: dict[str, dict] = {}
@@ -165,8 +156,8 @@ def _judge_to_fixed_point(model: str, host, seeds: int, max_iters: int = 10, see
 
 
 def _judge_campaign(model: str, host, seeds: int, max_iters: int = 10, seed_cache: dict | None = None):
-    """Judge the L2-residual pairs to a fixed point and persist the verdict cache the benchmark reads.
-    With ``seed_cache``, GROW it incrementally (prior verdicts preserved byte-exact, only new pairs judged)."""
+    """Judge to a fixed point and persist the verdict cache the benchmark reads. With ``seed_cache`` the cache is
+    grown incrementally: prior verdicts preserved, only new pairs judged."""
     accumulated, cases_by_hash, converged = _judge_to_fixed_point(model, host, seeds, max_iters, seed_cache)
     if not converged:                                          # never silently truncate coverage
         left = len(collect_cases(seeds, base_cache=accumulated))
@@ -176,14 +167,14 @@ def _judge_campaign(model: str, host, seeds: int, max_iters: int = 10, seed_cach
     n_err = sum(1 for v in accumulated.values() if "parse_error" in v)
     cache = _DATA / "llm_cache"
     cache.mkdir(parents=True, exist_ok=True)
-    (cache / "l3_verdicts.json").write_text(json.dumps(accumulated, indent=1) + "\n")
+    (cache / "l3_verdicts.json").write_text(json.dumps(accumulated, indent=1) + "\n", encoding="utf-8")
     cases_out = dict(cases_by_hash)                            # the newly-judged cases (provenance)
     cp = _DATA / "l3_cases.json"
     if seed_cache and cp.exists():                            # incremental: keep prior cases for preserved verdicts
-        for c in json.loads(cp.read_text()):
+        for c in json.loads(cp.read_text(encoding="utf-8")):
             if c["hash"] in accumulated and c["hash"] not in cases_out:
                 cases_out[c["hash"]] = c
-    (_DATA / "l3_cases.json").write_text(json.dumps(list(cases_out.values()), indent=1) + "\n")
+    (_DATA / "l3_cases.json").write_text(json.dumps(list(cases_out.values()), indent=1) + "\n", encoding="utf-8")
     print(f"judged with {model}: {len(accumulated)} pairs ({'a FIXED POINT' if converged else 'NOT converged'}), "
           f"{n_same} 'same', {n_err} parse-errors -> data/llm_cache/l3_verdicts.json")
     print("  now run `python -m benchmarks.run coherence` to verify the real anchor reproduces from the "
@@ -191,14 +182,14 @@ def _judge_campaign(model: str, host, seeds: int, max_iters: int = 10, seed_cach
 
 
 def _eval_judge(model: str, host):
-    from .. import real                                         # score the judge over the SAME bug set the
-    cases = gen_cases(real.MODEL)                               # benchmark runs (A,B,C,D), not a 2-bug default
+    from .. import real                                         # the same bug set the benchmark runs
+    cases = gen_cases(real.MODEL)
     verdicts = judge_cases(cases, model=model, host=host)
     sc = score(cases, verdicts)
-    ref = _DATA / "reference" / "l3_judge_eval.json"           # ANCHOR the recall/rejection: a committed
-    ref.parent.mkdir(parents=True, exist_ok=True)              # artifact a reader can re-score model-free
+    ref = _DATA / "reference" / "l3_judge_eval.json"           # committed so the score re-derives offline
+    ref.parent.mkdir(parents=True, exist_ok=True)
     ref.write_text(json.dumps({"model": model, "bugs": list(real.BUGS), "score": sc,
-                               "cases": cases, "verdicts": verdicts}, indent=1) + "\n")
+                               "cases": cases, "verdicts": verdicts}, indent=1) + "\n", encoding="utf-8")
     print(f"L3 judge eval ({model}, bugs={''.join(real.BUGS)}): {json.dumps(sc)} -> data/reference/l3_judge_eval.json")
 
 
@@ -216,7 +207,7 @@ def main():
         seed = None
         if a.seed_committed:
             vp = _DATA / "llm_cache" / "l3_verdicts.json"
-            seed = json.loads(vp.read_text()) if vp.exists() else {}
+            seed = json.loads(vp.read_text(encoding="utf-8")) if vp.exists() else {}
             print(f"--seed-committed: preserving {len(seed)} committed verdicts; judging only NEW pairs")
         _judge_campaign(a.model, a.host, a.seeds, seed_cache=seed)
     else:

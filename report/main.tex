@@ -1,174 +1,64 @@
-%% bare_jrnl_compsoc.tex
-%% V1.4b
-%% 2015/08/26
-%% by Michael Shell
-%% See:
-%% http://www.michaelshell.org/
-%% for current contact information.
+%% Robust Delta-Debugging for Reproducing Wireless IoT Fuzzing Bugs
+%% Data and Network Security (T39), MSc Cybersecurity, Sapienza University of Rome, 2026.
 %%
-%% This is a skeleton file demonstrating the use of IEEEtran.cls
-%% (requires IEEEtran.cls version 1.8b or later) with an IEEE
-%% Computer Society journal paper.
-%%
-%% Support sites:
-%% http://www.michaelshell.org/tex/ieeetran/
-%% http://www.ctan.org/pkg/ieeetran
-%% and
-%% http://www.ieee.org/
-
-%%*************************************************************************
-%% Legal Notice:
-%% This code is offered as-is without any warranty either expressed or
-%% implied; without even the implied warranty of MERCHANTABILITY or
-%% FITNESS FOR A PARTICULAR PURPOSE!
-%% User assumes all risk.
-%% In no event shall the IEEE or any contributor to this code be liable for
-%% any damages or losses, including, but not limited to, incidental,
-%% consequential, or any other damages, resulting from the use or misuse
-%% of any information contained here.
-%%
-%% All comments are the opinions of their respective authors and are not
-%% necessarily endorsed by the IEEE.
-%%
-%% This work is distributed under the LaTeX Project Public License (LPPL)
-%% ( http://www.latex-project.org/ ) version 1.3, and may be freely used,
-%% distributed and modified. A copy of the LPPL, version 1.3, is included
-%% in the base LaTeX documentation of all distributions of LaTeX released
-%% 2003/12/01 or later.
-%% Retain all contribution notices and credits.
-%% ** Modified files should be clearly indicated as such, including  **
-%% ** renaming them and changing author support contact information. **
-%%*************************************************************************
-
-
-% *** Authors should verify (and, if needed, correct) their LaTeX system  ***
-% *** with the testflow diagnostic prior to trusting their LaTeX platform ***
-% *** with production work. The IEEE's font choices and paper sizes can   ***
-% *** trigger bugs that do not appear when using other class files.       ***                          ***
-% The testflow support page is at:
-% http://www.michaelshell.org/tex/testflow/
-
+%% Built on bare_jrnl_compsoc.tex V1.4b (2015/08/26) by Michael Shell, the IEEEtran
+%% Computer Society journal template, distributed under the LaTeX Project Public
+%% License 1.3 (http://www.michaelshell.org/tex/ieeetran/). This file is a modified copy.
 
 \documentclass[10pt,journal,compsoc]{IEEEtran}
 
-% *** CITATION PACKAGES ***
-%
-\ifCLASSOPTIONcompsoc
-  % IEEE Computer Society needs nocompress option
-  % requires cite.sty v4.0 or later (November 2003)
-  \usepackage[nocompress]{cite}
-\else
-  % normal IEEE
-  \usepackage{cite}
-\fi
-
-% *** URL PACKAGE ***
-% Project deviation: references.bib contains URL fields, which
-% IEEEtranS emits via \url{...}. The cite-only package set in the original
-% template is sufficient only when the bibliography has no URL fields.
-\usepackage{url}
-
-% *** GRAPHICS ***
-% Packages kept minimal, each justified: graphicx for figure inclusion; tikz
-% draws the full-width pipeline-infrastructure figure (Fig. 1) the brief
-% requires; pgfplots
-% renders the two results charts (Sec. IV) inline from the committed
-% benchmark numbers, so no external image export is needed.
-\usepackage{graphicx}
-\usepackage{tikz}
+\usepackage[nocompress]{cite}
+\usepackage[hyphens]{url}  % references.bib carries URL fields
+\usepackage{tikz}          % Fig. 1, the pipeline
 \usetikzlibrary{positioning,arrows.meta,fit,backgrounds,calc,shapes.geometric}
-\usepackage{pgfplots}
+\usepackage{pgfplots}      % Fig. 2, drawn from the committed benchmark numbers
 \pgfplotsset{compat=1.18}
-% Rationale: booktabs gives the professional \toprule/\midrule/\bottomrule rules
-% that every IEEE/ACM table guide mandates (no vertical rules, no double rules);
-% it replaces the heavier \hline grid in Table I for a cleaner, publication-grade
-% headline table.
 \usepackage{booktabs}
-\graphicspath{{figures/}}
-
-\hyphenation{op-tical net-works semi-conduc-tor}
-
-\newcommand*{\sectiondir}{sections/}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={Stabilising the Oracle: Robust Delta-Debugging for Reproducing Wireless IoT Fuzzing Bugs},
+            pdfauthor={Aldo Ristori and Nicole Sperandini}}
+\usepackage{xurl}          % let long URLs break anywhere (after hyperref)
 
 \begin{document}
 
-% EDIT TO CHANGE THE TITLE
 \title{Stabilising the Oracle: Robust Delta-Debugging\\
   for Reproducing Wireless IoT Fuzzing Bugs}
-%
-%
-% author names and IEEE memberships
-% note positions of commas and nonbreaking spaces ( ~ ) LaTeX will not break
-% a structure at a ~ so this keeps an author's name from being broken across
-% two lines.
-% use \thanks{} to gain access to the first footnote area
-% a separate \thanks must be used for each paragraph as LaTeX2e's \thanks
-% was not built to handle multiple paragraphs
-%
-%
-%\IEEEcompsocitemizethanks is a special \thanks that produces the bulleted
-% lists the Computer Society journals use for "first footnote" author
-% affiliations. Use \IEEEcompsocthanksitem which works much like \item
-% for each affiliation group. When not in compsoc mode,
-% \IEEEcompsocitemizethanks becomes like \thanks and
-% \IEEEcompsocthanksitem becomes a line break with idention. This
-% facilitates dual compilation, although admittedly the differences in the
-% desired content of \author between the different types of papers makes a
-% one-size-fits-all approach a daunting prospect. For instance, compsoc
-% journal papers have the author affiliations above the "Manuscript
-% received ..."  text while in non-compsoc journals this is reversed. Sigh.
 
-% EDIT HERE TO ADD THE AUTHORS
-\author{Aldo~Ristori,~\IEEEmembership{2086552,~Sapienza University of Rome,}\\
-        Nicole~Sperandini,~\IEEEmembership{2264712,~Sapienza University of Rome,}%
+\author{Aldo~Ristori~(2086552) and Nicole~Sperandini~(2264712),\\
+        Sapienza University of Rome%
+\thanks{Group~19. Submitted and graded on June 25, 2026 (the repository's first
+commit); reviewed and revised on September 24, 2026.}}
 
-
-% EDIT HERE TO ADD THE DELIVERY DATE (course deadline 2026-06-30; adjust if
-% the report is handed in earlier).
-\thanks{Group~19. Manuscript delivered on June 25, 2026.}}
-
-
-% EDIT HERE TO ADD THE ABSTRACT
 \IEEEtitleabstractindextext{%
 \begin{abstract}
-Over-the-air fuzzing is still effective at finding vulnerabilities in the
-wireless stacks of smart-home devices. Turning a noisy crash log into a
-clear, replayable Proof-of-Concept, however, is still slow and demands
-specialised skill. The main problem is that the wireless medium is
-unpredictable, so the test \emph{oracle} a reproduction tool relies on
-returns inconsistent results. That rules out the precise input-minimisation
-algorithms, which need a stable verdict each time they ask. We introduce
-\emph{Robust Delta-Debugging} (RDD), which restores that stable-verdict
-assumption in software. A truncated Sequential Probability Ratio Test (SPRT)
-folds the noisy result of each attempt into one reliable decision with a
-controlled false-positive rate. A two-tier crash-identity oracle first uses a
-deterministic matcher, then sends only the uncertain cases to a single
-open-weight language model, recognising the same bug across the varied crash
-dumps the noise produces. A non-monotone-robust minimiser then drives delta
-debugging to the smallest reproduction recipe. It credits that recipe only
-after an independent re-confirmation, whose tunable false-positive rate keeps
-mistakes rare. On real Zephyr controller bugs the prototype recovers 0.863
-of reproductions at zero false credit, against 0.759 and 0.137 for a
-faithful re-implementation of the state-of-the-art tool, and 0.916 versus
-0.282 under heavy synthetic stress. These results point to a promising
-research direction, and we map the experiments and structural limits that
-determine its scope.
+Over-the-air fuzzing still finds vulnerabilities in the wireless stacks of
+smart-home devices, but turning a crash log into a replayable proof of concept
+remains slow: the unpredictable medium makes the reproduction \emph{oracle}
+answer inconsistently, which precise minimisation algorithms cannot tolerate. We introduce \emph{Robust
+Delta-Debugging} (RDD), which approximates the stable verdict those algorithms
+assume. A truncated Sequential Probability Ratio Test folds repeated noisy
+attempts into one decision with a bounded false-positive rate; a two-tier
+crash-identity oracle escalates to a single open-weight language model only
+what a deterministic matcher cannot settle; a suppressor-robust minimiser drives
+delta debugging and credits a recipe only after an independent re-confirmation.
+On six real Zephyr Bluetooth-controller bugs under a simulated noisy channel, a
+prototype recovers 0.848 of reproductions with no false credit in 336 campaigns,
+against 0.759 and 0.137 for a re-implementation of AirBugCatcher's strategy, at
+five times the device reads; on a 75,000-campaign synthetic sweep
+it recovers 0.824 against 0.266. The advantage is a property of the simulator's
+noise assumptions: with report variation and phantom crashes switched off, the
+baseline recovers 0.978 with no false credit at a fifth of the cost. The research
+agenda is to test these dependencies on real radios.
 \end{abstract}
 
-% EDIT TO ADD THE KEYWORDS OF YOUR REPORT (e.g., machine learning, adversarial attacks)
 \begin{IEEEkeywords}
-Internet of Things security, over-the-air fuzzing, bug reproduction,
-software test oracles, delta debugging, sequential probability ratio test,
-crash deduplication, large language models.
+Bug reproduction, crash deduplication, delta debugging, Internet of Things
+security, large language models, over-the-air fuzzing, sequential probability
+ratio test, software test oracles.
 \end{IEEEkeywords}}
 
-
-% make the title area
 \maketitle
-
-
 \IEEEdisplaynontitleabstractindextext
-\IEEEpeerreviewmaketitle
 
 \input{sections/01-introduction.tex}
 \input{sections/02-background.tex}
@@ -177,11 +67,7 @@ crash deduplication, large language models.
 \input{sections/05-related-work.tex}
 \input{sections/06-conclusions.tex}
 
-
-% Bibliography is driven by real \cite{} calls in the section files.
-\bibliographystyle{IEEEtranS}
+\bibliographystyle{IEEEtran}
 \bibliography{references}
 
-
-% that's all folks
 \end{document}
