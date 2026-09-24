@@ -36,4 +36,4 @@
 </div>
 </div>
 
-<div style="max-width: 58rem; margin: 1rem auto 0 auto; padding: 0.55rem 1rem; border-left: 4px solid var(--sapienza-red); background: var(--sapienza-red-soft); border-radius: 0 4px 4px 0; font-size: 0.85rem; color: var(--sapienza-ink); line-height: 1.5;">Signal flow <strong style="color: var(--sapienza-red);">antenna → amplitude → phase → WNIC</strong>. The phase obfuscator picks one of four switched sub-paths per packet — different lengths produce different propagation delays.</div>
+<div style="max-width: 58rem; margin: 1rem auto 0 auto; padding: 0.55rem 1rem; border-left: 4px solid var(--sapienza-red); background: var(--sapienza-red-soft); border-radius: 0 4px 4px 0; font-size: 0.85rem; color: var(--sapienza-ink); line-height: 1.5;">Signal flow <strong style="color: var(--sapienza-red);">antenna → amplitude → phase → WNIC</strong>. The phase obfuscator routes each packet through one of eight switched sub-paths (two 1→2 and four 1→4 switches) — different lengths produce different propagation delays.</div>
