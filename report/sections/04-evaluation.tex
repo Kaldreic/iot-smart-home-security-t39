@@ -21,7 +21,7 @@ declines to validate counts for neither. The \emph{size gap} is the mean number 
 packets a genuine recipe carries beyond the true minimum, and \emph{reads} counts
 device attempts per campaign. A third arm, the baseline with one confirming
 re-run before it credits a candidate, is the confirmation control; its reads are in
-the tables.
+Table~\ref{tab:headlines}.
 Table~\ref{tab:headlines} summarises the results.
 
 \begin{table*}[!t]
@@ -40,14 +40,14 @@ Real head-to-head            & \textsc{AirBugCatcher}                & 0.759 & 0
 {\footnotesize 6 bugs, 336 campaigns} & \textsc{AirBugCatcher} $+$ 1 confirmation & 0.708 & 0.006 & 0.931 & 24\\
                              & RDD                                   & \textbf{0.848} & \textbf{0.000} & \textbf{0.117} & 45\\
 \addlinespace
-Resilience at scale          & \textsc{AirBugCatcher}                & 0.266 & 0.632 & 0.52 & 41\\
-{\footnotesize 15,000 bugs, 75,000 campaigns} & \textsc{AirBugCatcher} $+$ 1 confirmation & 0.359 & 0.090 & 0.92 & 342\\
-                             & RDD                                   & \textbf{0.824} & \textbf{0.000} & \textbf{0.21} & 143\\
+Resilience at scale          & \textsc{AirBugCatcher}                & 0.266 & 0.632 & 0.518 & 41\\
+{\footnotesize 15,000 bugs, 75,000 campaigns} & \textsc{AirBugCatcher} $+$ 1 confirmation & 0.359 & 0.090 & 0.922 & 342\\
+                             & RDD                                   & \textbf{0.824} & \textbf{0.000} & \textbf{0.206} & 143\\
 \bottomrule
 \end{tabular*}
 \end{table*}
 
-\subsection{Real bugs, head to head}\label{ssec:eval-real}
+\subsection{Real bugs, head to head}
 
 The evaluation uses six controller bugs, labelled A--F, in the Zephyr Bluetooth
 Low Energy stack compiled for Zephyr's host-native \texttt{unit\_testing} target.
@@ -86,7 +86,8 @@ on A--F or in the 30 on the suppressor (95\,\% upper bounds on its rate 0.9\,\%,
 Section~\ref{ssec:eval-scale} (a rate of $1.3\times10^{-5}$; upper bound 0.006\,\%). The tool's property is the
 $\alpha$-bounded rate of Section~\ref{sec:our_approach}; zero is the measured outcome.
 
-On the real suppressor bug, where a later packet hides the crash, the baseline
+On the real suppressor bug, where a later packet hides the crash (its harness prints
+no backtrace, so the target emits bug A's dump), the baseline
 recovers 0.875 with 0.125 false credit; RDD recovers every one of the eight
 head-to-head campaigns, and 0.9 of the thirty truth-table runs, with no false credit
 in either;
@@ -105,7 +106,8 @@ truth-table experiment with each switched off.
 \begin{table}[!t]
 \renewcommand{\arraystretch}{1.2}
 \caption{The six real bugs, thirty runs each, under weaker noise models. Cells are
-genuine / false credit; reads for the last row are given in the text.}
+genuine / false credit over 180 campaigns, so a rate carries a standard error of
+about 0.02; reads for the last row are given in the text.}
 \label{tab:noise}
 \centering
 \footnotesize
@@ -243,13 +245,14 @@ variation of Section~\ref{ssec:eval-noise}. The robust minimiser changes nothing
 on the monotone bugs and takes the suppressor from zero to every campaign, by
 finding a suppressor-free starting window where plain \texttt{ddmin} finds none.
 
-\subsection{Threats to validity}\label{ssec:eval-threats}
+\subsection{Threats to validity}
 
 \textbf{The simulator.} The device is a deterministic host build of the Zephyr
-controller; the channel is a Gilbert--Elliott burst process with miss and phantom
-a miss rate calibrated to a flaky-test rerun corpus~\cite{flakeflagger2021} and
-phantom rates we chose,
-and the crash-report variation is a model with rates we chose (backtrace
+controller; the channel is a Gilbert--Elliott burst process whose miss rate,
+0.44, is our choice rather than a wireless measurement (it lies in the upper
+range of the per-test failure frequencies of a flaky-test rerun
+corpus~\cite{flakeflagger2021}) and whose phantom rates are ours; the
+crash-report variation is a model with rates we chose (backtrace
 truncation 0.35, top-frame loss 0.20, frame churn 0.15, log interleaving 0.40,
 severe garbling 0.08). Section~\ref{ssec:eval-noise} shows that the headline
 advantage is a consequence of these models. A phantom crash is modelled as
@@ -261,7 +264,7 @@ correlated attempts, which violate the sequential test's precondition, is not
 evaluated.
 
 \textbf{The baseline.} It is our re-implementation of one published strategy at
-one fifth of RDD's reads. The confirmation control shows that one confirming
+a fifth to a quarter of RDD's reads. The confirmation control shows that one confirming
 re-run removes almost all of its false credit; a budget-matched variant with a
 different search was not run.
 
@@ -275,7 +278,9 @@ calibration set. No experiment here presents a different bug's report to the
 in-loop oracle, because each harness emits only its target's crash; the resulting
 risk, crediting a recipe that reproduces a different bug, is unmeasured. The
 judge's verdicts are replayed from a committed cache; live inference is not
-bit-reproducible.
+guaranteed bit-reproducible, although re-judging all 386 cached pairs with the
+same model tag (Ollama 0.34.2, 24 September 2026) returned every verdict
+unchanged.
 
 \textbf{Construct.} ``Genuine'' is defined against a channel-off run of a
 deterministic binary. A bug that appears only with channel noise is scored as a
@@ -286,7 +291,7 @@ optional identity guard for binaries that ship several bugs; it is off in every
 reported run. Six bugs, one stack, one CVE and one synthetic fault mechanism bound
 what the numbers can say.
 
-\subsection{Proposed experiments}\label{ssec:eval-next}
+\subsection{Proposed experiments}
 
 The results order the research plan. First, measure the two assumed rates on a
 real link: replay recovered recipes over a software-defined radio and record how

@@ -32,14 +32,15 @@ python3 -m venv .venv && source .venv/bin/activate   # required on PEP 668 distr
 python -m pip install -e .
 ```
 
-The only dependencies are `numpy` and `drain3`. Everything below runs offline, on CPU.
+The only dependencies are `numpy` and `drain3`. Everything below runs offline on CPU,
+except the three commands marked as needing the live judge.
 
 ## Run
 
 ```bash
 PYTHONHASHSEED=0 python -m rdd.tests.test_rdd                # the tool's 18 invariants (seconds)
-PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks  # the suite self-test (~15 s without binaries)
-PYTHONHASHSEED=0 python -m benchmarks.run coherence          # reproduce the committed numbers (about 4 min; 7 on a GitHub runner)
+PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks  # the suite self-test (under a minute without binaries)
+PYTHONHASHSEED=0 python -m benchmarks.run coherence          # reproduce the committed numbers (four to seven minutes)
 PYTHONHASHSEED=0 python -m benchmarks.run sensitivity        # the same anchor with the noise models switched off
 ```
 
@@ -55,17 +56,23 @@ within ±0.02 (it reproduces exactly, delta 0.000) and the synthetic sweep leaf 
 | Command       | What it measures                                                       | Genuine recovery, RDD vs. baseline |
 | ------------- | ---------------------------------------------------------------------- | ---------------------------------- |
 | `b1`          | six real Zephyr bugs through the full pipeline (frozen judge cache)    | 0.848 vs. 0.759; false credit 0.000 vs. 0.137 |
-| `b2`          | 75,000-campaign, six-regime synthetic sweep (model-free)               | 0.824 vs. 0.266; false credit 0.000 vs. 0.632 |
+| `b2`          | 75,000-campaign, six-regime synthetic sweep (model-free)               | 0.824 vs. 0.266; false credit 0.000 (one campaign in 75,000) vs. 0.632 |
 | `b3`          | real-bug lever decomposition (oracle, identity, minimiser)             | one arm per lever                  |
 | `coherence`   | the model-free reproducibility gate (real anchor + B2)                 | delta 0.000                        |
 | `sensitivity` | the real anchor with report variation and phantom crashes switched off | see below                          |
 | `freeze`      | regenerate the anchor's committed reference                            | writes `anchor.json`               |
 
+Three further references have their own entry points: `python -m benchmarks.causeswap
+--freeze` (`causeswap.json`), `python -m benchmarks.eval.l2_threshold_eval`
+(`l2_threshold_eval.json`) and `python -m benchmarks.eval.l3_eval eval` (`l3_judge_eval.json`,
+live judge).
+
 Every arm is scored by the same rule: a reproduction is genuine only if the arm credited
 its recipe and the recipe crashes the target with the channel off; it is a false credit
 if the arm credited a recipe that does not. The baseline is a re-implementation of
 AirBugCatcher's reproduction strategy (bounded enumeration up to three packets, one
-attempt per candidate, exact signature match), not the original tool. A third arm,
+attempt per candidate plus one re-run after a crash to check its identifier, exact
+signature match), not the original tool. A third arm,
 `baseline_confirm`, is the confirmation control: the same baseline that credits a
 candidate only after one confirming re-run.
 
@@ -79,10 +86,12 @@ command shows how much of it is the model. On the six real bugs (30 runs each):
 | phantom crashes off    | 0.933 / 0.000 / 11 | 0.750 / 0.000 / 19   | 0.933 / 0.000 / 48 |
 | both off               | 0.978 / 0.000 / 10 | 0.933 / 0.000 / 17   | 0.928 / 0.000 / 47 |
 
-(cells: genuine / false credit / device reads per campaign). The baseline's false credit
-comes entirely from the modelled phantom crashes, which carry the target's own crash
-dump; RDD's advantage in recall comes from the modelled report variation, which defeats
-exact signature matching. Without either, the baseline wins at one fifth of the reads.
+(cells: genuine / false credit / device reads per campaign; 180 campaigns per cell, so a
+rate carries a binomial standard error of about 0.02). The baseline's false credit comes
+entirely from the modelled phantom crashes, which carry the target's own crash dump;
+RDD's recall advantage comes from the modelled report variation, which defeats exact
+signature matching, and shrinks to within noise without it. Without either, the baseline
+wins at one fifth of the reads.
 
 `b2` and `coherence` are model-free and run on a bare clone. `b1` and `b3` drive the real
 Zephyr binaries (built below); `--frozen` replays them from the committed judge cache,
@@ -119,8 +128,9 @@ code/
     └── benchmarks/     # the suite: baseline, runners, scoring, committed references
 ```
 
-The import graph is one-way, `benchmarks` → `emulation` → `rdd`: the tool imports
-neither of the others, and the test bed injects its device oracles into it.
+The import graph is one-way, `benchmarks` → `emulation` → `rdd`: the tool's modules import
+neither of the others (its test module uses the test bed), and the test bed injects its
+device oracles into it.
 
 ## Reproducibility
 
@@ -135,24 +145,36 @@ conservative "different bug", and the coherence gate checks that no miss occurre
   RDD run resets the session before each attempt, which makes attempts independent; the
   effect of correlated attempts on the sequential test is not evaluated.
 - A phantom crash (a non-reproducing subset reported as crashing, 2–7% per attempt) is
-  modelled as carrying the target's own dump; the miss rate is calibrated to the FlakeFlagger
-  rerun corpus (Alshammari et al., ICSE 2021), the phantom rates are the authors'.
+  modelled as carrying the target's own dump; the miss rate, 0.44, is our choice, in the upper range of the per-test failure
+  frequencies of the FlakeFlagger rerun corpus (Alshammari et al., ICSE 2021); the
+  phantom rates are ours.
   The baseline's false credit is a direct consequence of this assumption.
 - Crash-report variation is modelled with assumed rates (truncation 0.35, top-frame
   loss 0.20, frame churn 0.15, log interleaving 0.40, garbling 0.08). The identity
   layer's gain over exact matching is a function of these rates.
 - The committed Bug-B dump is an abbreviated transcript with no bracketed return
   addresses, so it yields no stack frames; exact matching is stronger on B. The
-  suppressor harness prints no backtrace, so its oracle re-uses Bug A's dump.
+  suppressor harness prints no backtrace, so its oracle reuses Bug A's dump.
 - No experiment presents a different bug's dump to the in-loop identity oracle, so the
   risk of crediting a recipe that reproduces a different bug is unmeasured.
 - Roughly a third of the synthetic bugs have minimal recipes larger than the baseline's
   three-packet cap and cannot be recovered by it by construction.
-- Runs with the live judge are not bit-reproducible. In the September 2026 audit `b1`
-  and `b3` were replayed from their caches on rebuilt binaries; `benchmarks.live` (bug A,
-  two runs: both genuine, one live judgment) and `benchmarks.scenario --traces 40` (one run:
-  dedup 0.875, genuine 0.850, no false credit, 29 live judgments) were exercised against a
-  local `llama3.1:8b`. Those live figures are indicative, not references.
+- Runs with the live judge are not guaranteed bit-reproducible. The judge is Ollama's
+  `llama3.1:8b` tag (Llama 3.1 8B Instruct, Q4_K_M, digest `46e0c10c039e`) at temperature 0
+  with a fixed seed. In the September 2026 audit `b1` and `b3` were replayed from their
+  caches on rebuilt binaries, and every one of the 386 cached verdicts was re-judged live
+  with Ollama 0.34.2 on a CPU: all 386 came back unchanged, and repeated calls on the same
+  pair were identical. The documented live commands then ran on that model:
+  `benchmarks.live` on each of the six bugs (five seeds each: every run genuine, no false
+  credit, 19 live judgments in all) and `benchmarks.scenario --traces 40` (dedup 0.875,
+  genuine 0.850, no false credit, 29 live judgments; over eight seeds genuine 0.859 in
+  [0.825, 0.900], dedup 0.931 in [0.850, 0.975], no false credit). Those live figures are
+  indicative, not references.
+- `l3_judge_eval.json` predates the canonicalisation of foreign-frame offsets in the rendered
+  reports, so 45 of its 143 pair texts differ from what the code renders today (bug A's
+  libc frames). Its score re-derives offline from the stored verdicts, and re-judging its
+  stored texts live changed one verdict, on a pair below the escalation band. Regenerate it
+  with `python -m benchmarks.eval.l3_eval eval` (live judge, about 15 minutes).
 
 ## License and citation
 

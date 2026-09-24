@@ -87,7 +87,7 @@ The [`presentation/`](./presentation) and [`code/`](./code) deliverables each ha
 ## License
 
 Released under the [MIT License](./LICENSE) — code, report, and slides alike. The figures reproduced from the two
-source papers in `presentation/public/` remain the copyright of their authors and are included for academic commentary;
+source papers in `presentation/public/` remain the copyright of their authors and publisher and are included for academic commentary;
 the Zephyr patches under `code/src/emulation/zephyr-targets/patches/` modify Apache-2.0 code, as noted there.
 
 To cite this work, use the metadata in [`CITATION.cff`](./CITATION.cff) (GitHub's _Cite this repository_ button).

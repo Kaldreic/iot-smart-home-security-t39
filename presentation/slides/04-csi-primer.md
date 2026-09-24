@@ -15,4 +15,4 @@
 
 <div class="note csi-note">Direct path plus reflections off bodies and walls arrive together at RX, where CSI captures the combined <strong>amplitude and phase per subcarrier</strong>.</div>
 
-<div class="motto-row"><div class="motto">Every modern Wi-Fi NIC exposes CSI — the channel itself acts as a <strong>sensor</strong>.</div></div>
+<div class="motto-row"><div class="motto">Commodity Wi-Fi NICs can expose CSI (an Intel 5300 with the CSI Tool in the paper) — the channel itself acts as a <strong>sensor</strong>.</div></div>

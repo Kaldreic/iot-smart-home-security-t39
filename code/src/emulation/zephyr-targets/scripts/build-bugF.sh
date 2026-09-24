@@ -26,7 +26,7 @@
 # assert message is the artifact, not a backtrace).
 #
 # Leaves build-cisc/testbinary (separate from B's build-cis, the CIS SIGFPE in the same suite). /work/build
-# and the other build-* dirs are untouched. Idempotent; re-uses the clone + SDK. Run: bash scripts/build-bugF.sh
+# and the other build-* dirs are untouched. Idempotent; reuses the clone + SDK. Run: bash scripts/build-bugF.sh
 set -euo pipefail
 # shellcheck source-path=SCRIPTDIR
 # shellcheck source=common.sh
@@ -61,6 +61,7 @@ echo "    determinism (3x on 24): $(run 24) $(run 24) $(run 24)"
 
 echo "### example dump (HARNESS_BUG=F HARNESS_SUBSET=24) — controller assert message ###"
 HARNESS_BUG=F HARNESS_SUBSET=24 "$BIN" 2>&1 | grep -E "Running TESTSUITE cis_create|ull_llcp_cc\.c:64"
+[ "$bad" -eq 0 ] || { echo "### VERIFY FAILED: the truth table does not hold ###"; exit 1; }
 EOF
 )
 build_harness

@@ -16,10 +16,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # code/src -> `import rdd`
 
-import rdd  # noqa: E402
-from emulation.channel import GEChannelParams, L1Channel, Outcome  # noqa: E402
-from rdd.minimizer import robust_minimize  # noqa: E402
-from rdd.sprt import Rep  # noqa: E402
+import rdd
+from emulation.channel import GEChannelParams, L1Channel, Outcome
+from rdd.minimizer import robust_minimize
+from rdd.sprt import Rep
 
 _OUTCOME_TO_REP = {Outcome.NOT_REPRODUCED: Rep.NO, Outcome.INVALID: Rep.INVALID}
 
@@ -40,7 +40,7 @@ def test_minimiser_nonmonotone_sound_and_recovers():
     rng = random.Random(0)
     fc = recovered = bailed = 0
     for _ in range(200):
-        M, X, test = _nonmonotone_bug(rng)
+        M, _, test = _nonmonotone_bug(rng)
         r = robust_minimize(range(8), test)                                          # full robust
         if r.reproduced and not test(r.recipe):
             fc += 1                                                                   # a credited non-crasher
@@ -561,7 +561,7 @@ def main():
         except AssertionError as e:
             failed += 1
             print(f"  FAIL  {fn.__name__}: {e}")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             failed += 1
             print(f"  ERROR {fn.__name__}: {type(e).__name__}: {e}")
     print(f"\n{'ALL PASS' if not failed else f'{failed} FAILED'} ({len(TESTS) - failed}/{len(TESTS)})")

@@ -33,7 +33,7 @@ class Rep(enum.Enum):
 @dataclass(frozen=True)
 class SPRTConfig:
     alpha: float = 0.01      # false-YES bound (the severe error)
-    beta: float = 0.10       # false-NO bound (the mild error)
+    beta: float = 0.10       # false-NO bound of decided runs (the mild error; truncation adds forced NOs)
     p0: float = 0.05         # ceiling on the per-valid-rep YES rate of a subset that must be called NO
     p1: float = 0.55         # per-valid-rep YES rate of a reproducing subset
     n_max: int = 16          # truncation point, in valid reps

@@ -14,7 +14,7 @@
     <div class="card-body">
       <div class="text"><strong>WindTalker</strong> <span class="year">· 2016</span> — keystroke recovery from hotspot CSI.</div>
       <div class="text"><strong>Zhu et al.</strong> — stealth eavesdrop from a single smartphone.</div>
-      <div class="text"><strong>Banerjee & Zhu</strong> — motion and human tracking.</div>
+      <div class="text"><strong>Banerjee et al.</strong> — localising and tracking humans through walls.</div>
     </div>
     <div class="card-foot">All three: Wi-Fi channel measurement</div>
   </div>

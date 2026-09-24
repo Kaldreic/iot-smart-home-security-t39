@@ -78,7 +78,7 @@ def which_crash(bug: SynthBug, subset) -> bool:
 
 def sev_channel(sev: float) -> GEChannelParams:
     """The device's per-bug L1 channel for a severity multiplier (scales the OTA false-negative rates)."""
-    cl = lambda x: float(min(0.95, max(0.0, x)))               # noqa: E731
+    cl = lambda x: float(min(0.95, max(0.0, x)))
     return replace(_BASE, p_fn_good=cl(_BASE.p_fn_good * sev), p_fn_bad=cl(_BASE.p_fn_bad * sev))
 
 

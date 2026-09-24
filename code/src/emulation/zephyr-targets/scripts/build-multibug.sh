@@ -20,7 +20,7 @@
 # -rdynamic lets backtrace_symbols_fd resolve the exported controller frames in Bug A's dump (notably
 # ull_conn_update_parameters, the faulting divide site).
 #
-# Leaves build-multibug/testbinary. Separate build dir; the other build dirs are untouched. Idempotent; re-uses the
+# Leaves build-multibug/testbinary. Separate build dir; the other build dirs are untouched. Idempotent; reuses the
 # clone + SDK. Run: bash scripts/build-multibug.sh
 set -euo pipefail
 # shellcheck source-path=SCRIPTDIR
@@ -69,6 +69,7 @@ echo "--- Bug A dump (HARNESS_BUG=A HARNESS_SUBSET=128) ---"
 HARNESS_BUG=A HARNESS_SUBSET=128 "$BIN" 2>&1 | sed -n "/=== CRASH/,\$p" | grep -E "CRASH|ull_conn_update_parameters|ull_cp_run" | head
 echo "--- Bug C dump (HARNESS_BUG=C HARNESS_SUBSET=24) ---"
 HARNESS_BUG=C HARNESS_SUBSET=24 "$BIN" 2>&1 | grep -E "ull_llcp_conn_upd\.c:247"
+[ $((abad + cbad)) -eq 0 ] || { echo "### VERIFY FAILED: the truth table does not hold ###"; exit 1; }
 EOF
 )
 build_harness

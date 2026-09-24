@@ -6,7 +6,8 @@ ddmin inside the seed, consults a fresh ``MonotoneOracleCache`` first and otherw
 search, suppressor verification and final validation, runs a second uncached SPRT (``probe_cfg``) with
 the same ``alpha`` and a tighter ``beta`` (default ``min(cfg.beta, 0.01)``), so that a lone crashing
 complement is rarely missed on a flaky NO and each suppressor is an SPRT decision rather than a single
-read. A flaky ``raw_test`` can still let a suppressor-containing seed reach the cache; that is harmless,
+read. ``beta`` bounds the false NO of decided runs only; truncation at ``n_max`` adds forced NOs, about
+0.028 in total for the probe at ``p1`` and 0.06 for the main SPRT, within its 0.10. A flaky ``raw_test`` can still let a suppressor-containing seed reach the cache; that is harmless,
 because credit rests on the uncached final validation rather than on seed scoping. ``decorrelate`` goes
 to both SPRTs and is on by default, which the SPRT's independence precondition requires on a bursty
 channel. ``ablate_robust=True`` disables the seed finder and verification, leaving classical ddmin on

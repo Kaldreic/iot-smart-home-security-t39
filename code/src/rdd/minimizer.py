@@ -6,7 +6,7 @@ full window contains it and does not crash, so ddmin returns ``[]`` at its first
 ddmin strips it mid-reduction and converges on a different crash than the target (mode 2). Neither can
 be detected by the test alone without probing supersets, so ``robust_minimize`` tests the full window;
 if it does not crash, searches for a crashing seed by bounded leave-k-out and choose-k probing; runs
-ddmin inside the seed, whose subsets are suppressor-free and hence monotone; re-adds each excluded
+ddmin inside the seed, whose subsets are suppressor-free and hence, under the single-trigger assumption below, monotone; re-adds each excluded
 element to confirm suppressors; and re-tests the recipe before crediting it. The result is a 1-minimal
 crashing recipe verified up to single re-addition, not a global minimum; a non-empty minimal trigger
 is assumed.

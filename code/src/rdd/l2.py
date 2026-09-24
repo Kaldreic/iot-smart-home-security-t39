@@ -156,8 +156,6 @@ class L2Comparator:
         if not a and not b:
             return None
         union = a | b
-        if not union:
-            return None
         w = (lambda c: self._idf.get(c, 1.0)) if self._idf else (lambda c: 1.0)
         uw = sum(w(c) for c in union)
         return sum(w(c) for c in (a & b)) / uw if uw else None

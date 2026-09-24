@@ -96,8 +96,10 @@ of which a flakiness layer decides whether an attempt registers the crash: a
 true reproducer is missed on about 0.44 of valid attempts, an attempt fails to
 connect on 0.02 to 0.27 depending on the state, and a non-reproducing recipe is
 reported as crashing, with the target's own dump, on 0.02 to 0.07 (a
-\emph{phantom} crash). The miss rate is calibrated to a flaky-test rerun corpus~\cite{flakeflagger2021}, not
-to wireless measurements; the phantom rates are ours. In every
+\emph{phantom} crash). The miss rate, 0.44, is our choice, not a wireless measurement; it lies in the
+upper range of the per-test failure frequencies of a flaky-test rerun
+corpus~\cite{flakeflagger2021}, so that a single attempt is unreliable. The
+phantom rates are ours as well. In every
 reported run RDD resets the connection before each attempt, which in the
 simulator resamples the channel state and makes attempts independent; the burst
 structure therefore does not affect RDD's numbers, and the baseline, which reads
@@ -161,7 +163,9 @@ The judge (L3) is consulted only when the matcher says ``different'' with a scor
 in $[0.05, 0.5)$, a band that holds about half of the different-bug pairs in the
 calibration set. It is a single open-weight model (Llama~3.1~8B~\cite{llama3_2024})
 asked whether the two reports describe the same bug; it sees the same reports the
-matcher saw. On an offline set of escalated pairs it recovered every same-bug pair the
+matcher saw. It is served locally through Ollama as the library tag
+\texttt{llama3.1:8b}, a 4-bit build, at temperature 0 with a fixed seed and
+JSON-constrained output. On an offline set of escalated pairs it recovered every same-bug pair the
 matcher had abstained on (57 of 57) and also accepted every different-bug pair
 (40 of 40); in the benchmark runs' caches it answered ``same'' every time. % l3_judge_eval.json
 The cascade therefore rejects a different-bug report only when the matcher scores
@@ -204,7 +208,7 @@ by both runs and are not covered by the bound. Genuine and false credit are
 assigned by the evaluation, not by the tool: the scorer compares each credited
 recipe to a channel-off run of the device.
 
-\subsection{Positioning: a SWOT view}\label{ssec:swot}
+\subsection{Positioning: a SWOT view}
 
 \textbf{Strengths.} Delta debugging returns with its 1-minimality relative to the
 oracle, where \textsc{AirBugCatcher} enumerates up to a fixed size. The false-credit
@@ -214,8 +218,8 @@ model is cheap and its verdicts can be committed and replayed.
 
 \textbf{Weaknesses.} The evaluation is a simulator whose two noise models,
 phantom crashes and report variation, produce the advantage
-(Section~\ref{sec:evaluation}); RDD costs four to five times the baseline's
-device reads; the judge does not discriminate on the pairs it receives; the
+(Section~\ref{sec:evaluation}); RDD costs 3.5 to 5 times the baseline's device reads on the two
+benchmarks and ten times on the suppressor bug; the judge does not discriminate on the pairs it receives; the
 indifference zone leaves the deepest noise unrecoverable; the matcher's threshold
 is calibrated on six bugs with no held-out set.
 

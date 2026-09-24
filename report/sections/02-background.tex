@@ -26,7 +26,7 @@ triggers the crash. Naive record-and-replay fails at once, because a wireless
 session depends on values that were valid only in the moment, like authentication
 challenges, sequence numbers, and freshly negotiated parameters, none of which a
 stale replay can satisfy. \textsc{AirBugCatcher}~\cite{airbugcatcher2024} is the
-state of the art, and it works in two stages. First, offline, it groups crashes
+most recent such tool we know of, and it works in two stages. First, offline, it groups crashes
 that share a signature and walks a backward window from each crash to collect the
 fuzzed packets most likely responsible, distilling each group into a concise set
 of suspect packets. Then, online, it rebuilds the attack on a fresh, live

@@ -35,18 +35,6 @@
    "cache_hits": 164,
    "rule_no_fallback": 0,
    "live_calls": 0
-  },
-  "ablation": {
-   "genuine": 0.9,
-   "false_credit": 0.0,
-   "size_gap_genuine": 0.10493827160493827,
-   "reads": 46.355555555555554
-  },
-  "oracle": {
-   "genuine": 0.7611111111111111,
-   "false_credit": 0.0,
-   "size_gap_genuine": 0.24087591240875914,
-   "reads": 48.03333333333333
   }
  },
  "suppressor": {

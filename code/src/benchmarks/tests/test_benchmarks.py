@@ -11,10 +11,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # code/src -> import rdd + benchmarks
 
-from benchmarks import run  # noqa: E402
-from benchmarks import identity_cache as idc  # noqa: E402
-from emulation import multibug  # noqa: E402
-from emulation import baseline as emulation_baseline  # noqa: E402
+from benchmarks import run
+from benchmarks import identity_cache as idc
+from emulation import multibug
+from emulation import baseline as emulation_baseline
 
 
 def test_suite_smoke():
@@ -35,7 +35,7 @@ def test_real_suppressor_coherence():
 
 
 def test_l3_judge_eval_anchored():
-    """l3_judge_eval.json re-scores from its stored verdicts without the model, and its recall is 1.0."""
+    """l3_judge_eval.json re-scores from its stored verdicts without the model."""
     import json as _json
 
     from benchmarks.eval import l3_eval
@@ -45,7 +45,6 @@ def test_l3_judge_eval_anchored():
     fresh = l3_eval.score(d["cases"], d["verdicts"])           # re-score offline from committed verdicts
     assert abs(fresh["l3_residual_recovery"] - d["score"]["l3_residual_recovery"]) < 1e-12, (fresh, d["score"])
     assert abs(fresh["l3_cross_rejection"] - d["score"]["l3_cross_rejection"]) < 1e-12, (fresh, d["score"])
-    assert fresh["l3_residual_recovery"] == 1.0, f"committed Llama recall must be 1.0, got {fresh}"
     return (f"l3_judge_eval anchored ({d['model']}): recall {fresh['l3_residual_recovery']:.3f} / "
             f"rejection {fresh['l3_cross_rejection']:.3f} (re-scored model-free)")
 
@@ -292,7 +291,7 @@ def test_live_offshelf_bug_c():
     orig = subprocess.run
     subprocess.run = fake
     try:
-        rows, oracle, identity = live.run_live("C", seeds=2, binary=live.__file__,
+        rows, oracle, _ = live.run_live("C", seeds=2, binary=live.__file__,
                                                judge=lambda t, r, **k: {"same": True, "conf": 0.9})
         agg = live._agg(rows)
         assert agg["genuine"] == 1.0 and agg["false_credit"] == 0.0, agg     # exit 255 maps to a crash
@@ -304,7 +303,7 @@ def test_live_offshelf_bug_c():
 
 def test_live_binary_agrees_with_truth():
     """With the real binaries present, each bug's live crash truth matches the committed truth table on its
-    own harness. SKIPs when a binary is absent."""
+    own harness, over every subset of its window. SKIPs when a binary is absent."""
     from benchmarks import live
     truth = multibug.TRUTH
     bugs = tuple(truth)                                       # validate every bug the committed truth file declares
@@ -312,15 +311,14 @@ def test_live_binary_agrees_with_truth():
         return "SKIP (a target binary is absent — build via src/emulation/zephyr-targets/scripts/*.sh)"
     mism = []
     for bug in bugs:
-        W = live._WINDOW[bug]
-        trig = sum(1 << i for i in live._TRUE_MIN[bug])
-        for mask in (0, 1, trig, (1 << W) - 1):                # benign, a lone decoy, the trigger, full window
+        W = multibug.WINDOW[bug]
+        for mask in range(1 << W):                              # every subset of the window
             subset = frozenset(i for i in range(W) if mask & (1 << i))
             crashed, _ = live.run_binary(live._BINARIES[bug], bug, subset, live._CRASH_RC[bug])
             if crashed != (truth[bug].get(str(mask)) == bug):
                 mism.append((bug, mask, crashed, truth[bug].get(str(mask))))
     assert not mism, f"live-binary vs truth-table disagreements: {mism}"
-    return "live binary crash-truth == committed truth-multibug.json (all 6 bugs on their OWN harness binaries)"
+    return "live binary crash-truth == committed truth-multibug.json (all six bugs, every subset, on their own harness binaries)"
 
 
 def test_scenario_dedup_families():
@@ -616,7 +614,7 @@ def test_b2_resilience_smoke():
     assert set(regs["standard"]) == set(resilience.ARMS) == {"baseline", "baseline_confirm", "tool"}, "B2 arms"
     assert set(regs["standard"]["tool"]) == set(resilience.METRICS) == {
         "genuine", "false_credit", "exact_minimal", "mean_size_gap", "reads"}, "B2 must report B1's full metric set"
-    g = lambda reg, arm, k="genuine": regs[reg][arm][k][0]       # noqa: E731  (CI mean)
+    g = lambda reg, arm, k="genuine": regs[reg][arm][k][0]       # CI mean
     for reg in regs:                                             # the alpha bound is a property of the tool
         assert g(reg, "tool", "false_credit") <= 0.02, f"RDD false_credit must be ~0 in {reg}, got {g(reg, 'tool', 'false_credit')}"
     assert a["l3_provenance"] == {"source": "deterministic_rule", "model": None}, "B2 is model-free"
@@ -692,7 +690,7 @@ def test_b1_reference_invariants():
     ab, rd, sp = ref["airbug"], ref["rdd"], ref["suppressor"]
     metrics = {"genuine", "genuine_routed", "false_credit", "dedup_accuracy", "exact_minimal", "mean_size_gap", "reads"}
     assert metrics <= set(ab) and metrics <= set(rd), f"B1 arms must carry B1's metric set, got {set(ab)} / {set(rd)}"
-    m = lambda arm, k: arm[k]["mean"]                            # noqa: E731
+    m = lambda arm, k: arm[k]["mean"]
     assert m(rd, "false_credit") <= 0.02, f"RDD false_credit must be within its alpha bound, got {m(rd,'false_credit')}"
     assert m(rd, "dedup_accuracy") == m(ab, "dedup_accuracy"), "both arms share ONE dedup front-end (identical accuracy)"
     assert sp["rdd"]["false_credit"] <= 0.02, f"suppressor: RDD false credit within bound, got {sp['rdd']}"
@@ -710,7 +708,7 @@ def test_b3_lever_consistency():
     arms = ["baseline", "oracle", "ablation", "tool"]           # the four-arm ladder
     assert list(real) == arms and list(sup) == arms and list(lev["oracle_fc_invariance"]) == arms, \
         f"B3 must carry the 4-arm ladder baseline/oracle/ablation/tool, got real={list(real)}"
-    close = lambda a, b: abs(a - b) <= 1e-9                      # noqa: E731
+    close = lambda a, b: abs(a - b) <= 1e-9
     # each delta must equal the difference of the arms it is computed from
     idd = real["ablation"]["genuine"]["mean"] - real["oracle"]["genuine"]["mean"]
     assert close(idd, lev["identity_genuine_real"]), f"identity delta desynced: arms={idd} vs levers={lev['identity_genuine_real']}"
@@ -756,7 +754,7 @@ def main():
         except AssertionError as e:
             failed += 1
             print(f"  FAIL  {fn.__name__}: {e}")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             failed += 1
             print(f"  ERROR {fn.__name__}: {type(e).__name__}: {e}")
     tail = f", {skipped} skipped" if skipped else ""

@@ -1,4 +1,4 @@
-\section{Introduction}\label{sec:introduction}
+\section{Introduction}
 
 Modern homes depend on wireless devices such as smart speakers, video doorbells
 and thermostats that connect over Bluetooth, Wi-Fi or a cellular network. The
@@ -10,8 +10,8 @@ single flaw can become a persistent way in.
 
 The standard way to surface such flaws is \emph{fuzzing}: sending a target many
 malformed or out-of-order packets and watching for anything that crashes it. The
-\textsc{SweynTooth} campaign found eleven new Bluetooth Low Energy vulnerabilities
-in chips from seven vendors and \textsc{BrakTooth} eighteen in thirteen Bluetooth
+\textsc{SweynTooth} campaign found eleven new Bluetooth Low Energy (BLE) vulnerabilities
+in chips from seven vendors and \textsc{BrakTooth} eighteen across thirteen fuzzed Bluetooth
 Classic devices from eleven vendors~\cite{sweyntooth2020,braktooth2022}. Detecting a crash, though, does not
 give a developer enough to fix it. What a developer needs is a
 \emph{proof of concept} (PoC): the minimal set of packets that reliably triggers
@@ -32,7 +32,7 @@ that adding packets never removes a crash. When either fails it can discard the
 critical packet and converge on
 an incorrect or empty result. \textsc{AirBugCatcher} avoids the algorithm: it
 enumerates small combinations of suspect packets and runs each once, which keeps
-the search cheap but forgoes minimality and accepts the first crash it sees.
+the search cheap but forgoes minimality and accepts the first crash that carries the expected identifier.
 
 We introduce \emph{Robust Delta-Debugging} (RDD), which approximates the stable
 verdict delta debugging assumes. A truncated Sequential Probability Ratio Test
@@ -58,8 +58,10 @@ of the simulator's two noise assumptions, since with report variation and
 phantom crashes switched off the baseline recovers 0.978 with no false credit at
 a fifth of the cost. % headtohead.json, resilience.json, benchmarks.run sensitivity
 Finally it turns those dependencies and the method's structural limits into a
-research agenda. The targets are public, and the benchmark code and the frozen
-judge verdicts are released, so the numbers reproduce without a model.
+research agenda. The targets are public, and the benchmark code, the reference results and the
+frozen judge verdicts are released at
+\url{https://github.com/Kaldreic/iot-smart-home-security-t39}, so the numbers
+reproduce without a model.
 Section~\ref{sec:background} gives the background, Section~\ref{sec:our_approach}
 presents RDD, Section~\ref{sec:evaluation} the evidence and the proposed
 experiments, Section~\ref{sec:related_work} the related work, and

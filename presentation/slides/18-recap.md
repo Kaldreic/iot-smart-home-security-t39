@@ -23,7 +23,7 @@
       </div>
       <div class="fact">
         <span class="kicker">Outcome</span>
-        <span class="text"><strong>Breaks adversarial sensing</strong>; the PER cost of amplitude obfuscation returns near baseline in intermittent (Run + Idle) operation.</span>
+        <span class="text"><strong>Breaks adversarial sensing</strong>; intermittent (Run + Idle) operation cuts the PER cost of amplitude obfuscation, a stated trade-off.</span>
       </div>
     </div>
   </div>
@@ -47,7 +47,7 @@
       </div>
       <div class="fact">
         <span class="kicker">Outcome</span>
-        <span class="text"><strong>75% of bugs reproduced</strong> where simple replay scored zero on 5G and Wi-Fi.</span>
+        <span class="text"><strong>33 of 44 unique bugs reproduced as expected</strong> (40 triggered) where simple replay scored zero on 5G and Wi-Fi.</span>
       </div>
     </div>
   </div>

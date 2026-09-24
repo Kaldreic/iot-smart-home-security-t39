@@ -52,8 +52,8 @@ def id_l2l3(target_bug: str, obs) -> bool:                          # RDD: L2, t
         return False
     L3_STATS["calls"] += 1                                          # uncertain: escalate
     h = _pair_hash(TARGET_TEXT[target_bug], render_dump(obs))
-    v = L3CACHE.get(h)
-    if v is not None:
+    if h in L3CACHE:                                                # `in`, as rdd.identity: a stored None is a hit
+        v = L3CACHE[h]
         L3_STATS["hits"] += 1
         return isinstance(v, dict) and v.get("same") is True       # strict: a non-dict or non-bool entry
         #                                                             reads as NO

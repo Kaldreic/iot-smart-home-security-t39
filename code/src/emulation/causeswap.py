@@ -62,7 +62,8 @@ class _CoPresentOracle:
         stackless ``LL_ASSERT`` exit) so L3 never escalates. The demo exercises cause discrimination, not
         L2/L3's robustness to dump variation (the in-loop / l3_eval's domain); the channel-off guard sees the
         cleaned dump (no report variation is applied to it). Demote-only: False on no crash, or when a different bug's real
-        dump fails the target identity."""
+        dump fails the target identity. Not counted in ``calls``: a channel-off read
+        outside the campaign budget."""
         obs = self._binary_dump(subset)
         return obs is not None and bool(self.identity(bug.bug, obs))
 

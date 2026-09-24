@@ -19,9 +19,9 @@ import subprocess
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from emulation.channel import GEChannelParams, L1Channel, Outcome
+from emulation.channel import GEChannelParams, L1Channel, OUT2REP, Outcome
 from emulation.dump import DumpModel
-from emulation.multibug import TRUE_MIN as _MB_TRUE_MIN, WINDOW as _WINDOW  # noqa: F401  (_WINDOW is re-exported: benchmarks read live._WINDOW)
+from emulation.multibug import TRUE_MIN as _MB_TRUE_MIN
 from rdd.sprt import Rep
 
 _HERE = Path(__file__).resolve().parent
@@ -34,7 +34,6 @@ _BINARIES = {"A": _UP / "build-multibug" / "testbinary",   # the 6 real bugs liv
              "D": _UP / "build-phy" / "testbinary",        #   F the cis-create-established harness. (Routing
              "E": _UP / "build-dle" / "testbinary",        #    them all to build-multibug silently breaks
              "F": _UP / "build-cisc" / "testbinary"}       #    B, D, E and F.)
-_OUT2REP = {Outcome.NOT_REPRODUCED: Rep.NO, Outcome.INVALID: Rep.INVALID}
 _TRUE_MIN = {b: v[0] for b, v in _MB_TRUE_MIN.items()}   # multibug's [frozenset] list-form -> a bare frozenset per bug
 _CRASH_RC = {"A": 136, "B": 136, "C": 255, "D": 255, "E": 255, "F": 255}    # exit code when this bug fires
 #                                                          (empirically: the SIGFPE handler exits 136; assert 255)
@@ -96,7 +95,7 @@ class LiveBinaryOracle:
             self.calls += 1
             out = ch.step(crashed)                         # modelled OTA flakiness: is the crash observed?
             if out is not Outcome.REPRODUCED:
-                return _OUT2REP[out]
+                return OUT2REP[out]
             obs = self.model.emit(bug.bug, rng)            # observed -> a noisy version of the live real dump
             return Rep.YES if self.identity(bug.bug, obs) else Rep.NO   # L2 -> on the residual band, live L3
         return rep

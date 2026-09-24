@@ -56,7 +56,7 @@ def run_baseline_campaign(oracle: Oracle, bugs: list[Bug], rng: random.Random, *
                           max_card: int = baseline.MAX_FUZZED_PKTS, max_try: int = baseline.MAX_TRY,
                           decorrelate: bool = False, most_recent_first: bool = True, confirm: int = 0) -> list[dict]:
     """Run the AirBugCatcher baseline over every bug; rows scored by ``score_bug``. ``confirm`` > 0 is the
-    read-matched control: a caught reproducer must reproduce that many more times before it is credited."""
+    confirmation control: a caught reproducer must reproduce that many more times before it is credited."""
     return [score_bug(oracle, bug, baseline.minimize(oracle, bug, rng, max_card=max_card, max_try=max_try,
             decorrelate=decorrelate, most_recent_first=most_recent_first, confirm=confirm)) for bug in bugs]
 

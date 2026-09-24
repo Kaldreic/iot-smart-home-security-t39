@@ -87,9 +87,9 @@ _GATED = {"real": ("baseline", "baseline_confirm", "tool"), "suppressor": ("base
 
 
 def freeze(seeds: int = 30) -> dict:
-    """Regenerate data/reference/anchor.json: the real bugs and the suppressor, every arm, with the L3 provenance
-    the gate checks."""
-    out = {"real": run_real(seeds, ablate=True), "suppressor": run_suppressor(seeds, ablate=True)}
+    """Regenerate data/reference/anchor.json: the real bugs and the suppressor, every gated arm, with the L3
+    provenance the gate checks."""
+    out = {"real": run_real(seeds), "suppressor": run_suppressor(seeds, ablate=True)}
     _ANCHOR.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n", encoding="utf-8")
     return out
 
@@ -136,7 +136,7 @@ def sensitivity(seeds: int = 30) -> None:
     print(f"  {'setting':24} {'baseline':>22} {'baseline + 1 confirm':>22} {'RDD':>22}")
     for name, params, dp in settings:
         out = run_real(seeds, params=params, dump_params=dp)
-        cell = lambda m: f"{m['genuine']:.3f} / {m['false_credit']:.3f} / {m['reads']:5.1f}"   # noqa: E731
+        cell = lambda m: f"{m['genuine']:.3f} / {m['false_credit']:.3f} / {m['reads']:5.1f}"
         print(f"  {name:24} {cell(out['baseline']):>22} {cell(out['baseline_confirm']):>22} {cell(out['tool']):>22}")
 
 

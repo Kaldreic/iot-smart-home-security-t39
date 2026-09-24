@@ -29,9 +29,9 @@ reliable oracle, which wireless environments do not provide, so \texttt{ddmin}'s
 a classical search but prioritises producing a reliable verdict, complementing
 rather than competing with these minimisers. Delta debugging has previously been
 applied to non-deterministic targets. For example, Pontolillo and
-Mousavi~\cite{quantumdd2024} reduce quantum-program regressions using a
-fixed-sample property check on a simulator, not a sequential, bounded-error
-decision on a real channel.
+Mousavi~\cite{quantumdd2024} reduce quantum-program regressions with
+property-based tests whose verdict is a fixed-sample statistical check, not a
+sequential, bounded-error decision on a real channel.
 
 \subsection{Wireless fuzzing: discovery versus reproduction}
 
@@ -77,7 +77,7 @@ output samples under a metamorphic relation with a fixed-sample hypothesis test,
 offline batch decision, whereas RDD makes sequential, bounded-error verdicts during
 the reduction process.
 
-\subsection{Language models (LLMs) as testing oracles}
+\subsection{Large language models (LLMs) as testing oracles}
 
 Language models are now applied in testing in various ways.
 \textsc{LPR}~\cite{lpr2024} combines a syntax-guided reducer with LLM-proposed

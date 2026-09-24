@@ -31,7 +31,8 @@ from benchmarks import live, scoring
 from benchmarks.scenario import _BUGS
 from emulation import multibug
 from emulation.baseline import exact_crash_id
-from emulation.live import LiveBinaryOracle, _Bug, _WINDOW
+from emulation.live import LiveBinaryOracle, _Bug
+from emulation.multibug import WINDOW
 from emulation.suppressor import LRBUG, LengthReqOracle
 from rdd.identity import LiveL2L3Identity
 
@@ -73,7 +74,7 @@ def _run_seed(seed, setups) -> dict:
     rows = {lbl: [] for lbl, *_ in _ARMS}
     for i, bug in enumerate(_BUGS):
         oracles = setups[bug]
-        bug_obj = _Bug(bug=bug, window=_WINDOW[bug], crash_sig=f"bug-{bug}")
+        bug_obj = _Bug(bug=bug, window=WINDOW[bug], crash_sig=f"bug-{bug}")
         arm_seed = seed * 131 + i                                         # the same channel seed for all four arms (distinct while bugs <= 131)
         for lbl, campaign, kind, kw in _ARMS:
             oracle = oracles[kind][0]
@@ -126,9 +127,9 @@ def _run_suppressor(seeds, *, model_name, host, judge, memo) -> dict:
 def _lever_deltas(out) -> dict:
     """The three lever deltas: per-arm false credit on A--F, the oracle -> ablation genuine change on A--F, and
     the ablation -> tool genuine change on the suppressor."""
-    rg = lambda arm: out["real"][arm]["genuine"]["mean"]                  # noqa: E731  (A--F genuine mean)
-    rfc = lambda arm: out["real"][arm]["false_credit"]["mean"]            # noqa: E731
-    sg = lambda arm: out["suppressor"][arm]["genuine"]                    # noqa: E731  (suppressor genuine rate)
+    rg = lambda arm: out["real"][arm]["genuine"]["mean"]                  # A--F genuine mean
+    rfc = lambda arm: out["real"][arm]["false_credit"]["mean"]
+    sg = lambda arm: out["suppressor"][arm]["genuine"]                    # suppressor genuine rate
     return {"oracle_fc_invariance": {lbl: rfc(lbl) for lbl, *_ in _ARMS},
             "identity_genuine_real": rg("ablation") - rg("oracle"),
             "minimiser_genuine_suppressor": sg("tool") - sg("ablation")}
@@ -204,7 +205,7 @@ def coherence(seeds: int = 8, tol: float = 1e-9) -> bool:
 
 
 def _print(out: dict) -> None:
-    g = lambda arm, m: out["real"][arm][m]["mean"] if out["real"][arm][m] else float("nan")   # noqa: E731
+    g = lambda arm, m: out["real"][arm][m]["mean"] if out["real"][arm][m] else float("nan")
     print(f"=== B3 lever decomposition — {out['n_seeds']} seeds, real host-native binaries ({out['n_bugs']} bugs A--F) + the suppressor ===")
     print(f"  {'arm':9} {'A--F genuine/fc':>22} {'exact/gap':>14}    {'suppressor g/fc':>15}")
     for lbl, *_ in _ARMS:

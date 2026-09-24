@@ -19,11 +19,12 @@ import random
 from pathlib import Path
 
 from benchmarks import scoring
-from benchmarks.identity_cache import agg as _agg  # noqa: F401  (shared aggregator; re-exported for tests)
+from benchmarks.identity_cache import agg as _agg
 from emulation.channel import GEChannelParams
 from emulation.dump import DumpModel, DumpParams, parse_base_dump
-from emulation.live import (LiveBinaryOracle, _BINARIES, _Bug, _CRASH_RC,  # noqa: F401  (re-exported)
-                            _TRUE_MIN, _WINDOW, run_binary)
+from emulation.multibug import WINDOW
+from emulation.live import (LiveBinaryOracle, _BINARIES, _Bug, _CRASH_RC,
+                            _TRUE_MIN, run_binary)
 from rdd.identity import LiveL2L3Identity
 
 
@@ -54,7 +55,7 @@ def run_live(bug: str, seeds: int = 5, *, decorrelate: bool = True, **kw):
     """Run the tool over ``seeds`` live campaigns on the real binary. The L3 memo is shared across seeds (each
     distinct dump pair is judged once). Returns (rows, oracle, identity)."""
     oracle, identity = build_live_campaign(bug, **kw)
-    bug_obj = _Bug(bug=bug, window=_WINDOW[bug], crash_sig=f"bug-{bug}")
+    bug_obj = _Bug(bug=bug, window=WINDOW[bug], crash_sig=f"bug-{bug}")
     rows = []
     for s in range(seeds):
         oracle.calls = 0
@@ -67,7 +68,7 @@ def run_live(bug: str, seeds: int = 5, *, decorrelate: bool = True, **kw):
 def main() -> int:
     ap = argparse.ArgumentParser(prog="benchmarks.live",
                                  description="Off-the-shelf run: the shipped tool on the real binary, live L3")
-    ap.add_argument("--bug", default="A", choices=list(_WINDOW))
+    ap.add_argument("--bug", default="A", choices=list(WINDOW))
     ap.add_argument("--seeds", type=int, default=5)
     ap.add_argument("--model", default="llama3.1:8b")
     ap.add_argument("--host", default=None)

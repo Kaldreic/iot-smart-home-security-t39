@@ -12,7 +12,7 @@
 </div>
 <div class="validation-col">
 <div class="validation-heading">Phase · SpotFi AoA estimation</div>
-<img src="/slide09-fig13-phase-aoa-validation.png" class="validation-image" alt="Figure 13 from the WiShield paper: phase difference (a) and AoA (b) are stable until t=5s; after WiShield activates, both scatter uniformly across their full range." />
+<img src="/slide09-fig13-phase-aoa-validation.png" class="validation-image" alt="Figure 13 from the WiShield paper: phase difference (a) and AoA (b) are stable until t=5s; after WiShield activates, the phase difference scatters uniformly over (−π, π) and the AoA spreads over (−90°, 90°), concentrating around 0°." />
 <div class="paper-fig-attrib">WiShield, Figure 13</div>
 <div class="validation-note">
 <strong>0 – 5 s (off):</strong> static target, phase and AoA clean flat lines.<br/>

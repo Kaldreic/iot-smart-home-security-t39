@@ -1,6 +1,5 @@
 {
   "name": "iot-smart-home-security-t39-slides",
-  "type": "module",
   "private": true,
   "scripts": {
     "build": "slidev build",

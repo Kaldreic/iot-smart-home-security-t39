@@ -7,8 +7,8 @@
 </div>
 <div class="phase-notes">
 <div class="phase-note-header">Key properties</div>
-<div class="phase-note-item"><span class="phase-note-num">8</span><span class="phase-note-text">sub-path lengths, selectable per packet</span></div>
-<div class="phase-note-item"><span class="phase-note-num">2π</span><span class="phase-note-text">phase shift uniform, modulo</span></div>
+<div class="phase-note-item"><span class="phase-note-num">8</span><span class="phase-note-text">sub-path lengths, switched at least every 10 ms</span></div>
+<div class="phase-note-item"><span class="phase-note-num">2π</span><span class="phase-note-text">phase shift uniform modulo 2π</span></div>
 <div class="phase-note-item"><span class="phase-note-num">×N</span><span class="phase-note-text">independent circuits — one per antenna</span></div>
 </div>
 </div>

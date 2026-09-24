@@ -25,6 +25,10 @@ dependencies = [
 Repository = "https://github.com/Kaldreic/iot-smart-home-security-t39"
 Report = "https://github.com/Kaldreic/iot-smart-home-security-t39/tree/main/report"
 
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]   # pyflakes plus the pycodestyle errors
+ignore = ["E731"]                     # small lambdas are used on purpose
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["rdd*", "emulation*", "benchmarks*"]   # tests ship too: the README runs them from an install

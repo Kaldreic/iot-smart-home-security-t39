@@ -1,7 +1,7 @@
 """benchmarks.real — the real-target campaign driver shared by the runner and the cache tests.
 
-The device (the truth-table oracle and the captured reference dumps) lives in ``emulation.multibug`` and the
-cached open-model L3 identity in ``benchmarks.identity_cache``; both are re-exported here. ``_run`` drives
+The device (the truth-table oracle and the captured reference dumps) lives in ``emulation.multibug`` and is
+re-exported here; the cached open-model L3 identity is ``benchmarks.identity_cache.id_l2l3``. ``_run`` drives
 one campaign function over every (bug, seed); ``benchmarks.run`` chooses the arm.
 """
 
@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import random
 
-from benchmarks.identity_cache import id_l2l3  # noqa: F401  (re-exported for the runner)
 from emulation.multibug import BUGS, MODEL, MultibugOracle, _mbug, id_exact  # noqa: F401  (device re-exports)
 
 

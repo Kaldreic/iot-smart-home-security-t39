@@ -1,4 +1,4 @@
-# AirBugCatcher reproduces 75% of expected bugs across 5 devices
+# AirBugCatcher reproduces 33 of 44 unique bugs as expected
 
 <div class="slide-tagline">5 devices · 3 protocols · 14 h 38 m total</div>
 

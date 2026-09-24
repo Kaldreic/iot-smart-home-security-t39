@@ -9,7 +9,6 @@ info: |
   Sapienza University of Rome
 layout: cover
 transition: slide-left
-mdc: true
 ---
 
 <div class="cover-tag">Data and Network Security · T39 · Group 19</div>

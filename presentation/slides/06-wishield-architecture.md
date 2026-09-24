@@ -36,4 +36,4 @@
 </div>
 </div>
 
-<div class="callout" style="max-width: 58rem; margin-top: 1rem;">Signal flow <strong>antenna → amplitude → phase → WNIC</strong>. The phase obfuscator routes each packet through one of eight switched sub-paths (two 1→2 and four 1→4 switches) — different lengths produce different propagation delays.</div>
+<div class="callout" style="max-width: 58rem; margin-top: 1rem;">Signal flow <strong>antenna → amplitude → phase → WNIC</strong>. The phase obfuscator routes the signal through one of eight switched sub-paths, switching at least every 10 ms when the channel is free (two 1→2 and four 1→4 switches) — different lengths produce different propagation delays.</div>

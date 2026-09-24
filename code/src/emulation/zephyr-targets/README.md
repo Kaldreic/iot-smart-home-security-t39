@@ -34,4 +34,4 @@ The built `testbinary` is a **32-bit i386** host executable (Zephyr's `unit_test
 (Debian/Ubuntu) or `sudo dnf install -y glibc.i686` (Fedora/RHEL). Without it the binary fails to exec with
 a misleading `FileNotFoundError` (the ELF interpreter `/lib/ld-linux.so.2` is absent).
 
-_Attribution: the `patches/` modify Zephyr controller test sources ([zephyrproject-rtos/zephyr](https://github.com/zephyrproject-rtos/zephyr), Apache-2.0) at the pinned vulnerable commit; those modifications ship under this repo's MIT license, and the underlying Zephyr code remains Apache-2.0._
+_Attribution: the `patches/` modify Zephyr controller test sources ([zephyrproject-rtos/zephyr](https://github.com/zephyrproject-rtos/zephyr), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)) at the pinned vulnerable commit; those modifications ship under this repo's MIT license, and the underlying Zephyr code remains Apache-2.0._

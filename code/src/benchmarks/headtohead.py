@@ -3,10 +3,10 @@
 Pipeline: fuzz campaign -> crash grouping -> per-bug window -> [AirBugCatcher | RDD] minimiser -> PoC -> score. Both
 arms see the same campaign, L2 crash grouping (AirBugCatcher itself groups by exact id), window, channel
 realisation and binary; only the minimiser and its in-loop crash identity differ. The AirBugCatcher arm
-(``benchmarks.baseline`` + ``exact_crash_id``) is deterministic; ``airbug_confirm`` is the read-matched
-control (one confirming re-run). The RDD arm (``rdd.minimize`` + ``rdd.LiveL2L3Identity``) calls the open
-model live, so it is reported as a range over seeds; its L3 verdicts are frozen to
-data/llm_cache/headtohead_l3.json so the frozen replay is reproducible. Every arm is scored by
+(``benchmarks.baseline`` + ``exact_crash_id``) calls no model and is bit-reproducible; ``airbug_confirm`` is
+the confirmation control (one confirming re-run). The RDD arm (``rdd.minimize`` + ``rdd.LiveL2L3Identity``)
+calls the open model live; its L3 verdicts are frozen to data/llm_cache/headtohead_l3.json so the frozen
+replay is reproducible. Every arm is reported as a mean and a range over seeds and scored by
 ``scoring.score_bug`` against the channel-off truth.
 
 The "device" is the Zephyr controller compiled to a host-native ELF and run via subprocess; the radio/OTA
@@ -94,12 +94,12 @@ def run_headtohead(n_traces: int = 42, *, seed: int = 0, model_name: str = "llam
                 rows[arm].append(_miss(t))
             continue
         rdd_oracle, _ri, ab_oracle = setup_for(predicted)
-        bug_obj = live._Bug(bug=predicted, window=live._WINDOW[predicted], crash_sig=f"bug-{predicted}")
+        bug_obj = live._Bug(bug=predicted, window=multibug.WINDOW[predicted], crash_sig=f"bug-{predicted}")
         trace_seed = seed * 131 + i                                       # the same channel realisation for every arm (distinct while traces <= 131)
         rdd_oracle.calls = 0
         rr = dict(scoring.run_tool_campaign(rdd_oracle, [bug_obj], random.Random(trace_seed), decorrelate=True)[0])
         rows["rdd"].append(_record(t, predicted, rr, rdd_oracle.calls))
-        for arm, confirm in (("airbug", 0), ("airbug_confirm", 1)):       # airbug_confirm: the read-matched control
+        for arm, confirm in (("airbug", 0), ("airbug_confirm", 1)):       # airbug_confirm: the confirmation control
             ab_oracle.calls = 0
             ar = dict(scoring.run_baseline_campaign(ab_oracle, [bug_obj], random.Random(trace_seed), decorrelate=True,
                                                     confirm=confirm)[0])
@@ -251,19 +251,17 @@ def main() -> int:
            else run(a.traces, a.seeds, model_name=a.model, host=a.host))
     print(f"=== B1 head-to-head — {a.seeds} seeds x {a.traces} traces; real host-native binary + "
           f"{'frozen L3 cache' if (a.frozen or a.refreeze) else 'live L3 (' + a.model + ')'} ===")
-    print(f"  {'metric':16} {'AirBugCatcher':>14} {'+ 1 confirmation':>18} {'RDD (range over seeds)':>26}")
+    print(f"  {'metric':16} {'AirBugCatcher':>26} {'+ 1 confirmation':>26} {'RDD':>26}   (mean [min, max] over seeds)")
     for m in ("genuine", "genuine_routed", "false_credit", "exact_minimal", "mean_size_gap", "reads"):
-        ab, ac, rd = out["airbug"][m], out["airbug_confirm"][m], out["rdd"][m]
-        f3 = lambda x: f"{x['mean']:.3f}" if x else "n/a"                   # noqa: E731
-        rd_s = f"{rd['mean']:.3f} [{rd['min']:.3f},{rd['max']:.3f}]" if rd else "n/a"
-        print(f"  {m:16} {f3(ab):>10} {f3(ac):>20} {rd_s:>26}")
+        fr = lambda x: f"{x['mean']:.3f} [{x['min']:.3f},{x['max']:.3f}]" if x else "n/a"
+        print(f"  {m:16} " + " ".join(f"{fr(out[arm][m]):>26}" for arm in ("airbug", "airbug_confirm", "rdd")))
     sp = out["suppressor"]
     print(f"  -- real non-monotone suppressor (LL_LENGTH_REQ, truth-table-backed): "
           f"AirBugCatcher {sp['airbug']['genuine']:.3f}/{sp['airbug']['false_credit']:.3f}   "
           f"+1 confirm {sp['airbug_confirm']['genuine']:.3f}/{sp['airbug_confirm']['false_credit']:.3f}   "
           f"RDD {sp['rdd']['genuine']:.3f}/{sp['rdd']['false_credit']:.3f}  (genuine/false credit)")
-    print("  RDD = live open-model L3 (range over seeds; verdicts frozen to the cache for a reproducible CI point);")
-    print("  AirBugCatcher = exact-id (bit-reproducible). Scored vs the channel-off virtual-perfect. host-native binary + MODELLED channel.")
+    print("  RDD = live open-model L3 (verdicts frozen to the cache for a reproducible replay); AirBugCatcher = exact id, no model.")
+    print("  Scored against the channel-off truth; host-native binary, modelled channel.")
     return 0
 
 

@@ -45,7 +45,7 @@ def _arm_agg(rows: list[dict], n_seeds: int) -> dict:
     rows (see ``synthetic.ci``). exact_minimal and mean_size_gap are conditioned on a genuine reproduction.
     Rows arrive bug-consecutive in chunks of n_seeds (``synthetic.run``)."""
     bugs = [rows[i:i + n_seeds] for i in range(0, len(rows), n_seeds)]
-    genuine = lambda r: r["true_reproduced"]                      # noqa: E731
+    genuine = lambda r: r["true_reproduced"]
     def grp(key, pred=lambda r: True, tf=None):                  # one filtered value-list per bug cluster
         f = tf or (lambda r: r[key])
         return [[f(r) for r in bug if r.get(key) is not None and pred(r)] for bug in bugs]
@@ -96,9 +96,9 @@ def coherence(tol: float = 1e-9) -> bool:
 
 
 def _print(out: dict) -> None:
-    g = lambda cell, key: cell[key][0]                           # the CI mean  # noqa: E731
-    cell = lambda c: (f"{g(c, 'genuine'):.3f}/{g(c, 'false_credit'):.3f}/{g(c, 'exact_minimal'):.2f}/"
-                      f"{g(c, 'mean_size_gap'):.2f}/{g(c, 'reads'):.1f}")        # noqa: E731
+    g = lambda cell, key, f: "n/a" if cell[key][0] != cell[key][0] else format(cell[key][0], f)   # the CI mean
+    cell = lambda c: (f"{g(c, 'genuine', '.3f')}/{g(c, 'false_credit', '.3f')}/{g(c, 'exact_minimal', '.2f')}/"
+                      f"{g(c, 'mean_size_gap', '.2f')}/{g(c, 'reads', '.1f')}")
     print(f"=== B2 resilience — {out['n_campaigns_per_arm']} campaigns/arm "
           f"(AirBugCatcher vs RDD; {len(out['regimes']) - 1} regimes; {out['n_bugs']}x{out['n_seeds']}) ===")
     print("  each cell = genuine / false_credit / exact_minimal / mean_size_gap / reads")

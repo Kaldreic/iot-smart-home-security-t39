@@ -52,4 +52,4 @@
   </div>
 </div>
 
-<div class="note insider-note">Prior Wi-Fi sensing attacks — <strong>WindTalker</strong> · <strong>Zhu et al.</strong> · <strong>Banerjee &amp; Zhu</strong> — all target the outsider; the insider gap is WiShield's new concern.</div>
+<div class="note insider-note">Prior Wi-Fi sensing attacks — <strong>WindTalker</strong> · <strong>Zhu et al.</strong> · <strong>Banerjee et al.</strong> — all target the outsider; the insider gap is WiShield's new concern.</div>

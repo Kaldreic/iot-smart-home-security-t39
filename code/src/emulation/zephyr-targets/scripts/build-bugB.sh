@@ -20,7 +20,7 @@
 # gdb (--cap-add SYS_PTRACE) anchors the exact site.
 #
 # Leaves build-cis/testbinary. Separate build dir; the other build dirs are untouched.
-# Idempotent; re-uses the clone + SDK. Run: bash scripts/build-bugB.sh
+# Idempotent; reuses the clone + SDK. Run: bash scripts/build-bugB.sh
 set -euo pipefail
 # shellcheck source-path=SCRIPTDIR
 # shellcheck source=common.sh
@@ -55,6 +55,7 @@ echo "    determinism (3x on 128): $(run 128) $(run 128) $(run 128)"
 
 echo "### example dump (HARNESS_BUG=B HARNESS_SUBSET=128) — SIGFPE handler backtrace ###"
 HARNESS_BUG=B HARNESS_SUBSET=128 "$BIN" 2>&1 | sed -n "/=== CRASH/,\$p" | grep -E "CRASH|llcp_rp_cc_run|ull_cp_run|event_prepare" | head
+[ "$bad" -eq 0 ] || { echo "### VERIFY FAILED: the truth table does not hold ###"; exit 1; }
 EOF
 )
 build_harness

@@ -41,7 +41,7 @@ def _arm(target: str, reachable: str, seeds: list[int], guard: bool) -> dict:
     for s in seeds:
         o = Oracle(reachable=reachable, identity=idc.id_l2l3)   # the guard's identity cascade
         rows.append(scoring.run_tool_campaign(o, [bug], random.Random(s), decorrelate=True)[0])
-    g = lambda k: float(np.mean([float(bool(r.get(k))) for r in rows]))   # noqa: E731
+    g = lambda k: float(np.mean([float(bool(r.get(k))) for r in rows]))
     return {"genuine": g("true_reproduced"), "false_credit": g("false_credit"), "n": len(rows)}
 
 

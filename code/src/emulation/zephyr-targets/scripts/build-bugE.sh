@@ -21,7 +21,7 @@
 # assert message is the artifact, not a backtrace).
 #
 # Leaves build-dle/testbinary. Separate build dir; /work/build and the other build-* dirs are untouched.
-# Idempotent; re-uses the clone + SDK. Run: bash scripts/build-bugE.sh
+# Idempotent; reuses the clone + SDK. Run: bash scripts/build-bugE.sh
 set -euo pipefail
 # shellcheck source-path=SCRIPTDIR
 # shellcheck source=common.sh
@@ -56,6 +56,7 @@ echo "    determinism (3x on 24): $(run 24) $(run 24) $(run 24)"
 
 echo "### example dump (HARNESS_BUG=E HARNESS_SUBSET=24) — controller assert message ###"
 HARNESS_BUG=E HARNESS_SUBSET=24 "$BIN" 2>&1 | grep -E "Running TESTSUITE dle|ull_llcp_common\.c:1138"
+[ "$bad" -eq 0 ] || { echo "### VERIFY FAILED: the truth table does not hold ###"; exit 1; }
 EOF
 )
 build_harness

@@ -143,7 +143,7 @@ def run_scenario(n_traces: int = 40, *, model_name: str = "llama3.1:8b", host=No
         oracle, identity = campaign_for(predicted)         # route to the predicted bug's binary
         l3_before, br_before = identity.stats["l3_live"], oracle.binary_runs   # per-trace deltas (oracle is shared)
         oracle.calls = 0
-        bug_obj = live._Bug(bug=predicted, window=live._WINDOW[predicted], crash_sig=f"bug-{predicted}")
+        bug_obj = live._Bug(bug=predicted, window=multibug.WINDOW[predicted], crash_sig=f"bug-{predicted}")
         r = dict(scoring.run_tool_campaign(oracle, [bug_obj], random.Random(seed * 131 + len(rows)),
                                            decorrelate=True)[0])
         # score_bug has already checked the PoC against the real binary; genuine additionally requires the
