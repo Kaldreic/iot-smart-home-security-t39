@@ -1,13 +1,15 @@
 # Zephyr target build recipe
 
-The *live* benchmarks -- B1 (`benchmarks.headtohead`), B3 (`benchmarks.levers`), the end-to-end
-`benchmarks.scenario` and the off-the-shelf `benchmarks.live` -- run against real, vulnerable Zephyr
+The *live* benchmarks — B1 (`benchmarks.run b1`), B3 (`benchmarks.run b3`), the end-to-end
+`benchmarks.scenario` and the off-the-shelf `benchmarks.live` — run against real, vulnerable Zephyr
 Bluetooth-controller binaries. Those binaries are **not committed**; they build into the gitignored
 `code/upstream/zephyr-cve/build-*/`. These scripts are the recipe that produces them.
 
-Each `scripts/build-*.sh` is self-contained and idempotent: inside the pinned `zephyr-build` Docker image it
-shallow-clones Zephyr at a fixed vulnerable commit, restores the vulnerable controller guard, applies its
-harness patch from `patches/`, and `cmake`/`ninja`-builds a `testbinary`.
+Each `scripts/build-*.sh` sources `scripts/common.sh`, which pins the `zephyr-build` Docker image by digest,
+the two Zephyr commits and the SDK tarball by checksum, and does the shared work: it shallow-clones Zephyr
+at the vulnerable commit, restores the vulnerable controller file, applies the script's harness patch from
+`patches/`, `cmake`/`ninja`-builds a `testbinary`, and runs the script's verification sweep. The scripts are
+idempotent.
 
 | Script | Builds (`upstream/zephyr-cve/…`) | Bug(s) |
 | --- | --- | --- |
@@ -20,10 +22,11 @@ harness patch from `patches/`, and `cmake`/`ninja`-builds a `testbinary`.
 
 **Requires Docker.** The first build pulls the pinned `zephyr-build` image (~31 GB), shallow-clones Zephyr
 (~1 GB) and downloads the Zephyr SDK (~42 MB) before building, so budget disk and time; run e.g.
-`bash scripts/build-multibug.sh`. You only need these to re-run the live benchmarks from scratch -- the
+`bash scripts/build-multibug.sh`. You only need these to re-run the live benchmarks from scratch — the
 offline reproduce gate (`python -m benchmarks.run coherence`) and every committed report number need none
 of it. Every script honours `HARNESS_WS=<dir>` to relocate its workspace; `build-lengthreq.sh` insists on a
-`*-lengthreq` directory so it never dirties the shared clone.
+`*-lengthreq` directory so it never dirties the shared clone, and writes `truth-lengthreq.json`, which is
+copied by hand to `src/emulation/data/`.
 
 The built `testbinary` is a **32-bit i386** host executable (Zephyr's `unit_testing` board). To *run* it on a
 64-bit host (the `b1`/`b3`/`scenario`/`live` benchmarks), install the 32-bit runtime once:
@@ -31,4 +34,4 @@ The built `testbinary` is a **32-bit i386** host executable (Zephyr's `unit_test
 (Debian/Ubuntu) or `sudo dnf install -y glibc.i686` (Fedora/RHEL). Without it the binary fails to exec with
 a misleading `FileNotFoundError` (the ELF interpreter `/lib/ld-linux.so.2` is absent).
 
-_Attribution: the `patches/` modify Zephyr controller test sources ([zephyrproject-rtos/zephyr](https://github.com/zephyrproject-rtos/zephyr), Apache-2.0) at the pinned vulnerable commit; those modifications ship under this repo's MIT licence, and the underlying Zephyr code remains Apache-2.0._
+_Attribution: the `patches/` modify Zephyr controller test sources ([zephyrproject-rtos/zephyr](https://github.com/zephyrproject-rtos/zephyr), Apache-2.0) at the pinned vulnerable commit; those modifications ship under this repo's MIT license, and the underlying Zephyr code remains Apache-2.0._

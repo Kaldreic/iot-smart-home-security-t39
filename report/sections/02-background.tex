@@ -15,7 +15,7 @@ in chips from seven vendors, \textsc{BrakTooth}~\cite{braktooth2022} eighteen in
 Bluetooth Classic devices from eleven vendors, and \textsc{U-Fuzz}~\cite{ufuzz2024} carried the same idea to stateful
 IoT protocols, 5G\,NR among them, on commercial devices. Each campaign ends with a
 large packet trace and a thin crash log, a terse record that a fault occurred but
-not which of the many fuzzed packets~\cite{airbugcatcher2024} was responsible. The
+not which of the many fuzzed packets was responsible~\cite{airbugcatcher2024}. The
 work does not scale well. Every distinct crash signature needs its own
 reconstruction, and aligning a sparse crash log against a vast trace by hand is a
 bottleneck that keeps teams from acting on what their fuzzers already found.
@@ -50,8 +50,8 @@ and radio drift mean identical packets need not yield the same result twice, and
 the device's hidden state (timers, queues, the seeds of its pseudo-random
 generators) is rarely reset between trials. The component that should answer
 ``did this recipe reproduce the bug?'' is therefore unreliable by construction.
-Repeating a test, as \textsc{AirBugCatcher} does, makes a true reproduction more
-likely to show up but never makes the verdict trustworthy. The distinction
+Trying many candidates, as \textsc{AirBugCatcher} does, makes a true reproduction
+more likely to show up but never makes any single verdict trustworthy. The distinction
 matters. A flaky software test can in principle be stabilised by controlling the
 timing and the randomness, but radio non-determinism is intrinsic to the medium
 and cannot be removed by better test hygiene. The verdict cannot be cleaned. It

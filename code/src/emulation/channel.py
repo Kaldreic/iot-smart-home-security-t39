@@ -10,7 +10,7 @@ The RF chain is a two-state Gilbert-Elliott Markov chain (GOOD/BAD) with a
 geometric BAD burst. Each state has its own miss, phantom and invalid rates:
 misses (false negatives) come from the FlakeFlagger rerun corpus, phantoms are
 rare, and an invalid (a connection-establishment failure) is discarded, never
-counted as a miss. A sticky device-error term ``rho_dev`` -- a swept unknown --
+counted as a miss. A sticky device-error term ``rho_dev`` (default 0; not swept by the committed benchmarks)
 adds ordered-rerun autocorrelation the RF state cannot represent. Two knobs,
 ``reset`` and ``dev_settle``, de-correlate reps while preserving the marginal
 loss rate. Calibration target: an among-valid miss rate of 0.44 (the FlakeFlagger
@@ -60,7 +60,7 @@ class GEChannelParams:
     # --- wireless connection-establishment failure -> invalid trial ---
     p_invalid_good: float = 0.02
     p_invalid_bad: float = 0.27
-    # --- device-state persistence: sticky-error autocorrelation (swept unknown) ---
+    # --- device-state persistence: sticky-error autocorrelation (default 0; not swept) ---
     rho_dev: float = 0.0
     # --- de-correlation knobs ---
     reset: float = 0.0       # RF resample rate in [0,1] (cheap spacing; marginal-neutral)

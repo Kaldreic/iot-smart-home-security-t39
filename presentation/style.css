@@ -38,23 +38,10 @@
 }
 
 /* Cover slide — title in full Sapienza red, no accent bar */
-.slidev-layout.cover h1,
-.slidev-layout.intro h1,
-.slidev-layout.center h1 {
+.slidev-layout.cover h1 {
   color: var(--sapienza-red);
   border-left: none;
   padding-left: 0;
-}
-
-/* Center layout: echo cover's red divider under the H1 */
-.slidev-layout.center h1::after,
-.slidev-layout.intro h1::after {
-  content: '';
-  display: block;
-  width: 72px;
-  height: 2px;
-  background: var(--sapienza-red);
-  margin: 0.9rem auto 0 auto;
 }
 
 /* Strong text — Sapienza red emphasis */
@@ -115,14 +102,6 @@
   color: var(--sapienza-muted);
   padding-left: 1em;
   font-style: italic;
-}
-
-/* Two-column layout gap */
-.slidev-layout.two-cols > :first-child {
-  padding-right: 1.25rem;
-}
-.slidev-layout.two-cols > :last-child {
-  padding-left: 1.25rem;
 }
 
 /* ---------- Content slides: coherent top + bottom accents ---------- */

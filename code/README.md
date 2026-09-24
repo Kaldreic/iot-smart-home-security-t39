@@ -39,7 +39,7 @@ The only dependencies are `numpy` and `drain3`. Everything below runs offline, o
 ```bash
 PYTHONHASHSEED=0 python -m rdd.tests.test_rdd                # the tool's 18 invariants (seconds)
 PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks  # the suite self-test (~15 s without binaries)
-PYTHONHASHSEED=0 python -m benchmarks.run coherence          # reproduce the committed numbers (~3 min)
+PYTHONHASHSEED=0 python -m benchmarks.run coherence          # reproduce the committed numbers (about 4 min; 7 on a GitHub runner)
 PYTHONHASHSEED=0 python -m benchmarks.run sensitivity        # the same anchor with the noise models switched off
 ```
 
@@ -59,13 +59,14 @@ within ±0.02 (it reproduces exactly, delta 0.000) and the synthetic sweep leaf 
 | `b3`          | real-bug lever decomposition (oracle, identity, minimiser)             | one arm per lever                  |
 | `coherence`   | the model-free reproducibility gate (real anchor + B2)                 | delta 0.000                        |
 | `sensitivity` | the real anchor with report variation and phantom crashes switched off | see below                          |
+| `freeze`      | regenerate the anchor's committed reference                            | writes `anchor.json`               |
 
 Every arm is scored by the same rule: a reproduction is genuine only if the arm credited
 its recipe and the recipe crashes the target with the channel off; it is a false credit
 if the arm credited a recipe that does not. The baseline is a re-implementation of
 AirBugCatcher's reproduction strategy (bounded enumeration up to three packets, one
 attempt per candidate, exact signature match), not the original tool. A third arm,
-`baseline_confirm`, is the read-matched control: the same baseline that credits a
+`baseline_confirm`, is the confirmation control: the same baseline that credits a
 candidate only after one confirming re-run.
 
 The comparison is a mechanism study under an assumed noise model, and the `sensitivity`
@@ -96,7 +97,8 @@ Bluetooth-controller binaries built for Zephyr's host-native `unit_testing` boar
 32-bit ztest executable, no radio). Build them with Docker using the recipe in
 [`src/emulation/zephyr-targets/`](./src/emulation/zephyr-targets/); each script also
 verifies its binary's channel-off truth table. On a 64-bit host install the i386 runtime
-once (`libc6:i386` on Debian/Ubuntu, `glibc.i686` on Fedora, `lib32-glibc` on Arch).
+once (`libc6:i386` on Debian/Ubuntu, `glibc.i686` on Fedora, `lib32-glibc` on Arch). `HARNESS_WS`
+relocates the build workspace for both the scripts and the Python side.
 
 ```bash
 PYTHONHASHSEED=0 python -m benchmarks.run b1 --frozen        # offline replay, no model
@@ -132,8 +134,9 @@ conservative "different bug", and the coherence gate checks that no miss occurre
 - The channel is a Gilbert–Elliott process on a deterministic host binary, and every
   RDD run resets the session before each attempt, which makes attempts independent; the
   effect of correlated attempts on the sequential test is not evaluated.
-- A phantom crash (a non-reproducing subset reported as crashing, 2–7% per attempt,
-  taken from a software flaky-test corpus) is modelled as carrying the target's own dump.
+- A phantom crash (a non-reproducing subset reported as crashing, 2–7% per attempt) is
+  modelled as carrying the target's own dump; the miss rate is calibrated to the FlakeFlagger
+  rerun corpus (Alshammari et al., ICSE 2021), the phantom rates are the authors'.
   The baseline's false credit is a direct consequence of this assumption.
 - Crash-report variation is modelled with assumed rates (truncation 0.35, top-frame
   loss 0.20, frame churn 0.15, log interleaving 0.40, garbling 0.08). The identity
@@ -145,9 +148,11 @@ conservative "different bug", and the coherence gate checks that no miss occurre
   risk of crediting a recipe that reproduces a different bug is unmeasured.
 - Roughly a third of the synthetic bugs have minimal recipes larger than the baseline's
   three-packet cap and cannot be recovered by it by construction.
-- The live end-to-end scenario is not bit-reproducible (live judge) and was not re-run
-  in the September 2026 audit; `b1` and `b3` were replayed from their caches on rebuilt
-  binaries.
+- Runs with the live judge are not bit-reproducible. In the September 2026 audit `b1`
+  and `b3` were replayed from their caches on rebuilt binaries; `benchmarks.live` (bug A,
+  two runs: both genuine, one live judgment) and `benchmarks.scenario --traces 40` (one run:
+  dedup 0.875, genuine 0.850, no false credit, 29 live judgments) were exercised against a
+  local `llama3.1:8b`. Those live figures are indicative, not references.
 
 ## License and citation
 

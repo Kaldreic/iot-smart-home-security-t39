@@ -21,10 +21,11 @@ from pathlib import Path
 from rdd.l2 import L2Comparator
 
 from .. import real
+from .. import identity_cache as idc
 
 _DATA = Path(__file__).resolve().parent.parent / "data"
 _SWEEP = [0.2, 0.3, 0.4, 0.45, 0.5, 0.55, 0.6, 0.7, 0.8, 0.9]   # L2 thresholds to sweep
-_BAND = real.L3_BAND_LO                                         # the L3 escalation floor (shared constant)
+_BAND = idc.L3_BAND_LO                                         # the L3 escalation floor (shared constant)
 
 
 def _scores(n_same: int, n_cross: int, seed: int):
@@ -101,6 +102,8 @@ def evaluate(n_same: int = 60, n_cross: int = 12, seed: int = 0, default_thresho
         pl = [t for t, v in sw.items() if bst - v <= 0.02]
         plat_los.append(min(pl))
         plat_his.append(max(pl))
+    ok = (auc >= 0.95 and abs(youden - default_threshold) <= 0.1 and same_min > _BAND
+          and all(lo <= default_threshold <= hi for lo, hi in zip(plat_los, plat_his)))   # the verdict below is derived
     stability = {"n_seeds": stability_seeds, "auc_min": min(aucs), "auc_max": max(aucs),
                  "youden_min": min(youdens), "youden_max": max(youdens),
                  "plateau_common": [max(plat_los), min(plat_his)],          # the band that is a plateau in every seed
@@ -116,7 +119,7 @@ def evaluate(n_same: int = 60, n_cross: int = 12, seed: int = 0, default_thresho
         "cross": {"mean": sum(cross) / len(cross), "p95": _pct(cross, 95), "max": max(cross)},
         "sweep": sweep, "plateau": [min(plateau), max(plateau)] if plateau else None, "best_balanced": best,
         "band": band, "stability": stability,
-        "conclusion": (f"NOT overfit [to A--F under the MODELLED OTA-noise regime; the threshold is noise-regime "
+        "conclusion": (("NOT overfit" if ok else "OVERFIT RISK") + " [to A--F under the MODELLED OTA-noise regime; the threshold is noise-regime "
                        f"dependent per rdd/l2.py -- a deployment recalibrates]: AUC {auc:.3f}; the FIXED default "
                        f"{default_threshold} is ~the (fit-on-A--F, not held-out) Youden-J optimum {youden:.3f}, on "
                        f"a flat balanced-accuracy plateau [{min(plateau):.2f},{max(plateau):.2f}] (~{best:.3f}); "
@@ -135,8 +138,8 @@ def main() -> int:
     print(f"=== L2-THRESHOLD overfit/sensitivity eval (real A--F bugs, modelled noise; {out['n_same']} same / {out['n_cross']} cross) ===")
     print(f"  ROC AUC (same vs cross)        : {out['auc']:.4f}   (stable {out['stability']['auc_min']:.3f}-{out['stability']['auc_max']:.3f} over {out['stability']['n_seeds']} seeds)")
     print(f"  same  similarity  mean {out['same']['mean']:.3f}  min {out['same']['min']:.3f}   cross mean {out['cross']['mean']:.3f}  max {out['cross']['max']:.3f}")
-    print(f"  fixed default 0.5  vs  Youden-J (fit-on-A--F) {out['youden_threshold']:.3f}   -> ~equal, not arbitrary")
-    print(f"  balanced-accuracy plateau      : [{out['plateau'][0]:.2f}, {out['plateau'][1]:.2f}]  (~{out['best_balanced']:.3f}, flat -> not a tuned peak)")
+    print(f"  fixed default 0.5  vs  Youden-J (fit-on-A--F) {out['youden_threshold']:.3f}")
+    print(f"  balanced-accuracy plateau      : [{out['plateau'][0]:.2f}, {out['plateau'][1]:.2f}]  (~{out['best_balanced']:.3f})")
     print(f"  L3 band {out['band']['band']}: {out['band']['cross_escalated_to_l3']:.2f} of cross escalated to L3, "
           f"{out['band']['same_at_risk_below_band']:.2f} same-bug at risk (conservative; safe up to ~{out['band']['max_safe_band_same_min']:.2f})")
     print(f"  -> {out['conclusion']}")

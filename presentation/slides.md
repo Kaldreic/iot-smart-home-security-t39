@@ -1,10 +1,8 @@
 ---
 theme: seriph
-title: "IoT and Smart Home Security"
+title: "Securing the Wireless Layer of the Smart Home"
 author: "Aldo Ristori & Nicole Sperandini"
-institution: "Sapienza University of Rome"
 date: "2026-05-07"
-course: "Data and Network Security — T39"
 info: |
   T39 — IoT and Smart Home Security · Group 19
   MSc Cybersecurity · Data and Network Security

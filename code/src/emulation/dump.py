@@ -55,7 +55,7 @@ _SCAFFOLD = ("__kernel_sigreturn", "linux-gate")
 
 
 def parse_base_dump(text: str, bug: str) -> BaseDump:
-    """Parse a captured real dump (a Bug A backtrace or a Bug C assert message) into a BaseDump."""
+    """Parse a captured real dump (a SIGFPE-handler backtrace as for A and B, or an assert message as for C to F) into a BaseDump."""
     lines = [ln.rstrip("\n") for ln in text.splitlines() if ln.strip() and not ln.lstrip().startswith("#")]
     fault, site, header, frames = "UNKNOWN", None, [], []
     for ln in lines:

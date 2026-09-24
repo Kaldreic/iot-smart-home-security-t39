@@ -13,9 +13,10 @@ device reads, and it kept its lead across a 75,000-campaign synthetic sweep.
 
 Those results hold under the simulator's two noise assumptions, phantom crashes
 that carry the target's signature and modelled report variation, and they
-reverse without them: with both switched off, enumeration with one confirming
-re-run recovers more at a fifth of the cost. The false-credit result is a bound,
-$\alpha$ per decision under stated preconditions, and zero is what was measured.
+reverse without them: with both switched off, plain enumeration recovers more (0.978 against 0.928) at a
+fifth of the cost, and one confirming re-run matches RDD at a third of it. The false-credit result is a bound,
+$\alpha$ per decision under stated preconditions, and one credit in 75,000 synthetic campaigns and none elsewhere is what was
+measured.
 Two limitations are intrinsic to the method: the indifference zone of the
 sequential test, which leaves the deepest noise unrecoverable, and the identity
 layer's dependence on the deterministic matcher, since the judge accepts every

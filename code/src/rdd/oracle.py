@@ -15,7 +15,6 @@ from .sprt import Rep
 class Bug(Protocol):
     window: int          # number of candidate elements (packets) the minimiser reduces over
     crash_sig: str       # crash signature, read by the baseline's reproduction loop
-    kind: str            # bug-category label, read only by benchmark scoring
 
 
 class Oracle(Protocol):

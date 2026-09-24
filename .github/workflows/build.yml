@@ -33,8 +33,26 @@ jobs:
           root_file: main.tex
           working_directory: report
 
-  pycode:
-    name: code (python)
+  pytests:
+    name: code (python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e code/
+      - name: Tool invariants
+        run: PYTHONHASHSEED=0 python -m rdd.tests.test_rdd
+      - name: Benchmark suite self-test (binary-dependent tests skip without upstream/)
+        run: PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks
+
+  gate:
+    name: code (reproducibility gate)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -42,21 +60,14 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.12"
-      - name: Install the RDD tool + benchmarks (editable)
-        run: python -m pip install -e code/
-      - name: Tool invariants
-        run: PYTHONHASHSEED=0 python -m rdd.tests.test_rdd
-      - name: Benchmark suite self-test (binary-dependent tests skip without upstream/)
-        run: PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks
-      - name: Reproducibility gate — the real anchor + the B2 sweep reproduce the committed references (model-free, ~3 min)
-        # `run coherence` is the unified model-free gate (real anchor + B2 exact). B1 + B3 are binary-gated -> the
-        # self-test above reproduces them only where the host-native binaries are built (absent in CI -> they SKIP).
+      - run: python -m pip install -e code/
+      - name: The real anchor and the B2 sweep reproduce the committed references (model-free)
         run: PYTHONHASHSEED=0 python -m benchmarks.run coherence
 
   ci-ok:
     name: CI green
     if: always()
-    needs: [slides, report, pycode]
+    needs: [slides, report, pytests, gate]
     runs-on: ubuntu-latest
     steps:
       - run: |

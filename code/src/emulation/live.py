@@ -6,7 +6,7 @@ code is the crash truth (captured live per probe), and on a crash its stderr is
 the real backtrace, parsed via ``emulation.dump.parse_base_dump``. The OTA
 conditions the host build lacks -- radio flakiness (the L1 channel) and UART/log
 report noise (the dump variation) -- are modelled. The identity matcher (the
-tool's live-L3 cascade) is injected by the benchmark runner, so the tool runs
+tool's live-L3 cascade, or the baseline's exact-id in B1/B3) is injected by the benchmark runner, so the tool runs
 verbatim. The harness binaries live under the gitignored ``upstream/zephyr-cve/``
 build area. Replacing this module with a real radio and device leaves the RDD
 tool unchanged; the benchmark re-wires its oracle.
@@ -27,7 +27,7 @@ from rdd.sprt import Rep
 _HERE = Path(__file__).resolve().parent
 # upstream/ is the gitignored third-party area at the code area root (code/), a sibling
 # of src/ -- so from this module (code/src/emulation/live.py) it is two levels up, not one.
-_UP = _HERE.parent.parent / "upstream" / "zephyr-cve"
+_UP = Path(os.environ.get("HARNESS_WS", _HERE.parent.parent / "upstream" / "zephyr-cve"))   # as the build scripts
 _BINARIES = {"A": _UP / "build-multibug" / "testbinary",   # the 6 real bugs live in 5 harness binaries:
              "B": _UP / "build-cis" / "testbinary",        #   A,C share build-multibug; B is the CIS harness,
              "C": _UP / "build-multibug" / "testbinary",   #   D the PHY harness, E the data-length harness,
@@ -45,7 +45,6 @@ class _Bug:
     bug: str
     window: int
     crash_sig: str = ""
-    kind: str = "crash"
 
 
 def run_binary(binary, bug: str, subset, crash_rc: int, timeout: float = 10.0):

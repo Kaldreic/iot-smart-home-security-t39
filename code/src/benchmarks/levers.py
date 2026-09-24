@@ -1,7 +1,7 @@
 """benchmarks.levers — B3: the real-target lever decomposition.
 
 Four arms on the real host-native Zephyr targets, each on the bug's own window (no grouping front-end):
-baseline (AirBug enumeration + exact-id); oracle (RDD's truncated-SPRT oracle + bare ddmin, exact-id);
+baseline (AirBugCatcher enumeration + exact-id); oracle (RDD's truncated-SPRT oracle + bare ddmin, exact-id);
 ablation (+ the L2/L3 crash identity, bare ddmin); tool (+ the robust minimiser: the shipped RDD). The
 ``levers`` block reports each arm's false credit on A--F, the oracle -> ablation genuine change on A--F
 (identity) and the ablation -> tool genuine change on the real LL_LENGTH_REQ suppressor (minimiser; on the
@@ -36,8 +36,8 @@ from emulation.suppressor import LRBUG, LengthReqOracle
 from rdd.identity import LiveL2L3Identity
 
 # (label, campaign runner, identity kind 'exact'|'l3', minimiser kwargs). All four arms run decorrelated so
-# the channel is the same across arms. decorrelate=True resamples the channel each rep, so the AirBug arm
-# here reads differently from the as-shipped (decorrelate=False) AirBug arm of B2 and the anchor.
+# the channel is the same across arms. decorrelate=True resamples the channel each rep, so the AirBugCatcher arm
+# here reads differently from the as-shipped (decorrelate=False) AirBugCatcher arm of B2 and the anchor.
 _ARMS = [
     ("baseline", scoring.run_baseline_campaign, "exact", {"decorrelate": True}),
     ("oracle",   scoring.run_tool_campaign,     "exact", {"decorrelate": True, "ablate_robust": True}),
@@ -53,7 +53,7 @@ def _setup_target(bug, *, model_name, host, judge, memo):
     l3_oracle, l3_identity = live.build_live_campaign(bug, model=model_name, host=host, judge=judge, memo=memo)
     ref_exact = exact_crash_id(l3_oracle.model.clean_obs(bug))            # the captured clean dump's exact id
 
-    def exact_identity(b, obs, _ref=ref_exact):                          # AirBug's is_same_crash_id
+    def exact_identity(b, obs, _ref=ref_exact):                          # AirBugCatcher's is_same_crash_id
         return exact_crash_id(obs) == _ref
     exact_oracle = LiveBinaryOracle(l3_oracle.binary, bug, exact_identity, l3_oracle.model, crash_rc=l3_oracle.crash_rc)
     return {"l3": (l3_oracle, l3_identity), "exact": (exact_oracle, None)}
@@ -74,7 +74,7 @@ def _run_seed(seed, setups) -> dict:
     for i, bug in enumerate(_BUGS):
         oracles = setups[bug]
         bug_obj = _Bug(bug=bug, window=_WINDOW[bug], crash_sig=f"bug-{bug}")
-        arm_seed = seed * 131 + i                                         # the same channel seed for all four arms
+        arm_seed = seed * 131 + i                                         # the same channel seed for all four arms (distinct while bugs <= 131)
         for lbl, campaign, kind, kw in _ARMS:
             oracle = oracles[kind][0]
             oracle.calls = 0
@@ -189,7 +189,8 @@ def refreeze(seeds: int = 8) -> dict:
 
 def coherence(seeds: int = 8, tol: float = 1e-9) -> bool:
     """True iff the frozen replay reproduces every leaf of the committed reference and makes no live model call.
-    The top-level ``l3_live`` is skipped: the reference records the live-freeze count."""
+    The top-level ``l3_live`` is skipped: the reference records the count of the run that wrote it
+    (live for ``--freeze``, 0 for ``--refreeze``)."""
     ref = json.loads(_REF.read_text(encoding="utf-8"))
     fresh = scoring.clean_nan(frozen(seeds))
     diffs = scoring.leaf_diffs(fresh, ref, tol=tol, skip_top=("l3_live",))
@@ -228,7 +229,7 @@ def main() -> int:
     ap.add_argument("--seeds", type=int, default=8)
     ap.add_argument("--model", default="llama3.1:8b")
     ap.add_argument("--host", default=None)
-    ap.add_argument("--freeze", action="store_true", help="run LIVE + persist the memo + the reference (regenerate)")
+    ap.add_argument("--freeze", action="store_true", help="run against a live judge and rewrite the memo and the reference")
     ap.add_argument("--frozen", action="store_true", help="reproduce from the committed memo (no live model)")
     ap.add_argument("--coherence", action="store_true", help="frozen replay must reproduce the committed reference")
     ap.add_argument("--refreeze", action="store_true", help="write the reference from the frozen replay (no live model)")

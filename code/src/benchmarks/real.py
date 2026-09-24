@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import random
 
-from benchmarks.identity_cache import L2, L3CACHE, L3_BAND_LO, TARGET_TEXT, id_l2l3  # noqa: F401  (re-exports)
+from benchmarks.identity_cache import id_l2l3  # noqa: F401  (re-exported for the runner)
 from emulation.multibug import BUGS, MODEL, MultibugOracle, _mbug, id_exact  # noqa: F401  (device re-exports)
 
 

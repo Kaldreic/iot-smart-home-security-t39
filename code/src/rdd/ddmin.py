@@ -20,7 +20,8 @@ def ddmin_search(
 
     Returns ``(subset, n_test_calls)``. If the full input fails ``test`` the result is ``([], 1)``;
     otherwise the subset is non-empty and removing any one element makes ``test`` fail. Worst case
-    O(n^2) calls, typically O(n log n). A noisy ``test`` just yields a less minimal result.
+    O(n^2) calls, typically O(n log n). A false NO from ``test`` yields a less minimal result; a false YES can
+    leave the result non-reproducing, so callers re-validate.
     """
     n_calls = 0
 

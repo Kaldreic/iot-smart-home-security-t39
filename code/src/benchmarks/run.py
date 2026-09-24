@@ -120,8 +120,9 @@ def coherence(tol: float = 0.02) -> bool:
 
 
 def sensitivity(seeds: int = 30) -> None:
-    """Genuine, false credit and reads of every arm with the committed noise model, with the crash-report
-    variation off, with phantom crashes off, and with both off."""
+    """How much of the anchor result is the noise model: genuine / false credit / reads of the baseline, the
+    confirmation control and the tool, with the committed noise, with report variation off, with phantom
+    crashes off, and with both off."""
     from dataclasses import replace
     from emulation.channel import GEChannelParams
     from emulation.dump import DumpParams
@@ -154,7 +155,6 @@ def main() -> int:
                                         "b1 --frozen') dispatch to the headtohead / resilience / levers modules.")
     ap.add_argument("suite", choices=["coherence", "sensitivity", "freeze"])
     a = ap.parse_args()
-    scoring.require_hashseed0()                               # B2 hashes bug ids -> needs seed 0
     if a.suite == "sensitivity":
         sensitivity()
         return 0
@@ -162,6 +162,7 @@ def main() -> int:
         freeze()
         print(f"  -> {_ANCHOR}")
         return 0
+    scoring.require_hashseed0()                               # coherence runs B2, which hashes bug ids
     from benchmarks import resilience                         # the model-free gate: the anchor + B2
     ok = coherence()
     ok = resilience.coherence() and ok

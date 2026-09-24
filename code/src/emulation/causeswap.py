@@ -28,7 +28,6 @@ class _Bug:
     bug: str
     window: int = _WINDOW
     crash_sig: str = ""
-    kind: str = "crash"
 
 
 @dataclass
@@ -48,7 +47,7 @@ class _CoPresentOracle:
     def _binary_dump(self, subset):
         """The crash dump the modelled binary emits for ``subset``: the fired bug fixes the artifact (build-multibug
         emits that bug's backtrace), so running channel-off yields the fired bug's committed real dump, cleaned
-        -- what emulation.live.LiveBinaryOracle.identity_truth compares. None if ``subset`` does not crash. The
+        -- the same cleaned form ``emulation.live`` captures from the binary's stderr. None if ``subset`` does not crash. The
         guard reads this dump without knowing which bug fired; the identity cascade infers that."""
         wb = self._which_bug(subset)
         return MODEL.clean_obs(wb) if wb is not None else None
@@ -62,7 +61,7 @@ class _CoPresentOracle:
         oracle knowledge. Here L2 settles A against C (A has a ``ull_conn_update_parameters`` stack, C is a
         stackless ``LL_ASSERT`` exit) so L3 never escalates. The demo exercises cause discrimination, not
         L2/L3's robustness to dump variation (the in-loop / l3_eval's domain); the channel-off guard sees the
-        cleaned dump, as the live guard does. Demote-only: False on no crash, or when a different bug's real
+        cleaned dump (no report variation is applied to it). Demote-only: False on no crash, or when a different bug's real
         dump fails the target identity."""
         obs = self._binary_dump(subset)
         return obs is not None and bool(self.identity(bug.bug, obs))

@@ -63,7 +63,7 @@ def gen_population(n: int, seed: int = 7, regime=None) -> list[SynthBug]:
     return bugs
 
 
-_TARGET_EXACT: dict = {}
+_TARGET_EXACT: dict = {}     # bid -> exact id of the clean base dump, for the population run() is driving
 
 
 def id_exact(bug, obs) -> bool:                                # baseline: AirBugCatcher exact id

@@ -12,8 +12,8 @@ abstract: >-
   protocol fuzzing for IoT bug reproduction (AirBugCatcher, ACSAC
   2024). Produced as Data and Network Security (T39) coursework at
   Sapienza University of Rome, MSc in Cybersecurity. Comprises a
-  presentation, an IEEEtran report (eight pages plus references) on a
-  future research direction, and a reproducible reference implementation (RDD, the
+  presentation, a ten-page IEEEtran report on a future research
+  direction, and a reproducible reference implementation (RDD, the
   Robust Delta-Debugging tool) with its benchmark suite.
 authors:
   - given-names: Aldo
@@ -23,6 +23,7 @@ authors:
     family-names: Sperandini
     affiliation: Sapienza University of Rome
 repository-code: 'https://github.com/Kaldreic/iot-smart-home-security-t39'
+url: 'https://kaldreic.github.io/iot-smart-home-security-t39/'
 license: MIT
 keywords:
   - IoT security
@@ -34,8 +35,8 @@ keywords:
   - delta debugging
   - bug reproduction
 preferred-citation:
-  type: generic
-  title: 'IoT and Smart Home Security — T39: Future Directions in Wi-Fi Sensing Countermeasures and Automated IoT Bug Reproduction'
+  type: report
+  title: 'Stabilising the Oracle: Robust Delta-Debugging for Reproducing Wireless IoT Fuzzing Bugs'
   authors:
     - given-names: Aldo
       family-names: Ristori
@@ -47,5 +48,7 @@ preferred-citation:
   institution:
     name: Sapienza University of Rome
     address: 'Rome, Italy'
+  url: 'https://kaldreic.github.io/iot-smart-home-security-t39/report.pdf'
   notes: >-
-    Data and Network Security, MSc Cybersecurity coursework (topic T39).
+    Data and Network Security (topic T39), MSc Cybersecurity coursework;
+    delivered June 2026, revised September 2026.

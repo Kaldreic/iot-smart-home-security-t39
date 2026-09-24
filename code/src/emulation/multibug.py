@@ -43,7 +43,6 @@ class MBug:
     bug: str
     window: int
     crash_sig: str
-    kind: str = "crash"
 
 
 def _mbug(b: str) -> MBug:

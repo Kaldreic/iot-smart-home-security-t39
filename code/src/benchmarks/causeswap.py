@@ -61,16 +61,18 @@ def run(seeds: int = 30) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser(prog="benchmarks.causeswap",
-                                 description="Mode-2 cause-swap guard demo on a co-present A+C deployment binary")
+                                 description="the identity guard on a modelled binary that ships two bugs (A and C) in one window")
     ap.add_argument("--seeds", type=int, default=30)
     ap.add_argument("--freeze", action="store_true", help="regenerate the committed reference (causeswap.json)")
     a = ap.parse_args()
+    if a.seeds < 1:
+        ap.error("--seeds must be at least 1")
     out = run(a.seeds)
     if a.freeze:
         ref = Path(__file__).resolve().parent / "data" / "reference" / "causeswap.json"
-        ref.write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
+        ref.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n", encoding="utf-8")
         print(f"  -> {ref}")
-    print(f"=== Mode-2 cause-swap identity-guard demo — {a.seeds} seeds, co-present A+C window ===")
+    print(f"=== identity guard, cause-swap demonstration — {a.seeds} seeds, co-present A+C window ===")
     print("  (REAL: A/C dumps + the guard's L2+L3 identity + the pipeline.  MODELLED: A+C co-present + a")
     print("   CRASH-ONLY in-loop oracle -- identity checked only at the guard, the case the guard is FOR.)")
     print(f"  {'arm':10} {'target->reachable':18} {'guard OFF g/fc':>16} {'guard ON g/fc':>16}")

@@ -53,7 +53,6 @@ class SynthBug:
     sev: float              # per-bug channel-severity multiplier on the L1 false-negative
     k: int
     crash_sig: str = ""
-    kind: str = "crash"
 
 
 def base_dump(bug: SynthBug) -> BaseDump:

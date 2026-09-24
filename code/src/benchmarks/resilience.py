@@ -1,12 +1,12 @@
-"""benchmarks.resilience — B2: the synthetic resilience sweep, AirBug vs RDD.
+"""benchmarks.resilience — B2: the synthetic resilience sweep, AirBugCatcher vs RDD.
 
 A large population of real-anchored synthetic bugs (only about six real emulable controller bugs exist),
 swept across regimes that each override one sampling axis of ``benchmarks.synthetic``: standard, high_card
 (minimals k >= 3), suppressor (about 70% non-monotone bugs), far_trigger, deep_noise, wide_window, plus the
-pooled OVERALL. No burst regime: at each tool's shipped channel setting rho_dev does not separate the arms.
+pooled OVERALL. No burst regime is swept; ``rho_dev`` stays at its default 0 in every regime.
 
 Arms, each as shipped: baseline (enumeration + exact-id, no decorrelation), baseline_confirm (the
-read-matched control: one confirming re-run) and tool (the robust pipeline, decorrelated). The in-loop L3 is
+confirmation control: one confirming re-run) and tool (the robust pipeline, decorrelated). The in-loop L3 is
 the deterministic site-string rule (``synthetic.id_l2l3``), so the sweep calls no model and is
 bit-reproducible; each (bug, seed) has its own noise stream. Every arm is scored by ``scoring.score_bug``
 against the channel-off truth; metrics are 95% bootstrap CIs over bugs, cost is device reads.
@@ -29,7 +29,7 @@ from benchmarks import scoring, synthetic
 # (not part of its mechanism); the tool runs decorrelated, its shipped recipe. The ablation arms are B3.
 ARMS = {
     "baseline":         (scoring.run_baseline_campaign, "A", {}),
-    "baseline_confirm": (scoring.run_baseline_campaign, "A", {"confirm": 1}),   # the read-matched control
+    "baseline_confirm": (scoring.run_baseline_campaign, "A", {"confirm": 1}),   # the confirmation control
     "tool":             (scoring.run_tool_campaign,     "B", {"decorrelate": True}),
 }
 METRICS = ("genuine", "false_credit", "exact_minimal", "mean_size_gap", "reads")
@@ -100,12 +100,12 @@ def _print(out: dict) -> None:
     cell = lambda c: (f"{g(c, 'genuine'):.3f}/{g(c, 'false_credit'):.3f}/{g(c, 'exact_minimal'):.2f}/"
                       f"{g(c, 'mean_size_gap'):.2f}/{g(c, 'reads'):.1f}")        # noqa: E731
     print(f"=== B2 resilience — {out['n_campaigns_per_arm']} campaigns/arm "
-          f"(AirBug vs RDD; {len(out['regimes']) - 1} regimes; {out['n_bugs']}x{out['n_seeds']}) ===")
+          f"(AirBugCatcher vs RDD; {len(out['regimes']) - 1} regimes; {out['n_bugs']}x{out['n_seeds']}) ===")
     print("  each cell = genuine / false_credit / exact_minimal / mean_size_gap / reads")
-    print(f"  {'regime':12} {'AirBug':>27} {'RDD':>27}")
+    print(f"  {'regime':12} {'AirBugCatcher':>27} {'+ 1 confirmation':>27} {'RDD':>27}")
     for reg, m in out["regimes"].items():
-        print(f"  {reg:12} {cell(m['baseline']):>27} {cell(m['tool']):>27}")
-    print("  AirBug = fixed-K enum + exact-id; RDD = the shipped robust pipeline (decorrelated). "
+        print(f"  {reg:12} {cell(m['baseline']):>27} {cell(m['baseline_confirm']):>27} {cell(m['tool']):>27}")
+    print("  AirBugCatcher = fixed-K enum + exact-id; RDD = the shipped robust pipeline (decorrelated). "
           "Cost = device reads (B2 has no live L3 / real device -> wall-clock is a B1 metric).")
     print(f"  L3-source: {out['l3_provenance']['source']} — no LLM (deterministic site-string rule; the cached "
           "open-model L3 lives only in B1's real anchor). Scored vs the channel-off virtual-perfect.")
@@ -113,7 +113,7 @@ def _print(out: dict) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(prog="benchmarks.resilience",
-                                 description="B2: synthetic resilience sweep, AirBug vs RDD (2-arm head-to-head)")
+                                 description="B2: synthetic resilience sweep (AirBugCatcher, + 1 confirmation, RDD)")
     ap.add_argument("--bugs", type=int, default=2500)
     ap.add_argument("--seeds", type=int, default=5)
     ap.add_argument("--freeze", action="store_true", help="regenerate the committed reference (resilience.json)")

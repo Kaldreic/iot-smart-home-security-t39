@@ -36,7 +36,7 @@ def build_live_campaign(bug: str, *, binary=None, band: float = 0.05, model: str
     binary = Path(binary) if binary is not None else _BINARIES[bug]
     if not binary.exists():
         raise FileNotFoundError(f"target binary not found: {binary} — build it via "
-                                "src/emulation/zephyr-targets/scripts/build-multibug.sh")
+                                "the per-bug script in src/emulation/zephyr-targets/scripts/ (see its README)")
     crash_rc = _CRASH_RC[bug]
     crashed, text = run_binary(binary, bug, _TRUE_MIN[bug], crash_rc, timeout)
     if not crashed:
@@ -66,22 +66,22 @@ def run_live(bug: str, seeds: int = 5, *, decorrelate: bool = True, **kw):
 
 def main() -> int:
     ap = argparse.ArgumentParser(prog="benchmarks.live",
-                                 description="GENUINE off-the-shelf run: the shipped tool on the REAL binary + LIVE L3")
+                                 description="Off-the-shelf run: the shipped tool on the real binary, live L3")
     ap.add_argument("--bug", default="A", choices=list(_WINDOW))
     ap.add_argument("--seeds", type=int, default=5)
     ap.add_argument("--model", default="llama3.1:8b")
     ap.add_argument("--host", default=None)
     ap.add_argument("--binary", default=None, help="override the per-bug harness binary (default: _BINARIES[bug])")
     a = ap.parse_args()
-    print(f"=== GENUINE off-the-shelf run — bug {a.bug}, {a.seeds} seeds, LIVE binary + LIVE L3 ({a.model}) ===")
+    print(f"=== Off-the-shelf run — bug {a.bug}, {a.seeds} seeds, LIVE binary + LIVE L3 ({a.model}) ===")
     rows, oracle, identity = run_live(a.bug, a.seeds, binary=a.binary, model=a.model, host=a.host)
     agg = _agg(rows)
     print(f"  genuine={agg['genuine']:.3f}  false_credit={agg['false_credit']:.3f}  "
           f"size_gap_genuine={agg['size_gap_genuine']:.3f}  reads/seed={agg['reads']:.1f}")
-    print(f"  LIVE binary executions: {oracle.binary_runs}   "
-          f"L3: {identity.stats['l3_live']} LIVE judgments / {identity.stats['l3_memo']} memo reuses / "
+    print(f"  binary executions: {oracle.binary_runs}   "
+          f"L3: {identity.stats['l3_live']} live judgments / {identity.stats['l3_memo']} memo reuses / "
           f"{identity.stats['l2_decided']} L2-decided")
-    print("  LIVE = real-binary crash truth + dump, and the open-model L3 ;  MODELLED = OTA flakiness + report-noise")
+    print("  real: the binary's crash truth and dump, the open-model judge;  modelled: OTA flakiness and report variation")
     return 0
 
 

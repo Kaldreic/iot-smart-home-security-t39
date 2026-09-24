@@ -57,20 +57,16 @@ def minimize(oracle: Oracle, bug: Bug, rng: random.Random, *,
              max_card: int = MAX_FUZZED_PKTS, max_try: int = MAX_TRY,
              decorrelate: bool = False, most_recent_first: bool = True, confirm: int = 0) -> BaselineResult:
     """AirBugCatcher's per-bug minimiser: increasing-cardinality ``combinations`` over the window (most-recent-first
-    unless ``most_recent_first=False``), exact-subset dedup, stop at the first caught reproducer. ``confirm`` is
-    not part of AirBugCatcher: it is the read-matched control, crediting a caught reproducer only after
-    ``confirm`` further sessions reproduce it too; otherwise enumeration continues."""
+    unless ``most_recent_first=False``), one session per candidate, stop at the first caught reproducer.
+    ``confirm`` is not part of AirBugCatcher: it is the confirmation control, crediting a caught reproducer
+    only after ``confirm`` further sessions reproduce it too; otherwise enumeration continues."""
     W = list(range(bug.window))
     if most_recent_first:                            # closest-to-crash first
         W = W[::-1]
-    seen: set[frozenset] = set()
     calls0 = oracle.calls
     for k in range(1, max_card + 1):
-        for comb in itertools.combinations(W, k):
+        for comb in itertools.combinations(W, k):    # combinations over a distinct window never repeat a subset
             S = frozenset(comb)
-            if S in seen:                            # exact-subset dedup
-                continue
-            seen.add(S)
             if _run_repro_session(oracle, bug, S, rng, max_try=max_try, decorrelate=decorrelate) and all(
                     _run_repro_session(oracle, bug, S, rng, max_try=max_try, decorrelate=decorrelate)
                     for _ in range(confirm)):

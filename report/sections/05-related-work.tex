@@ -21,7 +21,7 @@ calls. However, these methods treat the oracle as \emph{deterministic}, making
 assumptions about the input rather than the verdict. Probabilistic Monotonicity
 Assessment (\textsc{PMA})~\cite{pma2025} departs from this,
 modelling the search space's \emph{monotonicity} probabilistically to avoid
-redundant tests. \textsc{PMA} is the closest related work; it cites noise and
+redundant tests. \textsc{PMA} is the closest in aim; it cites noise and
 intermittent failures as motivation, but it accepts each verdict as given and does
 not \emph{stabilise} it with repeated trials, sequential tests or an error bound. All these methods assume a
 reliable oracle, which wireless environments do not provide, so \texttt{ddmin}'s
@@ -42,7 +42,7 @@ Bluetooth Classic devices from eleven vendors. Both projects conclude at discove
 manually construct a clean PoC. \textsc{U-Fuzz}~\cite{ufuzz2024} advances further:
 after stateful fuzzing of IoT and 5G protocols, it performs a post-fuzzing step to
 identify the minimal set of mutated packets that cause a crash. This makes U-Fuzz
-RDD's closest counterpart, but the distinction lies in the oracle. U-Fuzz walks
+the closest to RDD in workflow, but the distinction lies in the oracle. U-Fuzz walks
 backwards from the crash replaying one mutated packet at a time in a fresh session
 until the crash recurs, states no retry policy, and labels crashes whose
 reproduction is unstable as anomalies, while RDD employs a sequential,
@@ -53,10 +53,9 @@ to a small fixed size and runs each generated test case once within a trial budg
 rather than stabilising the verdict. In its study, a plain replay baseline,
 repeated five times to average out the medium, reproduced only 13 to 23 of 190
 crashes on its Bluetooth target and none on the other four~\cite{airbugcatcher2024}. % AirBugCatcher RQ5, Table 7
-RDD builds upon these concepts rather than competing with them. Three improvements
-have been noted: bounded enumeration is replaced by \texttt{ddmin}, and one attempt
-per candidate is replaced by a statistical oracle. The third improvement is in the
-identity layer: \textsc{AirBugCatcher} matches crashes by exact source-line trace,
+RDD builds on these concepts rather than competing with them, and changes three
+things: bounded enumeration becomes \texttt{ddmin}, one attempt per candidate becomes
+a statistical oracle, and the identity layer differs: \textsc{AirBugCatcher} matches crashes by exact source-line trace,
 by an address-offset pattern on memory traces, or by packet state when no log
 exists, and counts a crash with a non-matching identifier as ``unexpected'';
 RDD uses a two-tier cascade tolerant of truncated and garbled reports.
@@ -70,9 +69,9 @@ Luo et al.~\cite{flakytests2014} discuss flaky tests where verdicts vary across
 identical runs. Both works identify the issue but do not provide a decision rule
 for noisy \emph{physical} targets. The Sequential Probability Ratio Test
 (SPRT)~\cite{sprt1945} addresses this by offering a rule that makes decisions within
-a set budget while controlling both error rates. Applying SPRT to the reproduction
-oracle introduces Wald's guarantees, reducing false credit from the baseline's
-0.632 to 0.000 in all stress tests. Using a statistical test as an oracle is not new: Guderlei and
+a set budget while controlling both error rates. Applying the SPRT to the reproduction oracle brings the false-credit rate under the
+$\alpha$ bound where its preconditions hold; across the synthetic sweep it fell from the
+baseline's 0.632 to $1.3\times10^{-5}$. Using a statistical test as an oracle is not new: Guderlei and
 Mayer~\cite{statoracle2007} test random-output programs by comparing independent
 output samples under a metamorphic relation with a fixed-sample hypothesis test, an
 offline batch decision, whereas RDD makes sequential, bounded-error verdicts during
@@ -117,7 +116,7 @@ two-tier identity system: a deterministic L2 that considers stack, site, fault
 class, and log templates, and refers only the remaining uncertain cases to an
 open-weight model~\cite{llama3_2024}. This cost-gated cascade is incorporated into
 the reproduction oracle, unlike previous approaches that treat identity as a
-separate triage step. The closest comparison is GPTrace~\cite{gptrace2026}, which
+separate triage step. The closest in purpose is GPTrace~\cite{gptrace2026}, which
 deduplicates crashes using language-model embeddings offline, whereas RDD's judge
 determines identity during the process as part of the reproduction verdict.
 

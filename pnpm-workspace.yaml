@@ -14,5 +14,7 @@ overrides:
   dompurify: "^3.4.16"
   # chevrotain (a mermaid dependency) pins lodash-es 4.17.x exactly; lift it onto the patched line.
   lodash-es: "^4.18.1"
+  # @shikijs/vitepress-twoslash patches floating-vue at load and fails on 5.4.x (a console error on every deck load).
+  floating-vue: "5.2.2"
 # Known, accepted: image-size 1.x via pptxgenjs (Slidev's PPTX export, unused here) has no
 # patched 1.x release and forcing 2.x would change the API pptxgenjs calls.

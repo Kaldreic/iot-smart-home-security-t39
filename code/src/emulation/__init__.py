@@ -9,6 +9,6 @@ types (rdd.observation.DumpObs, rdd.sprt.Rep). Swapping the package for a real
 radio and target device leaves the RDD tool unchanged; each benchmarks/<suite>.py
 re-wires its oracle constructor at the device boundary.
 
-The AirBug minimiser arm and the pre-RDD fuzz-campaign and crash-grouping stages
+The AirBugCatcher minimiser arm and the pre-RDD fuzz-campaign and crash-grouping stages
 are evaluation code and live in benchmarks (baseline.py / scenario.py).
 """

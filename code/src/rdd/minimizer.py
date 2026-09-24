@@ -44,7 +44,7 @@ class RobustResult:
     ``suppressors`` are the excluded elements whose re-addition removed the crash, a diagnostic only as
     reliable as ``raw_test``. ``strategy`` is how the seed was found: "full", "tear-down:k",
     "build-up:k", "exhausted" (the bounded candidate set was searched in full) or "none" (the
-    ``max_seed_calls`` budget ran out first, also flagged by ``capped``). ``n_calls`` counts every
+    ``max_seed_calls`` budget ran out first, also flagged by ``capped``). ``n_calls`` counts every ``identity_check`` call and every
     ``test`` and ``raw_test`` call."""
 
     recipe: list

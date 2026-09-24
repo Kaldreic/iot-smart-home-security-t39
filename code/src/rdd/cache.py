@@ -41,7 +41,7 @@ class MonotoneOracleCache:
         return None
 
     def observe(self, subset: Iterable[int], reproduced: bool, *, trustworthy: bool = True) -> None:
-        """Record an SPRT (or campaign-seed) result. An untrustworthy result is ignored, so the caller
+        """Record a trusted SPRT verdict. An untrustworthy result is ignored, so the caller
         may use it for the current step but the point is re-tested next time. Re-recording the same
         value is a no-op."""
         if not trustworthy:

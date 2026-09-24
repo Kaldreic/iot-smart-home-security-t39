@@ -7,49 +7,48 @@
 
 \documentclass[10pt,journal,compsoc]{IEEEtran}
 
-\ifCLASSOPTIONcompsoc
-  \usepackage[nocompress]{cite}
-\else
-  \usepackage{cite}
-\fi
-\usepackage[hyphens]{url}  % references.bib carries URL fields; allow breaks at hyphens
-\usepackage{tikz}       % Fig. 1, the pipeline
+\usepackage[nocompress]{cite}
+\usepackage[hyphens]{url}  % references.bib carries URL fields
+\usepackage{tikz}          % Fig. 1, the pipeline
 \usetikzlibrary{positioning,arrows.meta,fit,backgrounds,calc,shapes.geometric}
-\usepackage{pgfplots}   % Fig. 2, drawn from the committed benchmark numbers
+\usepackage{pgfplots}      % Fig. 2, drawn from the committed benchmark numbers
 \pgfplotsset{compat=1.18}
 \usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={Stabilising the Oracle: Robust Delta-Debugging for Reproducing Wireless IoT Fuzzing Bugs},
+            pdfauthor={Aldo Ristori and Nicole Sperandini}}
+\usepackage{xurl}          % let long URLs break anywhere (after hyperref)
 
 \begin{document}
 
 \title{Stabilising the Oracle: Robust Delta-Debugging\\
   for Reproducing Wireless IoT Fuzzing Bugs}
 
-\author{Aldo~Ristori,~\IEEEmembership{2086552,~Sapienza University of Rome,}\\
-        Nicole~Sperandini,~\IEEEmembership{2264712,~Sapienza University of Rome,}%
-\thanks{Group~19. Manuscript delivered on June 25, 2026.}}
+\author{Aldo~Ristori~(2086552) and Nicole~Sperandini~(2264712),\\
+        Sapienza University of Rome%
+\thanks{Group~19. Manuscript delivered on June 25, 2026; revised September 24, 2026,
+with the evaluation re-scored. The graded version is the repository's first commit.}}
 
 \IEEEtitleabstractindextext{%
 \begin{abstract}
-Over-the-air fuzzing is still effective at finding vulnerabilities in the
-wireless stacks of smart-home devices, but turning a noisy crash log into a
-replayable proof of concept remains slow, because the unpredictable medium makes
-the test \emph{oracle} a reproduction tool relies on answer inconsistently, which
-the precise input-minimisation algorithms cannot tolerate. We introduce
-\emph{Robust Delta-Debugging} (RDD), which approximates the stable verdict those
-algorithms assume: a truncated Sequential Probability Ratio Test (SPRT) folds the
-noisy outcomes of repeated attempts into one decision with a bounded
-false-positive rate; a two-tier crash-identity oracle uses a deterministic matcher
-and escalates only its uncertain cases to a single open-weight language model; a
-suppressor-robust minimiser drives delta debugging and credits a recipe only
-after an independent re-confirmation under the same bound. On six real Zephyr
-Bluetooth-controller bugs under a simulated noisy channel, a prototype recovers
-0.848 of reproductions with no false credit in 336 campaigns, against 0.759 and
-0.137 for a re-implementation of the state-of-the-art tool's strategy, at five
-times the device reads; on a 75,000-campaign synthetic sweep it recovers 0.824
-against 0.266. The advantage is a property of the simulator's noise assumptions:
-with report variation and phantom crashes switched off the baseline recovers
-0.978 with no false credit at a fifth of the cost. We state these dependencies,
-and the experiments that would test them on real radios, as the research agenda.
+Over-the-air fuzzing still finds vulnerabilities in the wireless stacks of
+smart-home devices, but turning a crash log into a replayable proof of concept
+remains slow: the unpredictable medium makes the reproduction \emph{oracle}
+answer inconsistently, which precise minimisation algorithms cannot tolerate. We introduce \emph{Robust
+Delta-Debugging} (RDD), which approximates the stable verdict those algorithms
+assume. A truncated Sequential Probability Ratio Test folds repeated noisy
+attempts into one decision with a bounded false-positive rate; a two-tier
+crash-identity oracle escalates only what a deterministic matcher cannot settle
+to a single open-weight language model; a suppressor-robust minimiser drives
+delta debugging and credits a recipe only after an independent re-confirmation.
+On six real Zephyr Bluetooth-controller bugs under a simulated noisy channel, a
+prototype recovers 0.848 of reproductions with no false credit in 336 campaigns,
+against 0.759 and 0.137 for a re-implementation of AirBugCatcher's strategy, at
+five times the device reads; on a 75,000-campaign synthetic sweep
+it recovers 0.824 against 0.266. The advantage is a property of the simulator's
+noise assumptions: with report variation and phantom crashes switched off, the
+baseline recovers 0.978 with no false credit at a fifth of the cost. The research
+agenda is to test these dependencies on real radios.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -60,7 +59,6 @@ crash deduplication, large language models.
 
 \maketitle
 \IEEEdisplaynontitleabstractindextext
-\IEEEpeerreviewmaketitle
 
 \input{sections/01-introduction.tex}
 \input{sections/02-background.tex}
@@ -69,7 +67,7 @@ crash deduplication, large language models.
 \input{sections/05-related-work.tex}
 \input{sections/06-conclusions.tex}
 
-\bibliographystyle{IEEEtranS}
+\bibliographystyle{IEEEtran}
 \bibliography{references}
 
 \end{document}

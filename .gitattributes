@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.png binary
+*.patch -text
+pnpm-lock.yaml linguist-generated

@@ -20,7 +20,7 @@
     </table>
   </div>
   <div class="results-fig">
-    <div class="kicker">Figure 6 — reproduction time</div>
+    <div class="kicker">AirBugCatcher, Figure 6 — reproduction time</div>
     <img src="/slide15-fig6-reproduction-time.png" alt="Figure 6 from the AirBugCatcher paper: grouped bar chart showing distribution of expected bugs by reproduction time bucket (0-2, 2-4, 4-30, 30-60 minutes) across five target devices. OnePlus Phone (5G) dominates the 0-2 minute bucket with 9 bugs reproduced quickly." />
     <div class="subline">Bug count by reproduction time bucket (minutes)</div>
   </div>

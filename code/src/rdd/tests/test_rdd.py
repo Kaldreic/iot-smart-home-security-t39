@@ -191,8 +191,8 @@ def test_pipeline_wires_identity_truth():
 def test_submodule_imports_smoke():
     """Every rdd submodule imports, and the ``exact_crash_id`` site path and the dump-to-L2 adapter work."""
     import importlib
-    for m in ["sprt", "cache", "ddmin", "minimizer", "observation", "l2",
-              "identity", "l3", "pipeline", "oracle"]:
+    mods = ["sprt", "cache", "ddmin", "minimizer", "observation", "l2", "identity", "l3", "pipeline", "oracle"]
+    for m in mods:
         importlib.import_module(f"rdd.{m}")
     from emulation.baseline import exact_crash_id
     from rdd.l3 import render_dump
@@ -204,7 +204,7 @@ def test_submodule_imports_smoke():
     from rdd.observation import DumpObs
     co = DumpObs(log_lines=["assert at f.c:9"], stack=["k_oops+0x1a"], fault="ASSERT").to_crash_observation()
     assert co.fault == "ASSERT", "DumpObs.to_crash_observation (the dump->l2 deferred import) broke"
-    return f"12 submodules import; exact_crash_id site-path OK {cid[2]!r}; render_dump + dump->l2 OK"
+    return f"{len(mods)} submodules import; exact_crash_id site-path OK {cid[2]!r}; render_dump + dump->l2 OK"
 
 
 def test_budget_floor_bail_reports_capped():

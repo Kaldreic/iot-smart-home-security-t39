@@ -16,7 +16,7 @@ def require_hashseed0() -> None:
 
     The synthetic dump composition hashes bug ids (``emulation.synthetic.base_dump``) and Python randomises
     ``str`` hashing per process, so without the pinned seed the bug population, and every B2 and coherence
-    number, differs run to run. Called by the hash-dependent CLIs (``benchmarks.run`` and
+    number, differs run to run. Called by the coherence CLI (``benchmarks.run`` and
     ``benchmarks.resilience``); B1 and B3 drive the real binaries and do not hash."""
     if os.environ.get("PYTHONHASHSEED") != "0":
         raise SystemExit(
@@ -29,13 +29,14 @@ def require_hashseed0() -> None:
 def score_bug(oracle: Oracle, bug: Bug, r) -> dict:
     """Score one result against the channel-off truth the minimiser never sees. Every arm is held to the same
     rule: genuine if the arm credited its recipe and the recipe crashes the target channel-off; false credit
-    if it credited a recipe that does not. A recipe returned but not credited counts for neither."""
-    gtm = oracle.ground_truth_minimals(bug)
-    opt = min((len(m) for m in gtm), default=None)
-    crashes = r.subset is not None and oracle.truth(bug, r.subset)
+    if it credited a recipe that does not. A recipe returned but not credited counts for neither and gets no
+    size gap; ``truth`` is consulted only for credited recipes."""
+    credited = bool(r.reproduced and r.subset is not None)
+    crashes = credited and bool(oracle.truth(bug, r.subset))
+    opt = min((len(m) for m in oracle.ground_truth_minimals(bug)), default=None)
     return {
-        "true_reproduced": bool(r.reproduced and crashes), "false_credit": bool(r.reproduced and not crashes),
-        "size_gap": (r.size - opt) if (r.size is not None and opt is not None) else None,
+        "true_reproduced": crashes, "false_credit": credited and not crashes,
+        "size_gap": (r.size - opt) if (credited and r.size is not None and opt is not None) else None,
         "calls": r.calls,
     }
 
@@ -74,10 +75,11 @@ def clean_nan(o):
 
 def leaf_diffs(fresh, ref, *, path: str = "", tol: float = 1e-9, skip_top: tuple = ()) -> list:
     """Recursive leaf comparison of a NaN-cleaned result against the committed reference; the coherence gate of
-    B1, B2 and B3. A numeric leaf matches within ``tol``, a null leaf must stay null, bools and strings match
-    exactly, and a list leaf (B2's ``[mean, lo, hi]``) must match element for element. ``skip_top`` names
-    top-level keys to ignore (a frozen replay's ``l3_live`` is 0 while the reference records the live-freeze
-    count). Returns the ``(path, fresh, ref)`` mismatches; empty means coherent."""
+    B1, B2 and B3. A scalar number matches within ``tol``; a list (B2's ``[mean, lo, hi]``) is compared for
+    exact equality, with no tolerance inside it; a null leaf must stay null; bools and strings match exactly.
+    Only the keys of ``ref`` are walked, so a key present only in ``fresh`` is ignored. ``skip_top`` names
+    top-level keys to ignore (``l3_live``: a frozen replay records 0). Returns the ``(path, fresh, ref)``
+    mismatches; empty means coherent."""
     diffs = []
     if isinstance(ref, dict):
         for k in ref:

@@ -12,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # code/src -> import rdd + benchmarks
 
 from benchmarks import run  # noqa: E402
+from benchmarks import identity_cache as idc  # noqa: E402
 from emulation import multibug  # noqa: E402
 from emulation import baseline as emulation_baseline  # noqa: E402
 
@@ -30,7 +31,7 @@ def test_suite_smoke():
 def test_real_suppressor_coherence():
     """A fresh anchor reproduces anchor.json: every gated arm within +/-0.02 and the tool's L3 provenance equal."""
     assert run.coherence(), "the fresh anchor must reproduce the committed anchor.json"
-    return "anchor coherence within +/-0.02 (delta 0.000 in practice) incl. the L3 provenance"
+    return "anchor coherence within +/-0.02 incl. the L3 provenance"
 
 
 def test_l3_judge_eval_anchored():
@@ -103,25 +104,25 @@ def test_real_credit_path_strict():
     obs = None
     for _ in range(20000):                                          # synthesize an L3-band residual (L2 abstains)
         o = real.MODEL.emit(b, rng)
-        same, sc = real.L2.is_same(b, o)
-        if not same and sc >= real.L3_BAND_LO:
+        same, sc = idc.L2.is_same(b, o)
+        if not same and sc >= idc.L3_BAND_LO:
             obs = o
             break
     assert obs is not None, "could not synthesize an L3-band residual obs for the credit-path test"
-    h = _pair_hash(real.TARGET_TEXT[b], render_dump(obs))
-    saved = dict(real.L3CACHE)
+    h = _pair_hash(idc.TARGET_TEXT[b], render_dump(obs))
+    saved = dict(idc.L3CACHE)
     try:
-        real.L3CACHE.clear()
-        real.L3CACHE[h] = {"same": "true", "conf": 1.0, "model": "x"}   # a string: bool() would credit
-        assert real.id_l2l3(b, obs) is False, "string non-bool cache value credited — strict `is True` not enforced"
-        real.L3CACHE[h] = {"same": 1, "conf": 1.0}                      # numeric 1: `== True` would credit
-        assert real.id_l2l3(b, obs) is False, "numeric 1 credited — `is True` weakened to `== True`?"
-        real.L3CACHE[h] = {"same": True}                                # genuine bool, extra keys absent
-        assert real.id_l2l3(b, obs) is True, "a real bool True failed to credit"
+        idc.L3CACHE.clear()
+        idc.L3CACHE[h] = {"same": "true", "conf": 1.0, "model": "x"}   # a string: bool() would credit
+        assert idc.id_l2l3(b, obs) is False, "string non-bool cache value credited — strict `is True` not enforced"
+        idc.L3CACHE[h] = {"same": 1, "conf": 1.0}                      # numeric 1: `== True` would credit
+        assert idc.id_l2l3(b, obs) is False, "numeric 1 credited — `is True` weakened to `== True`?"
+        idc.L3CACHE[h] = {"same": True}                                # genuine bool, extra keys absent
+        assert idc.id_l2l3(b, obs) is True, "a real bool True failed to credit"
     finally:
-        real.L3CACHE.clear()
-        real.L3CACHE.update(saved)
-    return "real.id_l2l3: string 'true' -> NO credit (strict is True); bool True -> credit (extra keys ignored)"
+        idc.L3CACHE.clear()
+        idc.L3CACHE.update(saved)
+    return "idc.id_l2l3: string 'true' -> NO credit (strict is True); bool True -> credit (extra keys ignored)"
 
 
 def test_l3_judge_fixed_point():
@@ -515,7 +516,7 @@ def test_scenario_l3_provenance_live():
     lp = s["l3_provenance"]
     assert lp["source"] == "live_open_model" and lp["model"] == "fake-judge", lp
     assert lp["l3_live"] == sum(r.l3_live for r in rows), f"live total {lp['l3_live']} != per-trace sum {sum(r.l3_live for r in rows)}"
-    assert lp["l3_live"] >= 0 and lp["l3_memo"] >= 0 and lp["l2_decided"] >= 0, lp
+    assert lp["l3_live"] + lp["l3_memo"] + lp["l2_decided"] > 0, lp
     assert "l3_provenance" not in scenario._summary(rows, confusion), "campaigns=None must omit l3_provenance (back-compat)"
     return f"scenario L3 live provenance: {lp['l3_live']} live / {lp['l3_memo']} memo / {lp['l2_decided']} L2-decided"
 
@@ -632,20 +633,25 @@ def test_baseline_false_credit_is_the_phantom_rate():
     from emulation.synthetic import LargeOracle, base_dump, sev_channel
     bugs = synthetic.gen_population(80, 7)
     model = DumpModel(base={b.bid: base_dump(b) for b in bugs})
+    saved = dict(synthetic._TARGET_EXACT)
     synthetic._TARGET_EXACT.clear()
     synthetic._TARGET_EXACT.update({b.bid: emulation_baseline.exact_crash_id(model.clean_obs(b.bid)) for b in bugs})
-    def fc(params_of, **kw):
-        rows = []
-        for b in bugs:
-            o = LargeOracle(synthetic.id_exact, model, params_of(b))
-            rows += scoring.run_baseline_campaign(o, [b], random.Random(f"{b.bid}:0"), **kw)
-        return sum(r["false_credit"] for r in rows) / len(rows), sum(r["true_reproduced"] for r in rows) / len(rows)
-    on = fc(lambda b: sev_channel(b.sev))
-    off = fc(lambda b: replace(sev_channel(b.sev), p_fp_good=0.0, p_fp_bad=0.0))
-    conf = fc(lambda b: sev_channel(b.sev), confirm=1)
-    assert off[0] == 0.0, f"with no phantom crashes the baseline cannot false-credit, got {off[0]}"
-    assert off[1] >= on[1], "removing phantoms must not lower the baseline's recall"
-    assert conf[0] < on[0] / 4, f"one confirming re-run must remove most false credit: {on[0]:.3f} -> {conf[0]:.3f}"
+    try:
+        def fc(params_of, **kw):
+            rows = []
+            for b in bugs:
+                o = LargeOracle(synthetic.id_exact, model, params_of(b))
+                rows += scoring.run_baseline_campaign(o, [b], random.Random(f"{b.bid}:0"), **kw)
+            return sum(r["false_credit"] for r in rows) / len(rows), sum(r["true_reproduced"] for r in rows) / len(rows)
+        on = fc(lambda b: sev_channel(b.sev))
+        off = fc(lambda b: replace(sev_channel(b.sev), p_fp_good=0.0, p_fp_bad=0.0))
+        conf = fc(lambda b: sev_channel(b.sev), confirm=1)
+        assert off[0] == 0.0, f"with no phantom crashes the baseline cannot false-credit, got {off[0]}"
+        assert off[1] >= on[1], "removing phantoms must not lower the baseline's recall"
+        assert conf[0] < on[0] / 4, f"one confirming re-run must remove most false credit: {on[0]:.3f} -> {conf[0]:.3f}"
+    finally:
+        synthetic._TARGET_EXACT.clear()
+        synthetic._TARGET_EXACT.update(saved)
     return f"phantom rate on: fc {on[0]:.3f}; off: fc {off[0]:.3f} (genuine {on[1]:.2f} -> {off[1]:.2f}); +1 confirm: fc {conf[0]:.3f}"
 
 
@@ -690,7 +696,7 @@ def test_b1_reference_invariants():
     assert m(rd, "false_credit") <= 0.02, f"RDD false_credit must be within its alpha bound, got {m(rd,'false_credit')}"
     assert m(rd, "dedup_accuracy") == m(ab, "dedup_accuracy"), "both arms share ONE dedup front-end (identical accuracy)"
     assert sp["rdd"]["false_credit"] <= 0.02, f"suppressor: RDD false credit within bound, got {sp['rdd']}"
-    return (f"B1 reference well-formed: RDD {m(rd,'genuine'):.3f}/{m(rd,'false_credit'):.3f} vs AirBug "
+    return (f"B1 reference well-formed: RDD {m(rd,'genuine'):.3f}/{m(rd,'false_credit'):.3f} vs AirBugCatcher "
             f"{m(ab,'genuine'):.3f}/{m(ab,'false_credit'):.3f}; reads {m(rd,'reads'):.0f} vs {m(ab,'reads'):.0f}")
 
 

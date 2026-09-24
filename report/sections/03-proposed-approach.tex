@@ -44,7 +44,7 @@ independent attempts.
 \node[io]   (poc)   at (16.3,0)    {Minimised\\PoC};
 % oracle + identity row
 \node[proc] (cache) at (3.0,-2.15)  {Monotone\\cache\\{\scriptsize 0 reads}};
-\node[proc] (sprt)  at (6.0,-2.15)  {Truncated\\SPRT oracle\\{\scriptsize accurate path}};
+\node[proc] (sprt)  at (6.0,-2.15)  {Truncated\\SPRT oracle\\{\scriptsize on cache miss}};
 \node[idy]  (l2)    at (9.0,-2.15)  {L2 matcher\\{\scriptsize stack-LCS, site,}\\{\scriptsize fault, templates}};
 \node[dec]  (l2d)   at (11.4,-2.15) {L2\\sure?};
 \node[idy]  (l3)    at (13.8,-2.15) {L3 judge};
@@ -55,7 +55,7 @@ independent attempts.
 \draw[flow] (in) -- (ddmin);
 \draw[flow] (ddmin) -- node[lab,above]{1-minimal recipe} (fv);
 \draw[flow] (fv) -- (poc);
-\draw[<->,thick] (ddmin) -- node[lab,left]{in-seed\\query} (cache);
+\draw[<->,thick] (ddmin) -- node[lab,left]{in-window\\query} (cache);
 \draw[<->,thick] (cache) -- node[lab,above]{on miss} (sprt);
 % the SPRT injects into the external device (call leaves the tool); the device
 % returns a crash dump (re-enters); inject/dump labels carry a white fill only
@@ -90,14 +90,14 @@ L3, the other two being the tiers of the identity oracle. Both RDD and
 \textsc{AirBugCatcher} are evaluated on a software target (the Zephyr controller
 compiled for its host-native \texttt{unit\_testing} target, without radio
 hardware), so the medium is simulated. Each attempt passes through a
-\emph{Gilbert--Elliott} burst channel~\cite{gilbert1960,elliott1963} applied per packet, a two-state
+\emph{Gilbert--Elliott} burst channel~\cite{gilbert1960,elliott1963} applied per attempt, a two-state
 Markov chain whose ``bad'' state raises the loss rate for a few attempts, on top
 of which a flakiness layer decides whether an attempt registers the crash: a
 true reproducer is missed on about 0.44 of valid attempts, an attempt fails to
 connect on 0.02 to 0.27 depending on the state, and a non-reproducing recipe is
 reported as crashing, with the target's own dump, on 0.02 to 0.07 (a
-\emph{phantom} crash). The miss and phantom rates come from a corpus of flaky
-software tests~\cite{flakytests2014}, not from wireless measurements. In every
+\emph{phantom} crash). The miss rate is calibrated to a flaky-test rerun corpus~\cite{flakeflagger2021}, not
+to wireless measurements; the phantom rates are ours. In every
 reported run RDD resets the connection before each attempt, which in the
 simulator resamples the channel state and makes attempts independent; the burst
 structure therefore does not affect RDD's numbers, and the baseline, which reads
@@ -116,17 +116,15 @@ budget of attempts is spent. $\alpha$ is the chance of wrongly accepting a
 non-reproducing recipe (a false credit) and $\beta$ the chance of rejecting a
 real one. The bound on $\alpha$ holds when the attempts are independent and the
 non-reproducer's true rate is at most $p_0$; a true rate strictly between $p_0$
-and $p_1$, the \emph{indifference zone}, is decided by no sequential test with a
-bounded error, a limitation intrinsic to the method that the deep-noise regime of
+and $p_1$, the \emph{indifference zone}, is not covered by the SPRT's error bounds, a limitation intrinsic to the method that the deep-noise regime of
 Section~\ref{sec:evaluation} exhibits. The prototype uses $\alpha = 0.01$,
 $\beta = 0.10$, $p_0 = 0.05$, $p_1 = 0.55$ and a budget of sixteen valid attempts;
-$p_0$ sits above the modelled phantom rate and $p_1$ near the modelled reproduce
-rate, so both preconditions hold in the simulator by choice of parameters. Two
+$p_0$ sits above the phantom rate an independent attempt sees on average (0.03; the
+bad-state rate of 0.07 alone would exceed it) and $p_1$ near the modelled reproduce rate, so both preconditions hold in the simulator by choice of parameters. Two
 departures from Wald's test bias it towards the safe answer: an inconclusive test
 at the budget is ruled ``no'', so the realised miss rate can exceed $\beta$, and a
 ``yes'' additionally requires at least three valid attempts. Failed connections
-are discarded, not counted as misses. Given the committed judge verdicts, every
-run replays exactly from its seed.
+are discarded, not counted as misses, though eight of them end a test as ``no''. Given the committed judge verdicts, every run replays exactly.
 
 \subsection{The monotone result cache}
 
@@ -140,7 +138,7 @@ suppressors, which holds when the uncached probes that selected it were correct
 and the bug has a single cause; outside the starting window the driver does not
 use the cache.
 
-\subsection{The two-tier crash-identity oracle (L2$\rightarrow$L3)}
+\subsection{The two-tier crash-identity oracle (L2\texorpdfstring{$\rightarrow$}{ to }L3)}
 
 An attempt that crashes must be recognised as the target bug. Under noise the same
 crash arrives with a truncated backtrace, lost top frames or interleaved log
@@ -163,9 +161,9 @@ The judge (L3) is consulted only when the matcher says ``different'' with a scor
 in $[0.05, 0.5)$, a band that holds about half of the different-bug pairs in the
 calibration set. It is a single open-weight model (Llama~3.1~8B~\cite{llama3_2024})
 asked whether the two reports describe the same bug; it sees the same reports the
-matcher saw. In evaluation it recovered every same-bug pair the matcher had
-abstained on (57 of 57) and also accepted every different-bug pair that reached
-it (40 of 40). % l3_judge_eval.json
+matcher saw. On an offline set of escalated pairs it recovered every same-bug pair the
+matcher had abstained on (57 of 57) and also accepted every different-bug pair
+(40 of 40); in the benchmark runs' caches it answered ``same'' every time. % l3_judge_eval.json
 The cascade therefore rejects a different-bug report only when the matcher scores
 it below 0.05; cross-bug discrimination rests on the matcher, and the judge is a
 recall aid. No experiment in this report presents a different bug's report to the
@@ -189,7 +187,7 @@ test fails and \texttt{ddmin} returns nothing. RDD's driver first tests the full
 window with the uncached oracle; if it does not crash, it searches for a crashing
 starting window by bounded leave-$k$-out and build-up probing, cheapest first,
 and only then runs \texttt{ddmin} inside that window, where the cache is sound.
-At the end each excluded packet is added back once: if adding it makes the crash
+When the full window did not crash, each excluded packet is then added back once: if adding it makes the crash
 disappear, it is reported as a suppressor. Strictly pairwise suppressors are out of
 scope. The result is 1-minimal with respect to the oracle's verdicts: a false
 ``no'' on a single-packet removal leaves an unnecessary packet, which the size-gap
@@ -197,8 +195,7 @@ metric of Section~\ref{sec:evaluation} measures.
 
 \subsection{The final validation}
 
-RDD credits a recipe only after a second, uncached sequential test with a tighter
-$\beta$ on the same noisy channel. For a given non-reproducing recipe both the
+RDD credits a recipe only after a second, uncached sequential test with a tighter $\beta$ (0.01) on the same noisy channel. For a given non-reproducing recipe both the
 in-loop verdict and this re-confirmation must wrongly accept it, each with
 probability at most $\alpha$ when the two runs are independent and the recipe's
 true rate is at most $p_0$; over a reduction that queries $k$ non-reproducing

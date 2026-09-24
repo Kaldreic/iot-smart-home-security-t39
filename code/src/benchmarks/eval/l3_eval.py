@@ -46,15 +46,17 @@ def collect_cases(seeds: int = 30, base_cache: dict | None = None) -> list[dict]
     from benchmarks import identity_cache as idc
     saved = dict(idc.L3CACHE)
     idc.L3CACHE.clear()
-    if base_cache:
-        idc.L3CACHE.update(base_cache)                         # judged pairs hit; only new pairs miss
-    idc.L3_STATS.update(calls=0, hits=0, misses=[])
-    real._run(scoring.run_tool_campaign, idc.id_l2l3, list(real.BUGS), list(range(seeds)), decorrelate=True)
-    for s in range(seeds):                                     # the suppressor reuses idc.id_l2l3 -> same L3_STATS
-        o = suppressor.LengthReqOracle(identity=idc.id_l2l3)
-        scoring.run_tool_campaign(o, [suppressor.LRBUG], random.Random(s), decorrelate=True)
-    idc.L3CACHE.clear()
-    idc.L3CACHE.update(saved)                                  # restore the global cache
+    try:
+        if base_cache:
+            idc.L3CACHE.update(base_cache)                     # judged pairs hit; only new pairs miss
+        idc.L3_STATS.update(calls=0, hits=0, misses=[])
+        real._run(scoring.run_tool_campaign, idc.id_l2l3, list(real.BUGS), list(range(seeds)), decorrelate=True)
+        for s in range(seeds):                                 # the suppressor reuses idc.id_l2l3 -> same L3_STATS
+            o = suppressor.LengthReqOracle(identity=idc.id_l2l3)
+            scoring.run_tool_campaign(o, [suppressor.LRBUG], random.Random(s), decorrelate=True)
+    finally:
+        idc.L3CACHE.clear()
+        idc.L3CACHE.update(saved)                              # restore the process-wide cache on every path
     seen, uniq = set(), []
     for c in idc.L3_STATS["misses"]:
         if c["hash"] not in seen:
