@@ -8,11 +8,11 @@
     "export": "slidev export"
   },
   "dependencies": {
-    "@slidev/cli": "^52.14.2",
+    "@slidev/cli": "^53.0.0",
     "@slidev/theme-seriph": "^0.25.0"
   },
   "devDependencies": {
-    "playwright-chromium": "^1.60.0"
+    "playwright-chromium": "^1.63.0"
   },
   "engines": {
     "node": ">=22"
