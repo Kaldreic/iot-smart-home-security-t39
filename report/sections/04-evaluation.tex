@@ -38,7 +38,7 @@ Resilience at scale          & \textsc{AirBugCatcher} & 0.282 & 0.638 & 0.567 & 
 \subsection{Real bugs, head to head}\label{ssec:eval-real}
 
 The evaluation examines six controller bugs, labelled A--F, in the Zephyr Bluetooth
-Low Energy stack compiled for the \texttt{native\_sim} software target. One is a
+Low Energy stack compiled for Zephyr's host-native \texttt{unit\_testing} target. One is a
 disclosed vulnerability with a CVE identifier, a division-by-zero in
 connection-parameter handling. The other five are reachable controller faults
 exercised through harness patches on the same vulnerable Zephyr controller, one of

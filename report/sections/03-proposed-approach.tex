@@ -91,8 +91,8 @@ The channel is not part of the tool; it is the device the oracle interacts with
 and the source of noise --- the lowest of the three layers
 Figure~\ref{fig:pipeline} labels L1 to L3, with the crash-identity matcher (L2) and
 judge (L3) detailed below. Keeping it separate makes RDD hardware-independent. Both
-RDD and \textsc{AirBugCatcher} use a software simulator (Zephyr
-\texttt{native\_sim}, without radio hardware), so the wireless environment is
+RDD and \textsc{AirBugCatcher} use a software simulator (the Zephyr controller
+compiled for its host-native \texttt{unit\_testing} target, without radio hardware), so the wireless environment is
 simulated on purpose. The evaluation uses a \emph{Gilbert--Elliott} burst
 channel~\cite{gilbert1960,elliott1963}, a two-state Markov model: in the ``good''
 state, packets pass through easily, while in the ``bad'' state, the link drops

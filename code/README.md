@@ -43,35 +43,39 @@ The only third-party dependencies are `numpy` and `drain3`; everything below run
 
 ```bash
 PYTHONHASHSEED=0 python -m rdd.tests.test_rdd                # the tool's 18 invariants (~seconds)
-PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks  # the suite self-test (~1 min)
+PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks  # the suite self-test (~15 s)
 PYTHONHASHSEED=0 python -m benchmarks.run coherence          # reproduce the committed numbers (delta = 0.000)
 ```
 
 `PYTHONHASHSEED=0` pins determinism (the tests need no `pytest` — a tiny runner prints
 `ALL PASS` / `SKIP` / `FAIL`). `coherence` re-runs the benchmarks from scratch and
-checks the fresh numbers match the committed references exactly; if it prints
-`COHERENT`, the report's results reproduce on your machine.
+checks that the fresh real-anchor rates land within ±0.02 of the committed references
+(they reproduce exactly here, delta 0.000) and that the B2 sweep matches leaf for leaf;
+if it prints `COHERENT`, the report's results reproduce on your machine.
 
 The three headline benchmarks — `PYTHONHASHSEED=0 python -m benchmarks.run <cmd>`:
 
 | Command      | What it measures                                                    | RDD vs. AirBugCatcher  |
 | ------------ | ------------------------------------------------------------------- | ---------------------- |
-| `b1`         | real `native_sim` head-to-head through the full pipeline (live L3)  | 0.863 vs. 0.759 genuine |
+| `b1`         | real Zephyr-binary head-to-head through the full pipeline (live L3) | 0.863 vs. 0.759 genuine |
 | `b2`         | 75k-campaign, 6-regime synthetic resilience sweep (model-free)      | 0.916 vs. 0.282 genuine |
 | `b3`         | real-target lever decomposition (oracle / identity / minimiser)     | isolates each lever     |
 | `coherence`  | the model-free reproducibility gate: the real anchor + B2           | delta = 0.000           |
 
 `b2` and `coherence` are fully model-free, so they run on a bare clone. `b1`/`b3` need
 the real Zephyr binaries (built below) — with `--frozen` they replay from the committed
-L3 cache; without the binaries they exit with a build pointer. The suite self-test stays
-green on a fresh clone: its binary-gated B1/B3 checks SKIP cleanly when those are absent.
+L3 cache; without the binaries they stop with a `FileNotFoundError` naming the build recipe.
+`--freeze` (b1/b2/b3) rewrites the committed reference and L3 cache in place and is never
+needed to reproduce. The suite self-test stays green on a fresh clone: its binary-gated
+B1/B3 checks SKIP cleanly when those are absent.
 
 ## Reproduce the live Zephyr campaigns
 
 `b1`, `b3`, the end-to-end `scenario`, and the off-the-shelf `benchmarks.live` drive real, vulnerable Zephyr
-Bluetooth-controller binaries on `native_sim`. **Build them** (needs Docker) with the
+Bluetooth-controller binaries built for Zephyr's host-native `unit_testing` board (a ztest
+executable, no radio). **Build them** (needs Docker) with the
 recipe in [`src/emulation/zephyr-targets/`](./src/emulation/zephyr-targets/). The binaries are **32-bit**
-(`native_sim`), so on a 64-bit host install the i386 runtime once before running them:
+(`unit_testing` builds default to i386), so on a 64-bit host install the i386 runtime once before running them:
 
 ```bash
 sudo dpkg --add-architecture i386 && sudo apt-get update && sudo apt-get install -y libc6:i386   # Debian/Ubuntu
@@ -96,7 +100,7 @@ code/
 └── src/
     ├── rdd/            # THE TOOL — self-contained: pipeline, SPRT oracle, L2/L3 identity, robust ddmin
     ├── emulation/      # THE HARDWARE-FREE TEST BED — device oracles + the channel/dump noise models
-    │   └── zephyr-targets/   #   Docker build recipe for the real native_sim bug binaries
+    │   └── zephyr-targets/   #   Docker build recipe for the real host-native bug binaries
     └── benchmarks/     # THE SUITE — AirBugCatcher baseline vs. the tool + the reproducibility gate
 ```
 
@@ -114,6 +118,20 @@ reproduces with **no LLM, GPU, or network** — a cache hit returns the stored v
 miss falls back to a conservative "different bug". Tests that need the compiled binaries
 (under the gitignored `upstream/`) skip cleanly when absent, so a fresh clone is always
 green.
+
+## Known limitations
+
+- The committed Bug-B base dump (`src/emulation/data/logs/dump-bug-b.txt`) is an abbreviated
+  transcript whose frame lines carry no bracketed return address, so the dump-variation model
+  yields a header-only report with no stack for B. The exact-id baseline is therefore *stronger*
+  on B than on the other bugs, which is conservative for RDD's claims; a raw re-capture would need
+  the Docker build.
+- The LL_LENGTH_REQ suppressor harness installs no SIGFPE handler and prints no backtrace, so
+  its emulated oracle re-uses Bug A's captured dump (the crash *is* A's conn-update SIGFPE): that
+  dump is borrowed, not captured.
+- The live campaigns (`b1`, `b3`, `scenario`, `live`) were not re-run during the September 2026
+  audit (the binaries were not rebuilt); their committed references and L3 caches are the June
+  2026 runs, which `--frozen` replays.
 
 ## License & citation
 
