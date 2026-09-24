@@ -1,47 +1,21 @@
-"""benchmarks.levers — B3: the real-target lever decomposition, RDD's advantage attributed to its 3 levers.
+"""benchmarks.levers — B3: the real-target lever decomposition.
 
-The third headline (peer to B1 ``benchmarks.headtohead`` + B2 ``benchmarks.resilience``): on the REAL
-host-native Zephyr targets, decompose RDD's reproduction advantage into its three design levers by toggling
-ONE at a time — a 4-arm cube run DIRECT-WINDOW (each real bug's own window; NO dedup front-end, so the arms
-differ ONLY in the toggled lever):
+Four arms on the real host-native Zephyr targets, each on the bug's own window (no grouping front-end):
+baseline (AirBug enumeration + exact-id); oracle (RDD's truncated-SPRT oracle + bare ddmin, exact-id);
+ablation (+ the L2/L3 crash identity, bare ddmin); tool (+ the robust minimiser: the shipped RDD). The
+``levers`` block reports each arm's false credit on A--F, the oracle -> ablation genuine change on A--F
+(identity) and the ablation -> tool genuine change on the real LL_LENGTH_REQ suppressor (minimiser; on the
+monotone A--F bugs ddmin suffices). The oracle arm changes the oracle and the minimiser together, so its own
+genuine change is not attributed to one lever.
 
-  baseline  = AirBug          (fixed-K enum minimiser + exact-id)
-  oracle    = + the oracle     (RDD's truncated-SPRT oracle + ddmin, still exact-id)        [oracle ON]
-  ablation  = + the identity   (L2/L3 crash-identity replaces exact-id; still bare ddmin)   [oracle + identity]
-  tool      = + the minimiser  (the robust non-monotone seed-finder; the full shipped RDD)  [all three]
+The two L2/L3 arms call the open model live and are reported as ranges over seeds; their verdicts are frozen
+to data/llm_cache/levers_l3.json for a reproducible replay. The two exact-id arms call no model. All arms run
+decorrelated on the same per-(bug, seed) channel seed and are scored by ``scoring.score_bug`` against the
+channel-off truth. The "device" is the host-native ELF run via subprocess; the OTA channel is modelled. The
+suppressor target is truth-table backed and emits bug A's real dump.
 
-THE 3 LEVERS (honest attribution — each shown where it actually bites):
-  * ORACLE/gate = the FALSE-CREDIT lever, shown by INVARIANCE on A--F: false_credit ~ 0 for ALL THREE pipeline
-    arms (oracle, ablation, tool) and > 0 ONLY for the fixed-K baseline (no final-validation gate). baseline ->
-    the `oracle` arm flips the SPRT oracle AND the minimiser together, so the oracle's genuine EFFECT is
-    confounded and NOT claimed as a clean lever (the `oracle` arm's genuine can even sit BELOW baseline; the
-    genuine RECOVERY is the identity + minimiser levers below) — only its false-credit role (the SPRT +
-    final-validation gate) is attributed here.
-  * IDENTITY (genuine) = oracle -> ablation on A--F: the L2/L3 crash-identity recovers reproductions exact-id
-    discards (a varied/garbled dump that is the same bug).
-  * ROBUST MINIMISER (genuine) = ablation -> tool on the SUPPRESSOR: the non-monotone seed-finder recovers the
-    bug bare ddmin SEED-BAILS on (the real LL_LENGTH_REQ suppressor). On the monotone A--F bugs ddmin already
-    suffices, so the minimiser lever shows on the suppressor, not on A--F — disclosed.
-
-L3 = "live range + frozen CI gate" (like B1): the two L2/L3 arms (ablation, tool) run their crash-identity LIVE
-(the open-model judge) across N=8 seeds -> the authentic genuine RANGE is the headline; the live verdicts are
-FROZEN to the committed cache so CI re-verifies a reproducible point (out['l3_live']==0 on a frozen replay). The
-two exact-id arms (baseline, oracle) call NO model -> bit-reproducible. All four arms drive the SAME real
-host-native binary per bug (built once, shared) over the SAME per-(bug, seed) channel seed (fair).
-
-METRICS (B1's set), per arm, scored vs the channel-off virtual-perfect the minimiser NEVER sees (genuine <=>
-the PoC PROVABLY crashes the RIGHT bug): genuine / false_credit / exact_minimal (of genuine) / mean_size_gap
-(of genuine) / reads. The A--F arms are seed-RANGES (mean/min/max over seeds); the suppressor arms are rates
-over seeds (one bug). Reported in two parts: ``real`` (A--F) + ``suppressor`` + the 3 ``levers`` deltas.
-
-HONEST BOUNDARY (disclosed, as in B1): the "real device" is the real Zephyr controller compiled to a host-native (``unit_testing``)
-ELF and run via subprocess (NOT a runtime container; Docker only builds it); the radio/OTA channel is MODELLED
-(Gilbert-Elliott). Direct-window (vs B1's full fuzz->dedup pipeline) isolates the levers from the grouping
-front-end. The suppressor is the real non-monotone LL_LENGTH_REQ target (truth-table-backed, Docker-captured;
-it emits bug A's real conn-update dump, so the live L3 + exact-id both judge bug-A dumps).
-
-  python -m benchmarks.levers --seeds 8 --model llama3.1:8b   # the live decomposition (needs the binaries + Ollama)
-  python -m benchmarks.levers --coherence                     # frozen replay reproduces the committed reference (exact)
+  python -m benchmarks.levers --seeds 8 --model llama3.1:8b   # live (needs the binaries + Ollama)
+  python -m benchmarks.levers --frozen | --coherence | --refreeze
 """
 
 from __future__ import annotations
@@ -61,13 +35,9 @@ from emulation.live import LiveBinaryOracle, _Bug, _WINDOW
 from emulation.suppressor import LRBUG, LengthReqOracle
 from rdd.identity import LiveL2L3Identity
 
-# the 4-arm cube: (label, campaign-runner, identity-kind 'exact'|'l3', minimiser kwargs). ALL FOUR run
-# DECORRELATED so the channel is held CONSTANT across arms (the clean control a decomposition needs; matches B1) --
-# the toggled lever is then the only difference. baseline = AirBug enum + exact-id; oracle/ablation/tool = the RDD
-# pipeline (truncated-SPRT oracle) with the levers toggled on. NB decorrelate=True resamples the channel each rep, so
-# it DOES shift AirBug's numbers (not a no-op) -- it is a deliberate control to equalise the channel across arms here.
-# B2's head-to-head runs AirBug as-shipped (decorrelate=False), so the same AirBug arm reads slightly differently
-# there (e.g. the real suppressor 0.875 here/B1 vs 0.800 in the cached real anchor): a control difference, not a tool change.
+# (label, campaign runner, identity kind 'exact'|'l3', minimiser kwargs). All four arms run decorrelated so
+# the channel is the same across arms. decorrelate=True resamples the channel each rep, so the AirBug arm
+# here reads differently from the as-shipped (decorrelate=False) AirBug arm of B2 and the anchor.
 _ARMS = [
     ("baseline", scoring.run_baseline_campaign, "exact", {"decorrelate": True}),
     ("oracle",   scoring.run_tool_campaign,     "exact", {"decorrelate": True, "ablate_robust": True}),
@@ -78,19 +48,19 @@ _METRICS = ("genuine", "false_credit", "exact_minimal", "mean_size_gap", "reads"
 
 
 def _setup_target(bug, *, model_name, host, judge, memo):
-    """Capture the real host-native target ONCE and build the two oracles over the SAME dump-model: the live
-    L2/L3 oracle (ablation + tool) and the exact-id oracle (baseline + oracle arms). Returns {'l3': (o, id), 'exact': (o, None)}."""
+    """Capture the target once and build both oracles over the same dump model: live L2/L3 (ablation, tool) and
+    exact-id (baseline, oracle). Returns {'l3': (oracle, identity), 'exact': (oracle, None)}."""
     l3_oracle, l3_identity = live.build_live_campaign(bug, model=model_name, host=host, judge=judge, memo=memo)
     ref_exact = exact_crash_id(l3_oracle.model.clean_obs(bug))            # the captured clean dump's exact id
 
-    def exact_identity(b, obs, _ref=ref_exact):                          # AirBug's is_same_crash_id (deterministic)
+    def exact_identity(b, obs, _ref=ref_exact):                          # AirBug's is_same_crash_id
         return exact_crash_id(obs) == _ref
     exact_oracle = LiveBinaryOracle(l3_oracle.binary, bug, exact_identity, l3_oracle.model, crash_rc=l3_oracle.crash_rc)
     return {"l3": (l3_oracle, l3_identity), "exact": (exact_oracle, None)}
 
 
 def _row(bug, r, calls) -> dict:
-    """Score one arm's run on one bug vs the channel-off virtual-perfect (already applied by score_bug)."""
+    """One arm's scored row for one bug (score_bug has already applied the channel-off rule)."""
     genuine = bool(r.get("true_reproduced"))
     return {"bug": bug, "genuine": genuine, "false_credit": bool(r.get("false_credit")),
             "size_gap": float(r["size_gap"]) if (genuine and r.get("size_gap") is not None) else float("nan"),
@@ -98,13 +68,13 @@ def _row(bug, r, calls) -> dict:
 
 
 def _run_seed(seed, setups) -> dict:
-    """Run the 4 arms over every real bug on its OWN window (direct-window), all four sharing the per-(bug, seed)
-    channel seed. Returns {arm: [rows over the bugs]}."""
+    """The four arms over every real bug on its own window, sharing the per-(bug, seed) channel seed. Returns
+    {arm: rows over the bugs}."""
     rows = {lbl: [] for lbl, *_ in _ARMS}
     for i, bug in enumerate(_BUGS):
         oracles = setups[bug]
         bug_obj = _Bug(bug=bug, window=_WINDOW[bug], crash_sig=f"bug-{bug}")
-        arm_seed = seed * 131 + i                                         # SAME channel realisation start for all 4 arms (fair)
+        arm_seed = seed * 131 + i                                         # the same channel seed for all four arms
         for lbl, campaign, kind, kw in _ARMS:
             oracle = oracles[kind][0]
             oracle.calls = 0
@@ -114,8 +84,7 @@ def _run_seed(seed, setups) -> dict:
 
 
 def _arm_summary(rows) -> dict:
-    """B1's metric set over a set of scored rows (the 6 bugs of one seed, or the per-seed rows of the suppressor):
-    genuine / false_credit / exact_minimal (of genuine) / mean_size_gap (of genuine) / reads."""
+    """The metric set over scored rows: genuine, false_credit, exact_minimal and mean_size_gap (of genuine), reads."""
     n = len(rows) or 1
     gaps = [r["size_gap"] for r in rows if r["genuine"] and r["size_gap"] == r["size_gap"]]
     return {"genuine": sum(r["genuine"] for r in rows) / n,
@@ -131,9 +100,8 @@ def _agg_seed(per, key) -> dict | None:
 
 
 def _run_suppressor(seeds, *, model_name, host, judge, memo) -> dict:
-    """The 4 arms on the real non-monotone LL_LENGTH_REQ suppressor (truth-table-backed; emits bug A's real dump,
-    so the live L3 + exact-id both judge bug-A dumps). Rates over ``seeds`` (one bug). This is where the ROBUST
-    MINIMISER lever shows: bare ddmin (ablation) SEED-BAILS, the robust seed-finder (tool) recovers."""
+    """The four arms on the real non-monotone LL_LENGTH_REQ suppressor (truth-table backed; it emits bug A's
+    real dump, so both identities judge bug-A dumps). Rates over ``seeds``."""
     ref = multibug.MODEL.clean_obs("A")
     ref_exact = exact_crash_id(ref)
 
@@ -156,9 +124,8 @@ def _run_suppressor(seeds, *, model_name, host, judge, memo) -> dict:
 
 
 def _lever_deltas(out) -> dict:
-    """Attribute each lever where it bites: ORACLE = the false-credit INVARIANCE on A--F (baseline > 0, the
-    pipeline arms ~ 0); IDENTITY = the oracle -> ablation genuine gain on A--F; ROBUST MINIMISER = the
-    ablation -> tool genuine gain on the suppressor (where bare ddmin bails)."""
+    """The three lever deltas: per-arm false credit on A--F, the oracle -> ablation genuine change on A--F, and
+    the ablation -> tool genuine change on the suppressor."""
     rg = lambda arm: out["real"][arm]["genuine"]["mean"]                  # noqa: E731  (A--F genuine mean)
     rfc = lambda arm: out["real"][arm]["false_credit"]["mean"]            # noqa: E731
     sg = lambda arm: out["suppressor"][arm]["genuine"]                    # noqa: E731  (suppressor genuine rate)
@@ -168,10 +135,9 @@ def _lever_deltas(out) -> dict:
 
 
 def run(seeds: int = 8, *, model_name: str = "llama3.1:8b", host=None, judge=None, memo=None) -> dict:
-    """The full B3 decomposition: the 4-arm cube over A--F (seed-ranges) + the suppressor (rates) + the 3 lever
-    deltas. The L3 verdict memo is SHARED across seeds/bugs/parts (each distinct dump pair judged once) so the
-    caller can FREEZE it (empty ``memo`` for a live run; a complete ``memo`` + a conservative-NO ``judge`` for a
-    reproducible replay -> out['l3_live'] == 0)."""
+    """The full B3 run: the four arms over A--F (ranges over seeds), the suppressor (rates) and the lever deltas.
+    The L3 memo is shared across seeds, bugs and parts: pass an empty ``memo`` for a live run, or a complete
+    ``memo`` plus a conservative-NO ``judge`` for a replay (``l3_live`` is then 0)."""
     memo = {} if memo is None else memo
     setups = {bug: _setup_target(bug, model_name=model_name, host=host, judge=judge, memo=memo) for bug in _BUGS}
     per = {lbl: [] for lbl, *_ in _ARMS}
@@ -190,13 +156,13 @@ def run(seeds: int = 8, *, model_name: str = "llama3.1:8b", host=None, judge=Non
 
 
 _DATA = Path(__file__).resolve().parent / "data"
-_CACHE = _DATA / "llm_cache" / "levers_l3.json"             # the frozen live-L3 verdicts (the reproducibility freeze)
-_REF = _DATA / "reference" / "levers.json"                 # the frozen B3 reference numbers
+_CACHE = _DATA / "llm_cache" / "levers_l3.json"             # the frozen live-L3 verdicts
+_REF = _DATA / "reference" / "levers.json"                 # the committed B3 reference
 
 
 def freeze(seeds: int = 8, *, model_name: str = "llama3.1:8b", host=None, judge=None,
            cache_path: Path = _CACHE, ref_path: Path = _REF) -> dict:
-    """Run B3 LIVE (default judge = Ollama), capturing every L3 verdict, then PERSIST the memo + the reference."""
+    """Run B3 live (default judge: Ollama), then persist the L3 memo and the reference."""
     memo: dict = {}
     out = run(seeds, model_name=model_name, host=host, judge=judge, memo=memo)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -207,23 +173,23 @@ def freeze(seeds: int = 8, *, model_name: str = "llama3.1:8b", host=None, judge=
 
 
 def frozen(seeds: int = 8, *, cache_path: Path = _CACHE) -> dict:
-    """Reproduce B3 from the committed memo with NO live model: pre-load the complete memo + a conservative-NO
-    guard judge (which must never fire if the memo is complete -> out['l3_live'] == 0)."""
+    """Replay B3 from the committed memo with no live model: a conservative-NO judge stands in for the model and
+    must never fire if the memo is complete (``l3_live`` == 0)."""
     memo = json.loads(Path(cache_path).read_text(encoding="utf-8"))
     return run(seeds, judge=lambda *a, **k: {"same": False}, memo=dict(memo))
 
 
 def refreeze(seeds: int = 8) -> dict:
-    """Write the committed reference from the FROZEN replay (no live model): used after a change to the
-    scorer or the pipeline that leaves the noise streams, and hence the committed L3 memo, valid."""
+    """Write the reference from the frozen replay, for a change to the scorer or the pipeline that leaves the noise
+    streams, and hence the committed memo, valid."""
     out = frozen(seeds)
     _REF.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n", encoding="utf-8")
     return out
 
 
 def coherence(seeds: int = 8, tol: float = 1e-9) -> bool:
-    """The FROZEN replay reproduces the committed reference EXACTLY (every leaf) and makes 0 live model calls.
-    The top-level ``l3_live`` is skipped — the reference records the live-freeze count, a frozen replay is 0."""
+    """True iff the frozen replay reproduces every leaf of the committed reference and makes no live model call.
+    The top-level ``l3_live`` is skipped: the reference records the live-freeze count."""
     ref = json.loads(_REF.read_text(encoding="utf-8"))
     fresh = scoring.clean_nan(frozen(seeds))
     diffs = scoring.leaf_diffs(fresh, ref, tol=tol, skip_top=("l3_live",))

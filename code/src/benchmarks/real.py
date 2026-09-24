@@ -1,11 +1,9 @@
-"""benchmarks.real — the real-target evaluation: RDD (the tool) vs the AirBugCatcher baseline.
+"""benchmarks.real — the real-target campaign driver shared by the runner and the cache tests.
 
-The device (the oracle + its channel-off truth + captured reference dumps) lives in ``emulation.multibug``,
-and the shared cached open-model L3 identity (the reproducibility freeze) in ``benchmarks.identity_cache``;
-this module owns the real-target per-(bug, seed) campaign driver (``_run``) and re-exports both for the runner + the
-cache-strictness test. The baseline loses a true reproduction TWICE -- to the channel (fixed-K accept-first FN)
-AND to the exact-id (it cannot match a varied dump); RDD recovers both. The runner (``benchmarks.run``) drives
-the arms (baseline vs tool, + the ddmin-only ablation)."""
+The device (the truth-table oracle and the captured reference dumps) lives in ``emulation.multibug`` and the
+cached open-model L3 identity in ``benchmarks.identity_cache``; both are re-exported here. ``_run`` drives
+one campaign function over every (bug, seed); ``benchmarks.run`` chooses the arm.
+"""
 
 from __future__ import annotations
 
@@ -16,9 +14,9 @@ from emulation.multibug import BUGS, MODEL, MultibugOracle, _mbug, id_exact  # n
 
 
 def _run(arm, identity, bugs, seeds, *, params=None, **kw):
-    """Run one campaign function (``scoring.run_baseline_campaign``/``run_tool_campaign``) over every
-    (bug, seed); the campaign fn is a parameter so the runner picks baseline / tool / ddmin-only ablation.
-    ``params`` overrides the device's channel (the noise-sensitivity table uses it)."""
+    """Run one campaign function (``scoring.run_baseline_campaign`` or ``run_tool_campaign``) over every
+    (bug, seed), with a fresh oracle per campaign. ``params`` overrides the device's channel (the sensitivity
+    table uses it)."""
     rows = []
     for b in bugs:
         bug = _mbug(b)

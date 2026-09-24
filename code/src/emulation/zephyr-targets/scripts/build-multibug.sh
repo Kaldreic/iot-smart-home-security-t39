@@ -1,29 +1,27 @@
 #!/usr/bin/env bash
-# Build the TWO-BUG hardware-free oracle binary (ONE testbinary, TWO crash identities) on
-# the REAL vulnerable Zephyr LL controller, and verify BOTH bugs' channel-OFF exhaustive sweeps.
+# Build the two-bug oracle binary (one testbinary, two crash identities) on the vulnerable Zephyr LL
+# controller and verify both bugs' channel-off exhaustive sweeps.
 #
-# The harness (patches/multibug-harness.patch) adds two ZTESTs to the ctrl_conn_update suite; each is a NO-OP unless
-# selected by env HARNESS_BUG (the native unit_testing binary runs the WHOLE suite -- no per-test CLI
-# filter -- so selection is by getenv, the existing PROBE_ID pattern). HARNESS_SUBSET is a bitmask over
-# each bug's LL-PDU window so an external minimiser can drive a channel-OFF exhaustive subset sweep.
+# The harness (patches/multibug-harness.patch) adds two ZTESTs to the ctrl_conn_update suite; each is a
+# no-op unless selected by env HARNESS_BUG (the native unit_testing binary runs the whole suite, with no
+# per-test CLI filter, so selection is by getenv -- the existing PROBE_ID pattern). HARNESS_SUBSET is a
+# bitmask over each bug's LL-PDU window, for a channel-off exhaustive subset sweep.
 #
-#   HARNESS_BUG=A  test_bug_a: CVE-2024-4785 divide-by-zero -> SIGFPE. 8-PDU WIDE trigger-last window
-#             (the wide trigger-last window): decoys window[0..6], interval=0
-#             LL_CONNECTION_UPDATE_IND trigger window[7]. Channel-OFF true 1-minimal = {7} (bit7=128).
-#             An in-test signal(SIGFPE,...) handler prints a real backtrace + "=== CRASH sig=SIGFPE ==="
-#             to stderr then _exit(136). Shell exit 136 (Python returncode 136).
-#   HARNESS_BUG=C  test_bug_c: a DISTINCT crash identity -- LL_ASSERT(ntf) @ ull_llcp_conn_upd.c:247
-#             (cu_ntf) -> mocked bt_ctlr_assert_handle -> exit(-1). A genuine 2-PACKET minimal: a
-#             peripheral local CPR driven to WAIT_INSTANT by IND#1, then a load-bearing IND#2 desyncs
-#             the retained-node bookkeeping. Window: bits0..2 = transparent (droppable) drained local
-#             LE-Pings, bit3 = IND#1, bit4 = IND#2. Channel-OFF true minimal = {IND1,IND2} = 24 (0x18).
-#             Python returncode 255 / shell 255.
+#   HARNESS_BUG=A  test_bug_a: CVE-2024-4785 divide-by-zero -> SIGFPE. 8-PDU trigger-last window: decoys
+#             window[0..6], interval=0 LL_CONNECTION_UPDATE_IND trigger window[7]. Channel-off true
+#             1-minimal = {7} (bit7=128). An in-test signal(SIGFPE,...) handler prints a real backtrace
+#             + "=== CRASH sig=SIGFPE ===" to stderr then _exit(136). Shell exit 136 (Python returncode 136).
+#   HARNESS_BUG=C  test_bug_c: a distinct crash identity -- LL_ASSERT(ntf) @ ull_llcp_conn_upd.c:247
+#             (cu_ntf) -> mocked bt_ctlr_assert_handle -> exit(-1). A 2-packet minimal: a peripheral local
+#             CPR driven to WAIT_INSTANT by IND#1, then a load-bearing IND#2 desyncs the retained-node
+#             bookkeeping. Window: bits0..2 = transparent (droppable) drained local LE-Pings, bit3 = IND#1,
+#             bit4 = IND#2. Channel-off true minimal = {IND1,IND2} = 24 (0x18). Python returncode 255 / shell 255.
 #
-# -rdynamic is passed so backtrace_symbols_fd resolves the exported controller frames in Bug A's
-# dump (notably ull_conn_update_parameters, the faulting divide site).
+# -rdynamic lets backtrace_symbols_fd resolve the exported controller frames in Bug A's dump (notably
+# ull_conn_update_parameters, the faulting divide site).
 #
-# Leaves build-multibug/testbinary as the two-bug binary. Uses a SEPARATE build dir; /work/build is
-# left untouched. Idempotent. Re-uses the clone + SDK. Run: bash scripts/build-multibug.sh
+# Leaves build-multibug/testbinary. Separate build dir; /work/build is untouched. Idempotent; re-uses the
+# clone + SDK. Run: bash scripts/build-multibug.sh
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"                # code/src/emulation/zephyr-targets/

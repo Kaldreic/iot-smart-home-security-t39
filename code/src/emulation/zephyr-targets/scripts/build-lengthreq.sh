@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
-# Build the REAL length_req-SUPPRESSOR oracle binary on the vulnerable Zephyr controller and
-# capture its channel-OFF exhaustive truth (a genuinely NON-MONOTONE real bug), for the Arm A/B/B+ run.
+# Build the real length_req-suppressor oracle binary on the vulnerable Zephyr controller and capture its
+# channel-off exhaustive truth (a genuinely non-monotone real bug), for the Arm A/B/B+ run.
 #
-# Reuses the LOCKED oracle harness (patches/oracle-harness.patch) -- the 4-PDU window [0]=PING [1]=VERSION
-# [2]=FEATURE (transparent decoys) [3]=interval=0 trigger -- and ADDS window[4] = LL_LENGTH_REQ, the
-# REAL suppressor found + independently reproduced: a peer LL_LENGTH_REQ starts a Data-Length
-# procedure that, injected BEFORE the trigger, collides with / defers the conn-update so the trigger no
-# longer applies (CONFIG_BT_CTLR_DATA_LENGTH=y makes the colliding procedure live). The injection is
-# added by a small documented python edit (not a hand-counted patch) on top of oracle-harness.patch's output.
+# Reuses the locked oracle harness (patches/oracle-harness.patch) -- the 4-PDU window [0]=PING [1]=VERSION
+# [2]=FEATURE (transparent decoys), [3]=interval=0 trigger -- and adds window[4] = LL_LENGTH_REQ, the real
+# suppressor found and independently reproduced: a peer LL_LENGTH_REQ starts a Data-Length procedure that,
+# injected before the trigger, collides with / defers the conn-update so the trigger no longer applies
+# (CONFIG_BT_CTLR_DATA_LENGTH=y makes the colliding procedure live). The injection is a small documented
+# python edit on top of oracle-harness.patch's output, not a hand-counted patch.
 #
-# SIGFPE (shell exit 136 / Python returncode -8) iff window[3] set AND window[4] NOT set => non-monotone.
-# Emits build-lengthreq/truth-lengthreq.json (mask -> crash bool, 5-bit window) + a human log.
-# Idempotent. Run: bash scripts/build-lengthreq.sh
+# SIGFPE (shell exit 136 / Python returncode -8) iff window[3] set and window[4] not set => non-monotone.
+# Emits build-lengthreq/truth-lengthreq.json (mask -> crash bool, 5-bit window) + a human log. Idempotent.
+# Run: bash scripts/build-lengthreq.sh
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
 EXP="$(cd "$HERE/../../.." && pwd)"
 WS="${HARNESS_WS:-$EXP/upstream/zephyr-cve-lengthreq}"
-# isolation guard: this builds a DIFFERENT binary (LL_LENGTH_REQ + BT_DATA_LEN_UPDATE) than the
-# shared oracle, so it must live in its own *-lengthreq workspace + build-lengthreq dir and NEVER dirty the
-# shared zephyr-cve oracle workspace. Refuse anything else (even if HARNESS_WS is force-supplied).
+# isolation guard: this builds a different binary (LL_LENGTH_REQ + BT_DATA_LEN_UPDATE) than the shared
+# oracle, so it must live in its own *-lengthreq workspace + build-lengthreq dir and never dirty the shared
+# zephyr-cve oracle workspace. Refuse anything else (even if HARNESS_WS is force-supplied).
 case "$(basename "$WS")" in
   *-lengthreq) ;;
   *) echo "refuse: this script needs an isolated *-lengthreq workspace (got '$(basename "$WS")') — it would clobber the shared oracle workspace. Unset HARNESS_WS for the default." >&2; exit 1 ;;

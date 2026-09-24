@@ -1,34 +1,21 @@
-"""benchmarks.scenario — the FULL real-deployment scenario: RDD as the minimiser module in the production
-pipeline  fuzz-campaign -> crash-dedup -> per-bug window -> RDD -> PoC,  over all 6 real bugs.
+"""benchmarks.scenario — the full deployment scenario: fuzz campaign -> crash dedup -> per-bug window -> RDD
+-> PoC, over the six real bugs.
 
-This module owns the whole eval-side pipeline: the SIMULATED pre-RDD front-end (the fuzzing campaign +
-the crash deduper, below), then routing each deduped crash to the real per-bug binary (from
-``benchmarks.live``), driving RDD over that bug's fixed window, and scoring the end-to-end run. The fuzzing
-campaign is the ONLY simulated stage (no HW radio; the host-native binary): we synthesise a campaign of packet-log
-TRACES (illustrative decoy PDUs + the bugs' real trigger patterns + cross-bug look-alikes) and, for each, a
-crash log = a MODELLED-varied instance of that bug's REAL captured dump (the same report-noise model
-``benchmarks.live`` uses). The downstream STAGES are real:
+The fuzzing campaign is the only simulated stage: ``generate_campaign`` synthesises packet-log traces (decoy
+PDUs, cross-bug look-alikes and the bug's real trigger pattern) and, for each, a crash log that is a varied
+instance of the bug's real captured dump. Downstream is real: ``CrashDeduper`` classifies the crash log into
+one of the six families by the L2 identity (A and B are both SIGFPE; C, D, E, F are asserts at distinct
+sites, so the split is by crash site), the predicted family routes the minimiser to that bug's binary
+(``benchmarks.live``), RDD reduces the bug's fixed window with the live binary and live L3, and the PoC is
+scored against the true minimal. Routing on the prediction means a mis-dedup minimises the wrong target.
+The binary's window layout is fixed, so the trace supplies provenance, not a larger candidate space.
 
-  * crash DEDUP   — the tool gets only a crash log and must CLASSIFY it (via the L2/L3 crash-identity) into one
-                    of the 6 real families. A,B are both SIGFPE and C,D,E,F all assert (at distinct sites), so
-                    dedup must split by crash SITE, not just fault type. The predicted family ROUTES the
-                    minimiser to a binary, so a mis-dedup minimises the WRONG target -> a real end-to-end
-                    failure (load-bearing dedup).
-  * per-bug WINDOW — each bug's FIXED PDU window (trigger-last for A,B; the two load-bearing INDs/REQs for C,D,E,F).
-  * RDD MINIMISE  — reduce the window to a PoC by probing the REAL per-bug binary live + a live open-model L3.
-  * SCORE         — each PoC must genuinely crash the real binary AND is scored vs the PERFECT true-minimal.
+A usage validation: no baseline arm and no coherence gate (a live model and binary are not
+bit-reproducible), so ``run_multiseed`` reports the range over seeds; the dedup accuracy and false credit
+are pinned in CI by ``test_scenario_multiseed_robust_invariants`` with a fake judge and a mocked binary.
 
-Honest scope: the binary's window layout is fixed, so the trace is a FRONT-END — its PDU sequence is
-realism/provenance, while the FUNCTIONAL inputs are the (modelled-varied) crash log -> DEDUP and the binary's
-fixed W-window -> MINIMISE (where the minimiser discards the window's real decoys to find the trigger). It is
-NOT a larger candidate space — the one gap a HW radio would close. USAGE VALIDATION: no baseline, no coherence
-gate (a live model + a live binary are not bit-reproducible). End-to-end genuine varies with the seed (live
-model + OTA channel), so a single seed is not bit-reproducible and the RANGE over seeds is the claim
-(``run_multiseed``). The dedup accuracy and the 0 false-credit are the robust invariants;
-``test_scenario_multiseed_robust_invariants`` pins them reproducibly in CI (fake judge + mocked binary).
-
-  python -m benchmarks.scenario --traces 40 --model llama3.1:8b              # one live run (+ confusion matrix)
-  python -m benchmarks.scenario --traces 40 --seeds 8 --model llama3.1:8b    # the multi-seed range (needs Ollama)
+  python -m benchmarks.scenario --traces 40 --model llama3.1:8b              # one live run
+  python -m benchmarks.scenario --traces 40 --seeds 8 --model llama3.1:8b    # the multi-seed range
 """
 
 from __future__ import annotations
@@ -47,9 +34,9 @@ from rdd.identity import L2Matcher
 
 _BUGS = ("A", "B", "C", "D", "E", "F")
 
-# --- the SIMULATED pre-RDD front-end: fuzzing campaign + crash grouping (no HW radio) ---
+# --- the simulated front-end: fuzzing campaign + crash grouping ---
 
-# The PDU alphabet a BLE link-layer fuzzer mutates over (names are illustrative of the real control PDUs).
+# The PDU alphabet a BLE link-layer fuzzer mutates over (names illustrative of the real control PDUs).
 _DECOYS_PEER = ("LE_PING", "LL_VERSION_IND", "LL_FEATURE_REQ", "LL_CHANNEL_MAP_IND")   # transparent for A,B
 _DECOY_LOCAL = "LOCAL_LE_PING(drained)"                                                 # the transparent one for C,D,E,F
 _TRIGGERS = {"A": ("LL_CONNECTION_UPDATE_IND(interval=0)",),
@@ -58,7 +45,7 @@ _TRIGGERS = {"A": ("LL_CONNECTION_UPDATE_IND(interval=0)",),
              "D": ("LL_PHY_UPDATE_IND #1", "LL_PHY_UPDATE_IND #2"),
              "E": ("LL_LENGTH_REQ #1", "LL_LENGTH_REQ #2"),
              "F": ("LL_CIS_IND #1", "LL_CIS_IND #2")}
-# cross-bug LOOK-ALIKES — resemble a trigger but DON'T fire (the noise dedup/minimise must not be fooled by):
+# cross-bug look-alikes: resemble a trigger but do not fire
 _LOOKALIKES = ("LL_CONNECTION_UPDATE_IND(interval=7)",      # a benign conn-update (not interval=0, not a C-pair)
                "LL_CIS_REQ(well-formed)", "LL_PHY_UPDATE_IND(no-op)",
                "LL_LENGTH_REQ(single,benign)",              # one length-req keeps the node -> doesn't fire E
@@ -67,26 +54,25 @@ _LOOKALIKES = ("LL_CONNECTION_UPDATE_IND(interval=7)",      # a benign conn-upda
 
 @dataclass
 class Trace:
-    """One simulated fuzzer artifact: a packet-log + the crash log it produced (the fuzzer's observed crash).
-    ``bug`` is the GROUND TRUTH (used only for scoring, never shown to the tool)."""
+    """One simulated fuzzer artifact: a packet log and the crash log it produced. ``bug`` is the ground truth,
+    used only for scoring."""
     bug: str
-    pdus: list                     # the full packet sequence (realism/provenance; longer than the window)
+    pdus: list                     # the full packet sequence (longer than the window)
     crash_obs: object              # the crash log the fuzzer captured (a varied DumpObs of ``bug``)
 
 
 def generate_campaign(n_traces: int, model: DumpModel, rng: random.Random) -> list:
-    """Synthesise a realistic campaign: ``n_traces`` packet-log traces spread evenly across the real bugs, each
-    a noisy session (random decoys + cross-bug look-alikes + the bug's real trigger pattern) ending in that
-    bug's crash. The crash log is a VARIED dump (the same report-noise model benchmarks.real/live use)."""
+    """``n_traces`` traces spread evenly across the real bugs, each a session of random decoys and cross-bug
+    look-alikes ending in the bug's trigger pattern, with a varied crash log from ``model``."""
     traces = []
     for i in range(n_traces):
         bug = _BUGS[i % len(_BUGS)]                         # even spread across all real bugs
         decoys = list(_DECOYS_PEER if bug in ("A", "B") else (_DECOY_LOCAL,) * 3)
         n_decoy = rng.randint(2, 6)
         session = [rng.choice(decoys) for _ in range(n_decoy)]
-        for _ in range(rng.randint(0, 2)):                 # cross-bug look-alikes sprinkled in (combinations)
+        for _ in range(rng.randint(0, 2)):                 # cross-bug look-alikes
             session.insert(rng.randrange(len(session) + 1), rng.choice(_LOOKALIKES))
-        session += list(_TRIGGERS[bug])                    # the real trigger pattern, most-recent (windowable)
+        session += list(_TRIGGERS[bug])                    # the trigger pattern, most recent
         crash_obs = model.emit(bug, rng)                   # the fuzzer's crash log (a varied report of ``bug``)
         traces.append(Trace(bug=bug, pdus=session, crash_obs=crash_obs))
     rng.shuffle(traces)
@@ -94,9 +80,8 @@ def generate_campaign(n_traces: int, model: DumpModel, rng: random.Random) -> li
 
 
 class CrashDeduper:
-    """Crash deduplication: classify a crash log into one of the known families via the L2 crash-identity
-    (fuzzy: stack-LCS + SITE + fault). This is the step that must split A from B (both SIGFPE) and C, D, E, F
-    (all four asserts, distinct sites) by crash SITE. Returns the best family, or None (a new family)."""
+    """Classify a crash log into one of the known families by the L2 crash identity (stack LCS, site, fault).
+    ``classify`` returns the best-scoring family, or None for a new family."""
 
     def __init__(self, references: dict, threshold: float = 0.5):
         self.l2 = L2Matcher(references, threshold=threshold)
@@ -111,7 +96,7 @@ class CrashDeduper:
         return best
 
 
-# --- the EVALUATION: route on the prediction, drive RDD over the real binary, score end-to-end ---
+# --- the evaluation: route on the prediction, drive RDD over the real binary, score ---
 
 @dataclass
 class _Scored:
@@ -127,10 +112,9 @@ class _Scored:
 
 def run_scenario(n_traces: int = 40, *, model_name: str = "llama3.1:8b", host=None, seed: int = 0,
                  judge=None, dump_params=None, deduper=None):
-    """The full pipeline over a synthesised campaign. For each trace: DEDUP its crash log -> the predicted
-    family ROUTES the minimiser to that bug's REAL binary -> RDD reduces the window (live binary + live L3)
-    -> the PoC is scored vs the true minimal. Routing on the PREDICTION (not ground truth) makes dedup
-    load-bearing. ``deduper`` overrides the crash deduper (for testing). Returns (rows, confusion, campaigns)."""
+    """The full pipeline over one synthesised campaign: dedup each crash log, route the minimiser to the predicted
+    bug's real binary, reduce the window (live binary + live L3) and score the PoC against the true minimal.
+    ``deduper`` overrides the crash deduper, for testing. Returns (rows, confusion, campaigns)."""
     base_model = DumpModel.from_logs(multibug.LOGS, bugs=_BUGS,
                                      params=dump_params) if dump_params else DumpModel.from_logs(
         multibug.LOGS, bugs=_BUGS)
@@ -150,24 +134,23 @@ def run_scenario(n_traces: int = 40, *, model_name: str = "llama3.1:8b", host=No
 
     rows, confusion = [], {b: {p: 0 for p in (*_BUGS, None)} for b in _BUGS}
     for t in traces:
-        predicted = deduper.classify(t.crash_obs)          # CRASH DEDUP (the tool sees only the crash log)
+        predicted = deduper.classify(t.crash_obs)          # the tool sees only the crash log
         confusion[t.bug][predicted] += 1
         row = _Scored(bug=t.bug, predicted=predicted)
         if predicted is None:
             rows.append(row)                               # unclassified -> the tool has no target to minimise
             continue
-        oracle, identity = campaign_for(predicted)         # ROUTE the minimiser to the predicted bug's binary
+        oracle, identity = campaign_for(predicted)         # route to the predicted bug's binary
         l3_before, br_before = identity.stats["l3_live"], oracle.binary_runs   # per-trace deltas (oracle is shared)
         oracle.calls = 0
         bug_obj = live._Bug(bug=predicted, window=live._WINDOW[predicted], crash_sig=f"bug-{predicted}")
         r = dict(scoring.run_tool_campaign(oracle, [bug_obj], random.Random(seed * 131 + len(rows)),
                                            decorrelate=True)[0])
-        # run_tool_campaign already scored the recovered PoC against the REAL binary (oracle.truth):
-        #   true_reproduced = the PoC PROVABLY crashes ``predicted``;  false_credit = it credited a
-        #   NON-crashing PoC (a soundness breach, expect 0);  size_gap = PoC size vs ``predicted``'s minimal.
+        # score_bug has already checked the PoC against the real binary; genuine additionally requires the
+        # trace to have been grouped to the right family.
         credited = bool(r.get("true_reproduced"))
-        row.genuine = bool(credited and predicted == t.bug)            # a PoC that reproduces the CORRECT family
-        row.false_credit = bool(r.get("false_credit"))                 # soundness (expect 0), independent of dedup
+        row.genuine = bool(credited and predicted == t.bug)
+        row.false_credit = bool(r.get("false_credit"))                 # independent of the grouping
         if row.genuine and r.get("size_gap") is not None:
             row.size_gap = float(r["size_gap"])
         row.reads, row.binary_runs = oracle.calls, oracle.binary_runs - br_before
@@ -190,9 +173,7 @@ def _summary(rows, confusion, campaigns=None, model=None) -> dict:
            "exact_minimal_of_genuine": exact / len(gaps) if gaps else float("nan"),
            "mean_size_gap_genuine": float(np.mean(gaps)) if gaps else float("nan")}
     if campaigns is not None:
-        # L3-source provenance for the LIVE off-the-shelf path: the open model is called LIVE (memoised per
-        # pair), so this end-to-end result is NOT bit-reproducible by design (disclosed) -- the breakdown self-
-        # documents the live usage: l3_live model calls, l3_memo cache reuses, l2_decided settled without L3.
+        # L3 provenance of the live path: live model calls, memo reuses, and reads L2 decided alone
         ids = [c[1] for c in campaigns.values()]
         out["l3_provenance"] = {"source": "live_open_model", "model": model,
                                 "l3_live": sum(i.stats.get("l3_live", 0) for i in ids),
@@ -203,11 +184,9 @@ def _summary(rows, confusion, campaigns=None, model=None) -> dict:
 
 def run_multiseed(n_traces: int = 40, seeds: int = 8, *, model_name: str = "llama3.1:8b", host=None,
                   judge=None, dump_params=None, deduper=None) -> dict:
-    """Run the scenario over ``seeds`` independent seeds and aggregate the per-seed summaries. SUBSTANTIATES
-    the end-to-end genuine RANGE (a single live run is not bit-reproducible -- live model + OTA channel), and
-    confirms the dedup accuracy + 0 false-credit are ROBUST across seeds. Returns per-seed summaries + a
-    mean/min/max aggregate. With the live model+binary this is the disclosed-live end-to-end measurement; with a fake
-    judge + mocked binary it is the deterministic CI check (the robust invariants reproduce)."""
+    """Run the scenario over ``seeds`` seeds and aggregate the per-seed summaries as mean/min/max. With the live
+    model and binary this is the live end-to-end measurement; with a fake judge and a mocked binary it is the
+    deterministic CI check."""
     def _agg_seed(key):
         vs = [p[key] for p in per if p[key] == p[key]]           # drop NaN (e.g. exact-min with no genuine PoC)
         return {"mean": float(np.mean(vs)), "min": float(min(vs)), "max": float(max(vs)), "n": len(vs)} if vs else None
@@ -232,7 +211,7 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=0, help="seed of the single run (ignored when --seeds > 1)")
     ap.add_argument("--seeds", type=int, default=1, help=">1 runs the multi-seed range over seeds 0..N-1 (substantiates genuine)")
     a = ap.parse_args()
-    if a.seeds > 1:                                            # the multi-seed RANGE (the disclosed-live end-to-end claim)
+    if a.seeds > 1:                                            # the multi-seed range
         m = run_multiseed(a.traces, a.seeds, model_name=a.model, host=a.host)
         print(f"=== SCENARIO multi-seed — {a.seeds} seeds x {a.traces} traces; live binary + L3 ({a.model}) ===")
         for k in ("genuine", "dedup_accuracy", "false_credit", "exact_minimal_of_genuine"):

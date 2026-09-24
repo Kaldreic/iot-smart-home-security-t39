@@ -1,16 +1,14 @@
-"""benchmarks.run — the ONE CLI over the benchmark suite (the 3 headlines + the model-free gate).
+"""benchmarks.run — the CLI over the benchmark suite.
 
-  python -m benchmarks.run b1|b2|b3 [flags]   # the 3 HEADLINES (dispatch to benchmarks.headtohead / resilience / levers):
-                                              #   b1 = real head-to-head, b2 = synthetic resilience, b3 = lever decomposition
-  python -m benchmarks.run coherence          # the MODEL-FREE reproducibility gate: the real anchor (+/-0.02) + B2 (leaf-exact)
-                                              #   (B1 + B3 are binary-gated -> the self-test reproduces them where the binaries are built)
-  python -m benchmarks.run sensitivity        # the anchor with the report-variation / phantom-crash models switched off
+  python -m benchmarks.run b1|b2|b3 [flags]   # dispatch to benchmarks.headtohead / resilience / levers
+  python -m benchmarks.run coherence          # the model-free gate: the anchor (+/-0.02) and B2 (leaf-exact)
+  python -m benchmarks.run sensitivity        # the anchor with the report-variation / phantom-crash models off
   python -m benchmarks.run freeze             # regenerate data/reference/anchor.json
 
-Run after `pip install -e code/`. The gate's "real anchor" is the model-free truth-table reproduction of the
-6 real bugs (A-F) + the LL_LENGTH_REQ suppressor (``run_real`` / ``run_suppressor`` below); its preserved arms
-are exact (the baseline IS AirBugCatcher's minimiser, the tool IS the locked robust pipeline), so ``coherence``
-reproduces the committed real genuine rates (gated at +/-0.02; delta 0.000 in practice) and B2 leaf-exactly.
+The anchor is the model-free truth-table reproduction of the six real bugs A-F and the LL_LENGTH_REQ
+suppressor (``run_real`` / ``run_suppressor``): arms baseline, baseline_confirm, tool, ablation and oracle,
+with the tool's L3 served from the committed cache. B1 and B3 need the built binaries; the self-test
+reproduces them where the binaries exist. Run after ``pip install -e code/`` with PYTHONHASHSEED=0.
 """
 
 from __future__ import annotations
@@ -31,9 +29,9 @@ _REF = Path(__file__).resolve().parent / "data" / "reference"
 
 
 def run_real(seeds: int = 30, ablate: bool = False, *, params=None, dump_params=None) -> dict:
-    """The model-free real-bug anchor: the six Zephyr bugs A-F on the truth-table oracle, every arm scored
-    by ``scoring.score_bug``. ``params``/``dump_params`` override the channel and the report-variation model
-    (the sensitivity table); the cached open-model L3 serves the tool's escalations (live_calls == 0)."""
+    """The six Zephyr bugs A-F on the truth-table oracle: baseline, baseline_confirm and tool, plus ablation
+    (ddmin only) and oracle (ddmin + exact-id) when ``ablate``. ``params`` / ``dump_params`` override the
+    channel and the report-variation model."""
     bugs, ss = list(real.BUGS), list(range(seeds))
     model_params = real.MODEL.params
     real.MODEL.params = dump_params or model_params
@@ -42,7 +40,7 @@ def run_real(seeds: int = 30, ablate: bool = False, *, params=None, dump_params=
                "baseline": idc.agg(real._run(scoring.run_baseline_campaign, real.id_exact, bugs, ss, params=params)),
                "baseline_confirm": idc.agg(real._run(scoring.run_baseline_campaign, real.id_exact, bugs, ss,
                                                      params=params, confirm=1))}
-        idc.l3_reset()                                        # attribute the tool arm's L3 sourcing
+        idc.l3_reset()                                        # attribute the tool arm's L3 provenance
         out["tool"] = idc.agg(real._run(scoring.run_tool_campaign, idc.id_l2l3, bugs, ss, params=params, decorrelate=True))
         out["l3_provenance"] = idc.l3_provenance()
         if ablate:
@@ -56,7 +54,7 @@ def run_real(seeds: int = 30, ablate: bool = False, *, params=None, dump_params=
 
 
 def run_suppressor(seeds: int = 30, ablate: bool = False) -> dict:
-    """The real LL_LENGTH_REQ suppressor (non-monotone) on its truth-table oracle."""
+    """The real LL_LENGTH_REQ suppressor (non-monotone) on its truth-table oracle; arms as ``run_real``."""
     ss = list(range(seeds))
 
     def go(mod, identity, **kw):
@@ -80,7 +78,7 @@ def run_suppressor(seeds: int = 30, ablate: bool = False) -> dict:
 
 
 def _metric(m):
-    """The genuine-recovery value from an arm's idc.agg result (a plain float)."""
+    """An arm's genuine rate from an ``idc.agg`` result."""
     return m["genuine"]
 
 
@@ -89,17 +87,17 @@ _GATED = {"real": ("baseline", "baseline_confirm", "tool"), "suppressor": ("base
 
 
 def freeze(seeds: int = 30) -> dict:
-    """Regenerate the committed anchor reference (data/reference/anchor.json): the real bugs + the suppressor,
-    every arm, with the L3 provenance the coherence gate checks. Model-free (cached L3)."""
+    """Regenerate data/reference/anchor.json: the real bugs and the suppressor, every arm, with the L3 provenance
+    the gate checks."""
     out = {"real": run_real(seeds, ablate=True), "suppressor": run_suppressor(seeds, ablate=True)}
     _ANCHOR.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n", encoding="utf-8")
     return out
 
 
 def coherence(tol: float = 0.02) -> bool:
-    """The fresh anchor reproduces the committed anchor.json: genuine and false credit of every gated arm
-    within ``tol`` (delta 0.000 in practice), and the tool's L3 provenance equal (live_calls == 0, the same
-    cache-hit / rule-fallback counts, so a drifted cache is detected)."""
+    """True iff a fresh anchor reproduces the committed anchor.json: genuine and false credit of every gated arm
+    within ``tol``, and the tool's L3 provenance equal (live_calls == 0 and the same cache-hit / rule-fallback
+    counts, so a drifted cache is detected)."""
     ref = json.loads(_ANCHOR.read_text(encoding="utf-8"))
     fresh = {"real": run_real(30), "suppressor": run_suppressor(30, ablate=True)}
     print(f"COHERENCE — fresh anchor vs committed anchor.json (tol +/-{tol:.3f}):")
@@ -122,8 +120,8 @@ def coherence(tol: float = 0.02) -> bool:
 
 
 def sensitivity(seeds: int = 30) -> None:
-    """How much of the anchor result is the noise model: genuine / false credit / reads of every arm with the
-    committed noise, with the crash-report variation off, with phantom crashes off, and with both off."""
+    """Genuine, false credit and reads of every arm with the committed noise model, with the crash-report
+    variation off, with phantom crashes off, and with both off."""
     from dataclasses import replace
     from emulation.channel import GEChannelParams
     from emulation.dump import DumpParams
@@ -143,7 +141,7 @@ def sensitivity(seeds: int = 30) -> None:
 
 def main() -> int:
     argv = sys.argv[1:]
-    if argv and argv[0] in ("b1", "b2", "b3"):               # dispatch to the headline module; flags pass through
+    if argv and argv[0] in ("b1", "b2", "b3"):               # dispatch to the b1/b2/b3 module; flags pass through
         from benchmarks import headtohead, levers, resilience
         mod = {"b1": headtohead, "b2": resilience, "b3": levers}[argv[0]]
         sys.argv = [f"benchmarks.{argv[0]}", *argv[1:]]      # drop the subcommand token: the module parses its own flags
@@ -164,9 +162,9 @@ def main() -> int:
         freeze()
         print(f"  -> {_ANCHOR}")
         return 0
-    from benchmarks import resilience                         # the unified MODEL-FREE gate: real anchor + B2
-    ok = coherence()                                         # the real anchor (cached-L3, model-free)
-    ok = resilience.coherence() and ok                       # B2 (exact, model-free)
+    from benchmarks import resilience                         # the model-free gate: the anchor + B2
+    ok = coherence()
+    ok = resilience.coherence() and ok
     print("  (B1 + B3 are binary-gated -- the self-test reproduces them where the host-native binaries are built.)")
     return 0 if ok else 1
 

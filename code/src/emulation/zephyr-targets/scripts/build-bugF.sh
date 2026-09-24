@@ -1,34 +1,32 @@
 #!/usr/bin/env bash
-# Bug F — build the SUBSET-selectable cis-create CIS_ESTABLISHED-ntf assert oracle binary on the REAL
-# vulnerable Zephyr LL controller, and verify its channel-OFF exhaustive sweep + true 2-minimal.
+# Bug F — build the subset-selectable cis-create CIS_ESTABLISHED-ntf assert oracle binary on the vulnerable
+# Zephyr LL controller and verify its channel-off exhaustive sweep + true 2-minimal.
 #
-# The harness (patches/bugF-cis-harness.patch) adds ONE ZTEST (test_bug_f) to the ctrl_cis_create suite; it is a NO-OP
-# unless selected by env HARNESS_BUG=F (the native unit_testing binary runs the WHOLE suite -- no per-test CLI
-# filter -- so selection is by getenv, the existing PROBE_ID pattern). HARNESS_SUBSET is a bitmask over the
-# LL-PDU window so an external minimiser can drive a channel-OFF exhaustive sweep.
+# The harness (patches/bugF-cis-harness.patch) adds one ZTEST (test_bug_f) to the ctrl_cis_create suite;
+# a no-op unless selected by env HARNESS_BUG=F (whole suite, no per-test CLI filter, selection by getenv --
+# the existing PROBE_ID pattern). HARNESS_SUBSET is a bitmask over the LL-PDU window.
 #
-#   HARNESS_BUG=F  test_bug_f: doubled LL_CIS_IND assert. SAME retained-rx-node MECHANISM as bugs C, D and E
-#             (a retained NODE_RX reused as the procedure NTF with no fallback alloc) but a DISTINCT crash
-#             SITE. Built VERBATIM on the known-good test_cc_create_periph_rem_host_accept with a conditional
-#             2nd LL_CIS_IND injected in its own event while the peripheral rp_cc procedure is in
-#             RP_CC_STATE_WAIT_INSTANT. CIS_IND #1 retains ctx->node_ref.rx (llcp_rx_node_retain,
-#             ull_llcp_cc.c:408) for the deferred CIS_ESTABLISHED host notification; CIS_IND #2, routed to
-#             the head ctx (ull_llcp.c:1792-1798) and stored by llcp_rr_rx (ull_llcp_remote.c:240) over the
-#             retained pointer, is dropped by the WAIT_INSTANT handler (default: break) and llcp_rr_rx then
-#             clears node_ref.rx -> NULL (ull_llcp_remote.c:318-319); ctx->done stays 0 so the procedure
-#             survives. At the explicit established trigger cc_ntf_established (ull_llcp_cc.c:64) reads the
-#             NULL node -> LL_ASSERT(ntf) -> mocked bt_ctlr_assert_handle -> exit(-1). One IND -> clean.
-#             iso_interval stays 6 (remote_cis_req default) so the CIS_RSP divide (ull_llcp_cc.c:177) is
-#             non-zero -> this is the :64 ASSERT (255), NOT bug B's SIGFPE (136). 5-bit window: bits0..2 =
-#             transparent decoys, bit3 = CIS_IND #1, bit4 = CIS_IND #2 (load-bearing). Channel-OFF true
-#             2-minimal = {IND1,IND2} = 24 (0x18). Python rc 255 / shell 255.
+#   HARNESS_BUG=F  test_bug_f: doubled LL_CIS_IND assert. The same retained-rx-node mechanism as bugs C, D
+#             and E but a distinct crash site. Built verbatim on the known-good
+#             test_cc_create_periph_rem_host_accept with a conditional 2nd LL_CIS_IND injected in its own
+#             event while the peripheral rp_cc procedure is in RP_CC_STATE_WAIT_INSTANT. CIS_IND #1 retains
+#             ctx->node_ref.rx (llcp_rx_node_retain, ull_llcp_cc.c:408) for the deferred CIS_ESTABLISHED
+#             host notification; CIS_IND #2, routed to the head ctx (ull_llcp.c:1792-1798) and stored by
+#             llcp_rr_rx (ull_llcp_remote.c:240) over the retained pointer, is dropped by the WAIT_INSTANT
+#             handler (default: break), and llcp_rr_rx then clears node_ref.rx -> NULL
+#             (ull_llcp_remote.c:318-319); ctx->done stays 0 so the procedure survives. At the explicit
+#             established trigger, cc_ntf_established (ull_llcp_cc.c:64) reads the NULL node -> LL_ASSERT(ntf)
+#             -> mocked bt_ctlr_assert_handle -> exit(-1). One IND alone stays clean. iso_interval stays 6
+#             (remote_cis_req default) so the CIS_RSP divide (ull_llcp_cc.c:177) is non-zero -> this is the
+#             :64 assert (255), not bug B's SIGFPE (136). 5-bit window: bits0..2 = transparent decoys,
+#             bit3 = CIS_IND #1, bit4 = CIS_IND #2 (load-bearing). Channel-off true 2-minimal = {IND1,IND2}
+#             = 24 (0x18). Python rc 255 / shell 255.
 #
 # -rdynamic is passed for parity with the other bug scripts; Bug F reproduces identically without it (the
 # assert message is the artifact, not a backtrace).
 #
-# Leaves build-cisc/testbinary as the Bug F subset-window binary (SEPARATE from B's build-cis, which is the
-# CIS SIGFPE in the same suite). /work/build and the other build-* dirs are left untouched. Idempotent.
-# Re-uses the clone + SDK. Run: bash scripts/build-bugF.sh
+# Leaves build-cisc/testbinary (separate from B's build-cis, the CIS SIGFPE in the same suite). /work/build
+# and the other build-* dirs are untouched. Idempotent; re-uses the clone + SDK. Run: bash scripts/build-bugF.sh
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"                # code/src/emulation/zephyr-targets/

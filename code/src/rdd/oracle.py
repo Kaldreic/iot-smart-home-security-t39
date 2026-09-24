@@ -1,10 +1,8 @@
-"""rdd.oracle — the structural interface the tool reduces against.
+"""The interface the minimiser reduces against.
 
-RDD (and the AirBugCatcher ``baseline``) operate against any object that behaves like an ``Oracle``: a
-noisy reproduction target the minimiser can query, plus — for benchmark *scoring* only — the channel-off
-ground truth (``truth`` / ``ground_truth_minimals``), which the minimiser itself never consults. Concrete
-oracles (synthetic populations, the real Zephyr target) live in the ``emulation`` test-bed; the tool depends
-only on this protocol, never on a concrete oracle. Type-hint level only — oracles are duck-typed at runtime.
+An ``Oracle`` is a noisy reproduction target; the minimiser calls only ``rep_session``. The other
+methods serve benchmark scoring (``truth``, ``ground_truth_minimals``) or the optional identity guard
+(``identity_truth``). The protocols are type hints only; oracles are duck-typed at runtime.
 """
 
 from __future__ import annotations
@@ -15,30 +13,30 @@ from .sprt import Rep
 
 
 class Bug(Protocol):
-    window: int          # |candidate set| — the elements (packets) the minimiser reduces over
-    crash_sig: str       # the bug's crash signature (read by the baseline's reproduction loop)
-    kind: str            # bug-category label (read by benchmarks.scoring.score_bug — benchmark scoring only)
+    window: int          # number of candidate elements (packets) the minimiser reduces over
+    crash_sig: str       # crash signature, read by the baseline's reproduction loop
+    kind: str            # bug-category label, read only by benchmark scoring
 
 
 class Oracle(Protocol):
-    calls: int           # cumulative device reads (the overhead currency RDD and the baseline pay)
+    calls: int           # cumulative device reads
 
     def rep_session(self, bug: Bug, subset, rng, *, decorrelate: bool = False) -> Callable[[], Rep]:
-        """A fresh OTA session: returns a callable that yields one (noisy) reproduction verdict per call,
-        with within-session reps optionally correlated (``decorrelate=False``)."""
+        """Start a fresh over-the-air session and return a callable yielding one noisy ``Rep`` per call.
+        With ``decorrelate=False`` the reps within a session may be correlated."""
         ...
 
-    # --- OPTIONAL real-artifact hook (getattr-probed by the pipeline; absent -> the cause-swap guard is off) ---
+    # Optional. The pipeline looks it up with getattr; when absent, the identity guard is skipped.
     def identity_truth(self, bug: Bug, subset) -> bool:
-        """Mode-2 cause-swap guard for the final-validation: run ``subset`` once channel-off and confirm its
-        REAL crash artifact matches the TARGET bug's identity. Absent on an oracle -> the guard is skipped."""
+        """Run ``subset`` once with the channel off and report whether the resulting crash artifact
+        matches the target bug's identity."""
         ...
 
-    # --- benchmark scoring only (the minimiser never sees these) ---
+    # Benchmark scoring only; the minimiser never calls these.
     def truth(self, bug: Bug, subset) -> bool:
-        """Channel-off ground truth: does ``subset`` provably reproduce the crash?"""
+        """Channel-off ground truth: does ``subset`` reproduce the crash?"""
         ...
 
     def ground_truth_minimals(self, bug: Bug) -> list:
-        """The set of true 1-minimal reproducing subsets (for size-gap scoring)."""
+        """All 1-minimal reproducing subsets, for size-gap scoring."""
         ...

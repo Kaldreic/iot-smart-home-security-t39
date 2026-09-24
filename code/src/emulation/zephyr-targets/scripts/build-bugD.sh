@@ -1,27 +1,25 @@
 #!/usr/bin/env bash
-# Bug D — build the SUBSET-selectable PHY-update doubled-IND assert oracle binary on the REAL
-# vulnerable Zephyr LL controller, and verify its channel-OFF exhaustive sweep + true 2-minimal.
+# Bug D — build the subset-selectable PHY-update doubled-IND assert oracle binary on the vulnerable Zephyr
+# LL controller and verify its channel-off exhaustive sweep + true 2-minimal.
 #
-# The harness (patches/bugD-phy-window.patch) adds ONE ZTEST (test_bug_d) to the ctrl_phy_update suite; it is a
-# NO-OP unless selected by env HARNESS_BUG=D (the native unit_testing binary runs the WHOLE suite -- no
-# per-test CLI filter -- so selection is by getenv, the existing PROBE_ID pattern). HARNESS_SUBSET is a
-# bitmask over the LL-PDU window so an external minimiser can drive a channel-OFF exhaustive sweep.
+# The harness (patches/bugD-phy-window.patch) adds one ZTEST (test_bug_d) to the ctrl_phy_update suite;
+# a no-op unless selected by env HARNESS_BUG=D (whole suite, no per-test CLI filter, selection by getenv --
+# the existing PROBE_ID pattern). HARNESS_SUBSET is a bitmask over the LL-PDU window.
 #
-#   HARNESS_BUG=D  test_bug_d: confirmed PHY doubled-IND assert. A genuine MULTI-PACKET
-#             minimal (like Bug C). 5-bit window: bits0..2 = transparent (droppable) drained local
-#             LE-Pings, bit3 = LL_PHY_UPDATE_IND #1, bit4 = LL_PHY_UPDATE_IND #2 (load-bearing). The
-#             LL_PHY_REQ precondition (procedure start) is injected whenever any IND is present. A
-#             SECOND IND while in WAIT_INSTANT desyncs the retained NTF rx node; at the instant pu_ntf
-#             (ull_llcp_phy.c:437) hits LL_ASSERT(ntf) -> mocked bt_ctlr_assert_handle -> exit(-1).
-#             Channel-OFF true 2-minimal = {IND1,IND2} = 24 (0x18). The assert emits its OWN message
-#             (ASSERTION FAIL [ntf] @ ull_llcp_phy.c:437); no SIGFPE handler needed. Python rc 255 /
-#             shell 255.
+#   HARNESS_BUG=D  test_bug_d: confirmed PHY doubled-IND assert. A multi-packet minimal (like Bug C).
+#             5-bit window: bits0..2 = transparent (droppable) drained local LE-Pings, bit3 =
+#             LL_PHY_UPDATE_IND #1, bit4 = LL_PHY_UPDATE_IND #2 (load-bearing). The LL_PHY_REQ precondition
+#             (procedure start) is injected whenever any IND is present. A second IND while in WAIT_INSTANT
+#             desyncs the retained NTF rx node; at the instant pu_ntf (ull_llcp_phy.c:437) hits
+#             LL_ASSERT(ntf) -> mocked bt_ctlr_assert_handle -> exit(-1). Channel-off true 2-minimal =
+#             {IND1,IND2} = 24 (0x18). The assert emits its own message (ASSERTION FAIL [ntf] @
+#             ull_llcp_phy.c:437); no SIGFPE handler needed. Python rc 255 / shell 255.
 #
 # -rdynamic is passed for symbol-rich dumps (parity with the other bug scripts); Bug D reproduces
 # identically without it (the assert message is the artifact, not a backtrace).
 #
-# Leaves build-phy/testbinary as the Bug D subset-window binary. SEPARATE build dir; /work/build and
-# /work/build-multibug are left untouched. Idempotent. Re-uses the clone + SDK. Run: bash scripts/build-bugD.sh
+# Leaves build-phy/testbinary. Separate build dir; /work/build and /work/build-multibug are untouched.
+# Idempotent; re-uses the clone + SDK. Run: bash scripts/build-bugD.sh
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"                # code/src/emulation/zephyr-targets/

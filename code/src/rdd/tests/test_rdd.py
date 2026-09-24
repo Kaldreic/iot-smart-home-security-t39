@@ -1,14 +1,10 @@
-"""rdd — lean invariant suite (compacted from the ~22 scattered phase ``_test_``/``_verify_`` scripts to
-the load-bearing guarantees). Self-contained: no external data, no network, no real LLM.
+"""Invariant suite for rdd. Self-contained: no external data, no network, no live model.
 
-  * minimiser SOUNDNESS — a credited recipe provably crashes (0 false-credit), on non-monotone bugs
-  * minimiser RECOVERY  — recovers the suppressor-free minimal where classical ddmin bails
-  * monotone PARITY     — on monotone bugs RDD matches ddmin (no regression)
-  * oracle UNITS        — the SPRT controller (sustained-YES floor, CAPPED/UNHEALTHY, trust-gating) + the
-                          monotone cache (closure soundness + the no-YES-⊆-NO frontier invariant), directly
-  * pipeline END-TO-END — under a noisy SPRT oracle the tool recovers + the ablation bails + 0 false-credit
+Covers minimiser soundness and recovery on non-monotone bugs, parity with ddmin on monotone bugs, the
+SPRT controller and the monotone cache directly, the L3 judge and the live L2/L3 identity, and the
+pipeline end to end under a noisy oracle.
 
-Run:  ``python -m rdd.tests.test_rdd``   (after `pip install -e code/`)
+Run: ``python -m rdd.tests.test_rdd`` (after ``pip install -e code/``).
 """
 
 from __future__ import annotations
@@ -29,7 +25,8 @@ _OUTCOME_TO_REP = {Outcome.NOT_REPRODUCED: Rep.NO, Outcome.INVALID: Rep.INVALID}
 
 
 def _nonmonotone_bug(rng, n=8):
-    """A random non-monotone bug: minimal M crashes; suppressors X (disjoint, |X| in 1..2) un-crash it."""
+    """A random non-monotone bug: the minimal set M crashes unless any of the disjoint suppressors X
+    (|X| in 1..2) is present."""
     elems = list(range(n))
     M = set(rng.sample(elems, rng.randint(1, 3)))
     rest = [e for e in elems if e not in M]
@@ -38,15 +35,15 @@ def _nonmonotone_bug(rng, n=8):
 
 
 def test_minimiser_nonmonotone_sound_and_recovers():
-    """200 random non-monotone bugs: every credited recipe crashes (0 false-credit); RDD recovers the
-    minimal where the ddmin-only ablation (no seed-find) bails on the suppressed full window."""
+    """On 200 random non-monotone bugs no credited recipe is a non-crasher, the minimiser recovers the
+    minimal, and the ddmin-only ablation bails on the suppressed full window."""
     rng = random.Random(0)
     fc = recovered = bailed = 0
     for _ in range(200):
         M, X, test = _nonmonotone_bug(rng)
         r = robust_minimize(range(8), test)                                          # full robust
         if r.reproduced and not test(r.recipe):
-            fc += 1                                                                   # SOUNDNESS breach
+            fc += 1                                                                   # a credited non-crasher
         if r.reproduced and M <= set(r.recipe):
             recovered += 1
         b = robust_minimize(range(8), test, max_remove=0, max_build=0, verify=False)  # ddmin-only ablation
@@ -61,7 +58,7 @@ def test_minimiser_nonmonotone_sound_and_recovers():
 
 
 def test_monotone_parity():
-    """Monotone bugs (no suppressor): RDD and the ddmin-only ablation both recover the same true minimal."""
+    """On monotone bugs the minimiser and the ddmin-only ablation both return the true minimal."""
     rng = random.Random(1)
     ok = 0
     for _ in range(100):
@@ -76,8 +73,8 @@ def test_monotone_parity():
 
 
 class _NoisyLR:
-    """The real LL_LENGTH_REQ suppressor pattern (crash <=> trigger bit3 present AND length_req bit4 absent)
-    wrapped in the L1 channel + rdd.Rep -- the consistently-wired smoke for the whole pipeline."""
+    """The LL_LENGTH_REQ suppressor pattern (crash iff element 3 is present and 4 absent) behind the L1
+    channel model, as a pipeline oracle."""
 
     def __init__(self):
         self.calls = 0
@@ -101,8 +98,8 @@ class _NoisyLR:
 
 
 def test_pipeline_recovers_and_ablation_bails():
-    """Under the noisy SPRT oracle on the real suppressor: the tool recovers (>=0.8) at 0 false-credit;
-    the ddmin-only ablation bails to 0."""
+    """Under the noisy SPRT oracle the pipeline recovers the suppressed bug (genuine >= 0.8) with no false
+    credit, and the ddmin-only ablation bails."""
     bug = type("B", (), {"window": 5})()
 
     def run(**kw):
@@ -126,15 +123,13 @@ def test_pipeline_recovers_and_ablation_bails():
 
 
 def test_final_validation_gate_blocks_false_credit():
-    """Gate guard (catches removal of the Phase-4 RAW final-validation): a CACHED ``test`` holding a
-    trusted false-YES below the true minimal misleads the in-seed ddmin into a non-crashing cone; the raw
-    final-validation must demote it, so no reproduced recipe is ever a non-crasher. Deleting the gate
-    (``reproduced = bool(recipe)``) makes this test FAIL."""
+    """A cached ``test`` holding a false YES leads ddmin into a non-crashing recipe; final validation on
+    the raw oracle must demote it. A truthy non-bool raw verdict must also fail the strict gate."""
     from rdd.cache import MonotoneOracleCache
     M = frozenset({2, 3})
     raw = lambda S: M <= set(S)                              # monotone truth
     cache = MonotoneOracleCache()
-    cache.observe(frozenset({3}), True, trustworthy=True)    # a LIE: {3} alone does not crash
+    cache.observe(frozenset({3}), True, trustworthy=True)    # a lie: {3} alone does not crash
     def cached(s):
         a = cache.query(frozenset(s))
         return a if a is not None else raw(s)
@@ -142,9 +137,7 @@ def test_final_validation_gate_blocks_false_credit():
     assert not r.reproduced, f"poisoned cache produced a FALSE reproduction: recipe={r.recipe} validated={r.validated}"
     assert r.recipe and not r.validated, "expected ddmin to take the cache lie and final-validation to demote it"
     assert not raw(r.recipe), "sanity: the demoted recipe really is a non-crasher"
-    # the RAW gate is IDENTITY-STRICT (`is True`), symmetric with the Phase-4b identity_check: a raw_test that
-    # returns a TRUTHY NON-BOOL (violating the Callable[..., bool] contract) is rejected even for a GENUINE
-    # crasher -- weakening the gate to ``bool(raw(...))`` would wrongly credit it.
+    # the gate is identity-strict (`is True`): a truthy non-bool raw verdict must not credit even a genuine crasher
     raw_nonbool = lambda S: 1 if M <= set(S) else 0
     rb = robust_minimize(range(6), raw_nonbool, raw_test=raw_nonbool)
     assert not rb.reproduced and not rb.validated, \
@@ -153,18 +146,16 @@ def test_final_validation_gate_blocks_false_credit():
 
 
 def test_identity_check_blocks_cause_swap():
-    """Mode-2 cause-swap guard (catches removal of the Phase-4b identity_check): when the only reachable
-    crash in the window is a DIFFERENT cause {4,5} than the TARGET {0,1}, raw_test ('does it crash?') credits
-    the wrong-bug recipe; identity_check ('is it the TARGET crash?') must DEMOTE it. Deleting the Phase-4b
-    gate makes this FAIL. A genuine target still credits (no false rejection); a non-bool check fails closed."""
-    raw = lambda s: {4, 5} <= set(s)                          # the only reachable crash is a DIFFERENT cause
-    r0 = robust_minimize(range(6), raw, raw_test=raw)         # no identity_check -> mis-credits the wrong bug
+    """When the only reachable crash is a different cause than the target, ``identity_check`` must demote
+    the recipe; a genuine target is still credited and a non-bool check fails closed."""
+    raw = lambda s: {4, 5} <= set(s)                          # the only reachable crash is a different cause
+    r0 = robust_minimize(range(6), raw, raw_test=raw)         # no identity_check: the wrong bug is credited
     assert r0.reproduced and set(r0.recipe) == {4, 5}, f"fixture: must converge to the wrong-bug crash, got {r0.recipe}"
-    idok = lambda s: {0, 1} <= set(s)                         # the TARGET crash identity
+    idok = lambda s: {0, 1} <= set(s)                         # the target crash identity
     r1 = robust_minimize(range(6), raw, raw_test=raw, identity_check=idok)
     assert not r1.reproduced, "identity_check must DEMOTE the cause-swapped recipe (a wrong-bug credit)"
     assert set(r1.recipe) == {4, 5} and not r1.validated, "recipe kept for diagnosis, but validated=False"
-    raw2 = lambda s: {0, 1} <= set(s)                         # the TARGET crash IS reachable
+    raw2 = lambda s: {0, 1} <= set(s)                         # the target crash is reachable
     r2 = robust_minimize(range(6), raw2, raw_test=raw2, identity_check=idok)
     assert r2.reproduced and set(r2.recipe) == {0, 1}, "identity_check must NOT reject the genuine target"
     r3 = robust_minimize(range(6), raw2, raw_test=raw2, identity_check=lambda s: 1 if idok(s) else 0)
@@ -173,22 +164,20 @@ def test_identity_check_blocks_cause_swap():
 
 
 def test_pipeline_wires_identity_truth():
-    """Wiring guard (catches removal of the identity_truth passthrough in pipeline.minimize): an oracle whose
-    in-loop rep CRASHES on a DIFFERENT cause {4,5} but whose REAL identity_truth is the TARGET {0,1} must have
-    its wrong-bug recipe DEMOTED end-to-end; an otherwise-identical oracle WITHOUT identity_truth mis-credits
-    it (exactly the deployment gap the wiring closes)."""
+    """``pipeline.minimize`` passes an oracle's ``identity_truth`` to the minimiser: a wrong-cause recipe is
+    demoted with it and credited without it."""
     class _Base:
         def __init__(self):
             self.calls = 0
         def rep_session(self, bug, subset, rng, *, decorrelate=False):
-            crashes = {4, 5} <= set(subset)                   # the in-loop crash IS a different cause
+            crashes = {4, 5} <= set(subset)                   # the in-loop crash is a different cause
             def rep():
                 self.calls += 1
                 return Rep.YES if crashes else Rep.NO
             return rep
 
     class _Guarded(_Base):
-        def identity_truth(self, bug, subset):                # the REAL target identity (NOT the reachable crash)
+        def identity_truth(self, bug, subset):                # the real target identity
             return {0, 1} <= set(subset)
 
     bug = type("B", (), {"window": 6})()
@@ -200,8 +189,7 @@ def test_pipeline_wires_identity_truth():
 
 
 def test_submodule_imports_smoke():
-    """Import + lightly call every rdd submodule, so the suite is not blind to import bugs (a dropped
-    ``Path``, an unrewritten ``from l2_comparator``/``from dump_model``)."""
+    """Every rdd submodule imports, and the ``exact_crash_id`` site path and the dump-to-L2 adapter work."""
     import importlib
     for m in ["sprt", "cache", "ddmin", "minimizer", "observation", "l2",
               "identity", "l3", "pipeline", "oracle"]:
@@ -210,7 +198,7 @@ def test_submodule_imports_smoke():
     from rdd.l3 import render_dump
     obs = type("O", (), {"stack": [], "fault": "ASSERT", "site": None,
                          "log_lines": ["ASSERTION FAIL @ foo.c:42"]})()
-    cid = exact_crash_id(obs)                                # exercises _site_from_log -> Path (the NameError path)
+    cid = exact_crash_id(obs)                                # exercises the _site_from_log Path lookup
     assert cid[0] == "site" and "foo.c:42" in str(cid), f"exact_crash_id site path broke: {cid}"
     assert "crash report" in render_dump(obs)
     from rdd.observation import DumpObs
@@ -220,22 +208,20 @@ def test_submodule_imports_smoke():
 
 
 def test_budget_floor_bail_reports_capped():
-    """The budget-floor bail (max_seed_calls exhausted before a seed is found) reports strategy='none' +
-    capped=True + seed None -- distinct from genuine 'exhausted'. Covers the capped/`none` path the
-    strategy mapping depends on (a mutation collapsing it to always-'exhausted' slips past the others)."""
-    M, X = {2, 5}, {0, 1}                                    # 2 suppressors: the seed needs a leave-2-out
+    """Running out of ``max_seed_calls`` before a seed is found reports strategy "none", capped=True and
+    seed None, distinct from "exhausted"."""
+    M, X = {2, 5}, {0, 1}                                    # two suppressors: the seed needs a leave-2-out
     test = lambda S: M <= set(S) and not (X & set(S))
-    r = robust_minimize(range(8), test, max_seed_calls=1)    # 1 probe: too few to reach the leave-2-out seed
+    r = robust_minimize(range(8), test, max_seed_calls=1)    # one probe cannot reach the leave-2-out seed
     assert r.capped and r.strategy == "none" and r.seed is None and not r.reproduced, \
         f"budget-floor must be capped/none/seed-None/not-reproduced, got capped={r.capped} strategy={r.strategy!r} seed={r.seed!r}"
     return f"budget-floor: max_seed_calls=1 -> strategy={r.strategy!r} capped={r.capped} (bailed, not 'exhausted')"
 
 
 def test_l3_judge_ollama():
-    """The open-model L3 backend (mocked HTTP — no live model): parses BOTH verdict directions, sends a
-    deterministic temp-0/seed-0 JSON-constrained request, reads a string-typed ``same`` fail-closed (an
-    explicit allow-list, never raw ``bool()`` — so ``"false"`` is NOT True), and degrades to a conservative
-    NO on a non-JSON reply (so a weak/garbled judge can only under-credit, never false-match)."""
+    """``judge_ollama`` (HTTP mocked) honours both verdicts, sends a temperature-0, seeded, JSON-constrained
+    request, reads a string ``same`` fail-closed, returns a conservative NO on a non-JSON reply and lets a
+    connection error propagate."""
     import json as _json
     import urllib.error
     import urllib.request
@@ -265,21 +251,21 @@ def test_l3_judge_ollama():
         assert v == {"same": True, "conf": 0.9}, v
         assert cap["body"]["options"] == {"temperature": 0, "seed": 0}, cap["body"]["options"]
         assert cap["body"]["format"] == "json" and cap["body"]["stream"] is False, cap["body"]
-        cap["content"] = '{"same": false, "confidence": 0.8}'       # a GENUINE different verdict must be honored
+        cap["content"] = '{"same": false, "confidence": 0.8}'       # a genuine "different" verdict is honoured
         assert l3.judge_ollama("a", "b", model="m") == {"same": False, "conf": 0.8}, "valid false ignored"
         for bad, want in [('{"same": "false"}', False), ('{"same": "no"}', False), ('{"same": "0"}', False),
                           ('{"same": "different bug"}', False), ('{"same": null}', False),
-                          ('{"same": "not the same bug"}', False),    # affirmative token as SUBSTRING of a negative
+                          ('{"same": "not the same bug"}', False),    # an affirmative token inside a negative
                           ('{"same": "definitely not true"}', False), ('{"same": "no match"}', False),
                           ('{"same": "true"}', True), ('{"same": "yes"}', True)]:
-            cap["content"] = bad                                    # string/null `same`: fail CLOSED, exact-membership
+            cap["content"] = bad                                    # string or null same: exact membership only
             assert l3.judge_ollama("a", "b", model="m")["same"] is want, (bad, "raw bool()/substring coercion leaked")
         cap["content"] = "they look different to me"               # not JSON
         v2 = l3.judge_ollama("report A", "report B", model="m")
         assert v2["same"] is False and v2["conf"] == 0.0 and "parse_error" in v2, v2
         urllib.request.urlopen = lambda req, timeout=None: (_ for _ in ()).throw(urllib.error.URLError("down"))
-        raised = False                                              # a connection error must propagate LOUD,
-        try:                                                        # never degrade to a silent {same:False} cache
+        raised = False                                              # a connection error must propagate
+        try:
             l3.judge_ollama("a", "b", model="m")
         except urllib.error.URLError:
             raised = True
@@ -290,9 +276,8 @@ def test_l3_judge_ollama():
 
 
 def test_render_dump_and_pair_hash_stable():
-    """The open-model verdict CACHE is keyed by ``_pair_hash(render_dump(...))`` — pin render_dump's exact
-    text and _pair_hash's determinism/order-sensitivity so a silent format drift can't invalidate a shipped
-    cache (every lookup would miss -> conservative NO -> silent under-credit)."""
+    """``render_dump``'s exact text and ``_pair_hash``'s determinism and order sensitivity are pinned, since
+    together they key the verdict cache."""
     from rdd.l3 import _pair_hash, render_dump
     obs = type("O", (), {"log_lines": ["SIGFPE", "at ull_conn:1"], "stack": ["a+0x1", "b"]})()
     txt = render_dump(obs)
@@ -305,8 +290,7 @@ def test_render_dump_and_pair_hash_stable():
 
 
 class _FakeL2:
-    """Controls the L2 (same, score) verdict so the live-L3 ESCALATION logic is tested deterministically,
-    independent of L2Comparator's scoring (which has its own coverage)."""
+    """Fixes the L2 (same, score) verdict so the escalation logic is tested independently of ``L2Comparator``."""
 
     def __init__(self, verdict):
         self.verdict = verdict
@@ -316,9 +300,8 @@ class _FakeL2:
 
 
 def test_live_l2l3_cascade_and_memo():
-    """LiveL2L3Identity (the DEPLOYABLE off-the-shelf identity): L2 decides the confident cases with NO
-    model call; only the uncertain band escalates to a LIVE judge, which is called ONCE per pair and
-    memoised (an identical pair is then served from the memo, not re-queried)."""
+    """L2 decides the confident cases without a model call; the uncertain band escalates to the judge once
+    and is then served from the memo."""
     from rdd.observation import DumpObs
     from rdd.identity import LiveL2L3Identity
     base = {"A": DumpObs(log_lines=["SIGFPE at ull_conn:1"], stack=["ull_conn_update", "lll_conn"], fault="SIGFPE")}
@@ -342,16 +325,15 @@ def test_live_l2l3_cascade_and_memo():
 
 
 def test_live_l2l3_failsafe():
-    """LiveL2L3Identity mirrors the backend's soundness: a garbled / non-bool verdict yields a conservative
-    NO (never a false match — strict ``is True``), and a connection error to the model PROPAGATES (loud)
-    rather than silently degrading the campaign."""
+    """A garbled, non-bool or corrupt verdict reads as "different", and a connection error from the judge
+    propagates."""
     from rdd.observation import DumpObs
     from rdd.identity import LiveL2L3Identity
     base = {"A": DumpObs(log_lines=["SIGFPE @ x:1"], stack=["f", "g"], fault="SIGFPE")}
     obs = DumpObs(log_lines=["garble"], stack=["f"], fault="SIGFPE")
-    for verdict, want in [({"same": False, "conf": 0.0, "parse_error": "x"}, False),   # garbled -> conservative
-                          ({"same": "true", "conf": 1.0}, False),                       # non-bool -> not `is True`
-                          ({"same": True, "conf": 0.9}, True)]:                         # genuine bool -> credit
+    for verdict, want in [({"same": False, "conf": 0.0, "parse_error": "x"}, False),   # garbled
+                          ({"same": "true", "conf": 1.0}, False),                       # non-bool
+                          ({"same": True, "conf": 0.9}, True)]:                         # genuine bool
         o = LiveL2L3Identity(base, band=0.05, judge=lambda t, r, _v=verdict, **kw: _v)
         o.l2 = _FakeL2((False, 0.30))
         assert o("A", obs) is want, (verdict, want)
@@ -368,9 +350,9 @@ def test_live_l2l3_failsafe():
         raised = True
     assert raised, "a connection error must propagate (loud), not silently degrade the campaign"
 
-    from rdd.l3 import _pair_hash, render_dump                       # a corrupt / foreign memo entry (missing
-    for bad in [{"conf": 1.0}, True, None, "yes", [1]]:             # "same", or non-dict) -> conservative NO,
-        oc = LiveL2L3Identity(base, band=0.05, judge=boom)          # not a KeyError/TypeError crash
+    from rdd.l3 import _pair_hash, render_dump                       # a corrupt or foreign memo entry
+    for bad in [{"conf": 1.0}, True, None, "yes", [1]]:             # must read as "different", not raise
+        oc = LiveL2L3Identity(base, band=0.05, judge=boom)
         oc.l2 = _FakeL2((False, 0.30))
         oc.memo[_pair_hash(oc.target_text["A"], render_dump(obs))] = bad
         assert oc("A", obs) is False, (bad, "corrupt memo must degrade to False, not crash or credit")
@@ -378,9 +360,7 @@ def test_live_l2l3_failsafe():
 
 
 def test_live_l2l3_memo_persist():
-    """A persisted memo round-trips: a verdict saved by one campaign serves the next WITHOUT a live call —
-    exactly the benchmark's pre-warmed-cache EQUIVALENCE (a pre-filled memo short-circuits the model, so the
-    live path with a warm memo == the cache path)."""
+    """A memo saved by one campaign serves the next without a live call."""
     import shutil
     import tempfile
     from pathlib import Path as _P
@@ -393,7 +373,7 @@ def test_live_l2l3_memo_persist():
     assert o("A", obs) is True and o.stats["l3_live"] == 1
     d = _P(tempfile.mkdtemp(prefix="rddmemo-"))
     try:
-        memo_path = d / "nested" / "sub" / "memo.json"             # parent dirs don't exist -> save_memo mkdirs
+        memo_path = d / "nested" / "sub" / "memo.json"             # parent dirs do not exist: save_memo creates them
         o.save_memo(memo_path)
 
         def boom(t, r, **kw):
@@ -408,17 +388,16 @@ def test_live_l2l3_memo_persist():
 
 
 def test_parse_base_dump_live_format():
-    """parse_base_dump must handle BOTH the captured ``)[0x..]`` AND the LIVE glibc ``) [0x..]`` (a SPACE
-    before ``[``) backtrace formats — pins the _FRAME_RE ``\\s*``. Reverting it parses the real binary's live
-    dump to ZERO frames, silently killing the L2 target + all L3 escalation (the suites otherwise stay green)."""
+    """``parse_base_dump`` handles both the captured ``)[0x..]`` and the live glibc ``) [0x..]`` backtrace
+    forms (a space before ``[``)."""
     from emulation.dump import parse_base_dump
     live = ("=== CRASH sig=SIGFPE ===\n"
-            "./testbinary(+0x1284c) [0x5663084c]\n"                          # leading handler frame (sym-less)
+            "./testbinary(+0x1284c) [0x5663084c]\n"                          # leading handler frame (no symbol)
             "linux-gate.so.1(__kernel_sigreturn+0x0) [0xf7f77250]\n"          # scaffold (dropped)
-            "./testbinary(ull_conn_update_parameters+0xdc) [0x56639338]\n"    # LIVE: SPACE before [
+            "./testbinary(ull_conn_update_parameters+0xdc) [0x56639338]\n"    # live form: space before [
             "./testbinary(llcp_rp_cu_run+0x20) [0x5663bfeb]\n")
     captured = ("=== CRASH sig=SIGFPE ===\n"
-                "/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x56663338]\n"   # captured: NO space
+                "/work/build-multibug/testbinary(ull_conn_update_parameters+0xdc)[0x56663338]\n"   # captured form: no space
                 "/work/build-multibug/testbinary(llcp_rp_cu_run+0x20)[0x56665feb]\n")
     for txt, label in [(live, "live `) [0x..]`"), (captured, "captured `)[0x..]`")]:
         bd = parse_base_dump(txt, "A")
@@ -428,18 +407,16 @@ def test_parse_base_dump_live_format():
 
 
 def test_sprt_config_validation():
-    """SPRTConfig.__post_init__ rejects the degenerate parameterisations that would silently break the error
-    control -- a non-informative oracle (p0 >= p1, or p0/p1 outside (0,1)), degenerate decision boundaries
-    (alpha + beta >= 1), an unreachable YES (min_yes_reps < 1 or > n_max) -- so a typo'd config fails LOUD at
-    construction, never as a silent mis-decision in the loop. A valid config (default + a non-default) is accepted."""
+    """``SPRTConfig`` rejects non-informative (p0 >= p1 or outside (0,1)), degenerate (alpha + beta >= 1)
+    and unreachable-YES (min_yes_reps outside 1..n_max) configurations, and accepts valid ones."""
     from rdd.sprt import SPRTConfig
-    bad = [dict(p0=0.5, p1=0.5),            # p0 < p1 violated (oracle not informative)
+    bad = [dict(p0=0.5, p1=0.5),            # p0 < p1 violated
            dict(p0=0.6, p1=0.5),            # p0 < p1 violated
            dict(p0=0.0),                    # 0 < p0 violated
            dict(p1=1.0),                    # p1 < 1 violated
-           dict(alpha=0.6, beta=0.5),       # alpha + beta >= 1 (boundaries degenerate)
-           dict(min_yes_reps=0),            # min_yes_reps < 1 (YES unreachable)
-           dict(min_yes_reps=20, n_max=16)] # min_yes_reps > n_max (YES unreachable)
+           dict(alpha=0.6, beta=0.5),       # alpha + beta >= 1
+           dict(min_yes_reps=0),            # min_yes_reps < 1
+           dict(min_yes_reps=20, n_max=16)] # min_yes_reps > n_max
     for kw in bad:
         try:
             SPRTConfig(**kw)
@@ -452,58 +429,51 @@ def test_sprt_config_validation():
 
 
 def test_sprt_run_and_trust_gating():
-    """The truncated-SPRT controller's guarantees, DIRECTLY (covered only via the pipeline before): a
-    DECIDED-YES needs SUSTAINED evidence (>= min_yes_reps valid reps -- a lucky early burst that crosses A
-    must not lock in the SEVERE error); a fast NO is cheap (no floor on the safe side); truncation forces the
-    SAFE NO at LOW trust (CAPPED); too many INVALID exchanges abstain (UNHEALTHY); INVALID reps are skipped as
-    missing DATA, not evidence; and apply_to_cache trust-gates (a DECIDED verdict is cached, a CAPPED one is a no-op)."""
+    """The controller needs ``min_yes_reps`` valid reps for a YES, decides a fast NO, returns a low-trust NO
+    on truncation or an unhealthy link, skips invalid reps, and ``apply_to_cache`` records only trusted verdicts."""
     from dataclasses import replace
     from rdd.cache import MonotoneOracleCache
     from rdd.sprt import Rep, SPRTConfig, Status, TruncatedSPRT, apply_to_cache
     cfg = SPRTConfig()
     yes, no, inv = (lambda: Rep.YES), (lambda: Rep.NO), (lambda: Rep.INVALID)
 
-    # DECIDED-YES is gated by the min_yes_reps FLOOR: all-YES decides at reps == min_yes_reps (3), NOT at the
-    # rep where the LLR first crosses A (rep 2) -- the floor blocks the lucky 2-rep burst from the severe error.
+    # all-YES decides at min_yes_reps (3), not at rep 2 where the LLR first crosses A
     v = TruncatedSPRT(cfg).run(yes)
     assert v.decision is True and v.trust is True and v.status is Status.DECIDED and v.reps == cfg.min_yes_reps, v
-    v2 = TruncatedSPRT(replace(cfg, min_yes_reps=2)).run(yes)     # relax the floor -> decides one rep earlier
+    v2 = TruncatedSPRT(replace(cfg, min_yes_reps=2)).run(yes)     # a relaxed floor decides one rep earlier
     assert v2.reps == 2, f"min_yes_reps floor not load-bearing (deleting the `valid >= min_yes_reps` guard): {v2}"
 
-    # a fast NO is DECIDED + trusted (the deliberately looser, cheap-and-recoverable side)
+    # a fast NO is decided and trusted
     vn = TruncatedSPRT(cfg).run(no)
     assert vn.decision is False and vn.trust is True and vn.status is Status.DECIDED, vn
 
-    # truncation -> forced SAFE NO at LOW trust (CAPPED). Tiny per-rep steps (p0 ~ p1) cannot cross A/B within n_max.
+    # truncation: with p0 ~ p1 the steps are too small to reach a boundary within n_max, so a low-trust NO
     vc = TruncatedSPRT(replace(cfg, p0=0.49, p1=0.51)).run(yes)
     assert vc.decision is False and vc.trust is False and vc.status is Status.CAPPED and vc.reps == cfg.n_max, vc
 
-    # too many INVALID exchanges -> UNHEALTHY abstain (distinct from "did not reproduce"), low trust, 0 valid reps
+    # invalid_cap invalid exchanges: UNHEALTHY, low trust, no valid reps
     vu = TruncatedSPRT(cfg).run(inv)
     assert vu.status is Status.UNHEALTHY and vu.decision is False and vu.trust is False, vu
     assert vu.invalid == cfg.invalid_cap and vu.reps == 0, vu
 
-    # INVALID reps are missing DATA (skipped), not evidence: 2 invalids then 3 YES still DECIDES YES at reps 3
+    # invalid reps are skipped: two invalids then three YES decide YES at three valid reps
     mixed = iter([Rep.INVALID, Rep.INVALID, Rep.YES, Rep.YES, Rep.YES])
     vm = TruncatedSPRT(cfg).run(lambda: next(mixed))
     assert vm.decision is True and vm.reps == 3 and vm.invalid == 2, vm
 
-    # apply_to_cache trust-gates: a DECIDED verdict is recorded; a CAPPED verdict is a no-op (-> re-escalates)
+    # apply_to_cache records a decided verdict and ignores a capped one
     cache = MonotoneOracleCache()
-    apply_to_cache(cache, frozenset({1, 2}), v)                  # DECIDED-YES -> recorded
+    apply_to_cache(cache, frozenset({1, 2}), v)                  # decided YES: recorded
     assert cache.query(frozenset({1, 2})) is True, "a DECIDED verdict must be cached"
-    apply_to_cache(cache, frozenset({7}), vc)                    # CAPPED -> no-op (low trust)
+    apply_to_cache(cache, frozenset({7}), vc)                    # capped: ignored
     assert cache.query(frozenset({7})) is None, "a CAPPED verdict must NOT be cached (low trust -> re-escalate)"
     return (f"SPRT controller: YES floor reps={v.reps} (vs {v2.reps} relaxed); fast NO; CAPPED safe-NO low-trust; "
             f"UNHEALTHY@{vu.invalid} invalids; invalids skipped; apply_to_cache trust-gated")
 
 
 def test_sprt_alpha_bounds_false_yes():
-    """The truncated SPRT's load-bearing SEVERE-error guarantee, DIRECTLY: on the null boundary (per-valid-rep
-    P(YES) == p0) the realised false-YES -- a wrongly DECIDED reproduce (trust=True -> cached -> propagated
-    upward forever) -- stays <= alpha. Covered only end-to-end before (pipeline fc==0, where the Phase-4
-    final-validation can MASK an SPRT regression); this isolates the controller. Loosening the YES boundary A
-    lifts the realised rate above alpha -> FAIL."""
+    """At the null boundary (per-valid-rep P(YES) == p0) the realised false-YES rate stays at or below
+    alpha, measured on the controller alone so the pipeline's final validation cannot mask a regression."""
     from rdd.sprt import Rep, SPRTConfig, TruncatedSPRT
     cfg = SPRTConfig()
     rng = random.Random(0)
@@ -516,14 +486,11 @@ def test_sprt_alpha_bounds_false_yes():
 
 
 def test_cache_monotone_soundness():
-    """MonotoneOracleCache answers ONLY what the monotone closure forces, soundly (covered only indirectly
-    before): superset-of-YES => True, subset-of-NO => False, else None; the frontiers keep the invariant "no
-    YES is a subset of any NO" -- a NO ABOVE a confirmed YES is REJECTED (never prunes the reproducer's cone),
-    a YES BELOW a confirmed NO SELF-HEALS by evicting that NO; the YES frontier stays a MINIMAL antichain; an
-    untrustworthy read is NOT recorded; and a same-point re-measurement flip is not a cross-point violation."""
+    """The cache answers only what the closure forces, keeps the no-YES-below-NO invariant, keeps the
+    frontiers minimal and maximal, ignores untrustworthy reads, and takes the new value on a same-point flip."""
     from rdd.cache import MonotoneOracleCache
 
-    # closure: superset-of-YES -> True, subset-of-NO -> False, unforced -> None
+    # closure: superset of a YES -> True, subset of a NO -> False, unforced -> None
     c = MonotoneOracleCache()
     c.observe(frozenset({1, 2}), True)
     c.observe(frozenset({5, 6}), False)
@@ -531,46 +498,43 @@ def test_cache_monotone_soundness():
     assert c.query(frozenset({5})) is False, "a subset of a confirmed NO must be False"
     assert c.query(frozenset({8, 9})) is None, "an unforced point must be None (defer -> escalate)"
 
-    # antichain invariant: a NO ABOVE a confirmed YES is a real monotonicity violation -> REJECTED (the
-    # downward NO direction would wrongly prune the YES cone), so the cache never answers NO over a reproducer.
-    # Pin the rejection on the FRONTIER directly (_no == []): query({1,2}) is True via YES-dominance whether or
-    # not the stale NO was wrongly stored, so the query alone is vacuous -- the frontier check is what bites.
+    # a NO above a confirmed YES is rejected. Check the frontier directly: the query would be True by
+    # YES-dominance whether or not the NO had been stored.
     c2 = MonotoneOracleCache()
     c2.observe(frozenset({1}), True)
-    c2.observe(frozenset({1, 2}), False)                         # {1} subset of {1,2}: the NO is rejected
+    c2.observe(frozenset({1, 2}), False)                         # {1} is a subset of {1,2}: rejected
     assert c2._no == [], f"a NO above a confirmed YES must be REJECTED from the frontier, got {c2._no}"
     assert c2.query(frozenset({1, 2})) is True, "and the cache must never answer NO over the confirmed reproducer"
 
-    # self-heal: a YES BELOW a confirmed NO evicts that stale NO (else the cache answers NO over a reproducer)
+    # a YES below a stored NO evicts that NO
     c3 = MonotoneOracleCache()
     c3.observe(frozenset({1, 2, 3}), False)
-    c3.observe(frozenset({1, 2}), True)                          # a subset reproduces -> evict the stale NO
+    c3.observe(frozenset({1, 2}), True)                          # a subset reproduces: evict the stale NO
     assert c3.query(frozenset({1, 2, 3})) is True, "a YES below a NO must self-heal (evict the NO)"
     assert c3._no == [], f"the contradicted NO must be evicted, got {c3._no}"
 
-    # the YES frontier stays a MINIMAL antichain: a larger YES dominated by a smaller one is not added (GUARD)
+    # the YES frontier stays a minimal antichain
     c4 = MonotoneOracleCache()
     c4.observe(frozenset({1}), True)
-    c4.observe(frozenset({1, 2}), True)                          # dominated by {1} -> not a separate frontier elem
+    c4.observe(frozenset({1, 2}), True)                          # dominated by {1}: not added
     assert c4._yes == [frozenset({1})], f"YES frontier must stay a minimal antichain, got {c4._yes}"
 
-    # the frontiers also EVICT on the opposite order: a smaller YES arriving later must drop the larger one it
-    # now dominates (and symmetrically a larger NO drops the smaller NOs) -- the antichains stay minimal/maximal.
+    # eviction in the other order: a later smaller YES drops the larger one, a later larger NO the smaller ones
     c4b = MonotoneOracleCache()
     c4b.observe(frozenset({1, 2}), True)                         # larger YES first
-    c4b.observe(frozenset({1}), True)                            # a smaller reproducer -> EVICTS the larger {1,2}
+    c4b.observe(frozenset({1}), True)                            # a smaller reproducer evicts {1,2}
     assert c4b._yes == [frozenset({1})], f"a smaller YES must EVICT the dominated larger one, got {c4b._yes}"
     c4c = MonotoneOracleCache()
     c4c.observe(frozenset({1}), False)                          # smaller NO first
-    c4c.observe(frozenset({1, 2}), False)                       # a larger non-reproducer -> EVICTS the smaller {1}
+    c4c.observe(frozenset({1, 2}), False)                       # a larger non-reproducer evicts {1}
     assert c4c._no == [frozenset({1, 2})], f"a larger NO must EVICT the dominated smaller one, got {c4c._no}"
 
-    # trust-gating: an untrustworthy read is a NO-OP (used for the current step by the caller, never cached)
+    # an untrustworthy read is not recorded
     c5 = MonotoneOracleCache()
     c5.observe(frozenset({4}), True, trustworthy=False)
     assert c5.query(frozenset({4})) is None, "an untrustworthy observation must NOT be recorded (re-escalates)"
 
-    # a same-point re-measurement FLIP is not a cross-point violation: the new value wins
+    # a same-point flip takes the new value
     c6 = MonotoneOracleCache()
     c6.observe(frozenset({2}), True)
     c6.observe(frozenset({2}), False)                            # same point, flipped

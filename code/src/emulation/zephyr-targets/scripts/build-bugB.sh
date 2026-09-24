@@ -1,27 +1,26 @@
 #!/usr/bin/env bash
-# Bug B — build the SUBSET-selectable CIS divide-by-zero oracle binary on the REAL
-# vulnerable Zephyr LL controller, and verify its channel-OFF exhaustive sweep + true 1-minimal.
+# Bug B — build the subset-selectable CIS divide-by-zero oracle binary on the vulnerable Zephyr LL
+# controller and verify its channel-off exhaustive sweep + true 1-minimal.
 #
-# The harness (patches/bugB-cis-window.patch) adds ONE ZTEST (test_bug_b) to the ctrl_cis_create suite; it is a
-# NO-OP unless selected by env HARNESS_BUG=B (the native unit_testing binary runs the WHOLE suite -- no
-# per-test CLI filter -- so selection is by getenv, the existing PROBE_ID pattern). HARNESS_SUBSET is a
-# bitmask over the LL-PDU window so an external minimiser can drive a channel-OFF exhaustive sweep.
+# The harness (patches/bugB-cis-window.patch) adds one ZTEST (test_bug_b) to the ctrl_cis_create suite;
+# a no-op unless selected by env HARNESS_BUG=B (whole suite, no per-test CLI filter, selection by getenv --
+# the existing PROBE_ID pattern). HARNESS_SUBSET is a bitmask over the LL-PDU window, for a channel-off
+# exhaustive sweep.
 #
-#   HARNESS_BUG=B  test_bug_b: confirmed CIS divide-by-zero. A SINGLE-PACKET minimal
-#             (like Bug A). 8-bit WIDE window, trigger-LAST: bits0..3 = transparent (droppable)
-#             drained local LE-Pings, bit7 (0x80) = the malformed LL_CIS_REQ trigger (iso_interval=0
-#             AND conn_event_count=0). On accept, llcp_rp_cc_tx_rsp (ull_llcp_cc.c:177) divides by
-#             iso_interval_us=0 -> SIGFPE. An in-test signal(SIGFPE,...) handler prints a real
-#             backtrace + "=== CRASH sig=SIGFPE ===" to stderr then _exit(136). Channel-OFF true
-#             1-minimal = {7} (bit7=128). Python returncode 136 / shell 136 (a CLEAN handler exit,
-#             NOT a -8 signal death -- match returncode==136).
+#   HARNESS_BUG=B  test_bug_b: confirmed CIS divide-by-zero. A single-packet minimal (like Bug A). 8-bit
+#             trigger-last window: bits0..3 = transparent (droppable) drained local LE-Pings, bit7 (0x80) =
+#             the malformed LL_CIS_REQ trigger (iso_interval=0 and conn_event_count=0). On accept,
+#             llcp_rp_cc_tx_rsp (ull_llcp_cc.c:177) divides by iso_interval_us=0 -> SIGFPE. An in-test
+#             signal(SIGFPE,...) handler prints a real backtrace + "=== CRASH sig=SIGFPE ===" to stderr
+#             then _exit(136). Channel-off true 1-minimal = {7} (bit7=128). Python returncode 136 / shell
+#             136 (a clean handler exit, not a -8 signal death -- match returncode==136).
 #
-# -rdynamic is passed so backtrace_symbols_fd resolves the exported controller frames in the dump
-# (the static faulting fn llcp_rp_cc_tx_rsp shows as a raw offset; the
-# exported LLCP/CIS spine frames resolve by name). gdb (--cap-add SYS_PTRACE) anchors the exact site.
+# -rdynamic lets backtrace_symbols_fd resolve the exported controller frames in the dump (the static
+# faulting fn llcp_rp_cc_tx_rsp shows as a raw offset; the exported LLCP/CIS spine frames resolve by name).
+# gdb (--cap-add SYS_PTRACE) anchors the exact site.
 #
-# Leaves build-cis/testbinary as the Bug B subset-window binary. SEPARATE build dir; /work/build and
-# /work/build-multibug are left untouched. Idempotent. Re-uses the clone + SDK. Run: bash scripts/build-bugB.sh
+# Leaves build-cis/testbinary. Separate build dir; /work/build and /work/build-multibug are untouched.
+# Idempotent; re-uses the clone + SDK. Run: bash scripts/build-bugB.sh
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"                # code/src/emulation/zephyr-targets/

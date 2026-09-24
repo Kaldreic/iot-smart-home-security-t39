@@ -1,13 +1,14 @@
-"""emulation.synthetic — the mega-scale synthetic Zephyr-anchored target as a hardware-free oracle.
+"""emulation.synthetic — the large-scale synthetic Zephyr-anchored target as a hardware-free oracle.
 
-The DEVICE side of the statistical-power benchmark: a synthetic controller fault, real-anchored (crash
-dumps composed from the REAL Zephyr controller symbol space POOL/FILES/FAULTS), driven through the locked
-L1 channel + the dump-variation model. ``which_crash`` is the channel-off truth (crash iff the minimal
-subset is present AND no suppressor is). The identity matcher (the exact-id baseline or the deterministic
-L2/L3 rule) is INJECTED by the benchmark runner, so the arms run verbatim. The benchmark
-(``benchmarks.synthetic``) generates the heterogeneous bug POPULATION and composes the per-population dump
-model (``base_dump``) + per-bug channel (``sev_channel``) from these device primitives. Replace this module
-with real hardware (a real radio + target device) and the RDD tool is unchanged (the benchmark re-wires its oracle)."""
+The device side of the statistical-power benchmark: a synthetic controller fault whose crash dumps are
+composed from the real Zephyr controller symbol space (POOL/FILES/FAULTS), driven through the locked L1
+channel and the dump-variation model. ``which_crash`` is the channel-off truth (crash iff the minimal
+subset is present and no suppressor is). The identity matcher (the exact-id baseline or the deterministic
+L2/L3 rule) is injected by the benchmark runner, so the arms run verbatim. The benchmark
+(``benchmarks.synthetic``) generates the heterogeneous bug population and composes the per-population dump
+model (``base_dump``) and per-bug channel (``sev_channel``) from these device primitives. Replacing this
+module with real hardware leaves the RDD tool unchanged; the benchmark re-wires its oracle.
+"""
 
 from __future__ import annotations
 
@@ -18,8 +19,8 @@ from emulation.channel import GEChannelParams, L1Channel, OUT2REP, Outcome
 from emulation.dump import BaseDump, DumpModel, Frame
 from rdd.sprt import Rep
 
-# Zephyr controller symbols — MOST verbatim from subsys/bluetooth/controller/ll_sw/ull_llcp_*.c +
-# ull_conn.c (grepped); a few are paraphrased in the same naming style. They are identity tokens only
+# Zephyr controller symbols -- most verbatim from subsys/bluetooth/controller/ll_sw/ull_llcp_*.c +
+# ull_conn.c (grepped), a few paraphrased in the same naming style. They are identity tokens only
 # (the same set for both arms), so the handful of non-verbatim names does not affect any score.
 POOL = ["cu_ntf", "cu_update_conn_parameters", "cu_prepare_update_ind", "cu_check_conn_parameters",
         "rp_cu_check_instant", "rp_cu_st_wait_instant", "rp_cu_execute_fsm", "llcp_rp_cu_run",
@@ -84,7 +85,7 @@ def sev_channel(sev: float) -> GEChannelParams:
 
 @dataclass
 class LargeOracle:
-    """The synthetic target oracle; the identity matcher is INJECTED so the arms run verbatim."""
+    """The synthetic target oracle; the identity matcher is injected so the arms run verbatim."""
     identity: object        # (bug, obs) -> bool: the eval's matcher (exact-id baseline or the L2/L3 rule)
     model: DumpModel
     params: GEChannelParams

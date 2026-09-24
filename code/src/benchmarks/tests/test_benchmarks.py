@@ -1,4 +1,4 @@
-"""benchmarks — lean self-test: the suite runs and the PRESERVED arms reproduce the committed numbers.
+"""benchmarks self-test: the suites run and the committed references reproduce.
 
 Run:  ``PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks``   (after `pip install -e code/`)
 """
@@ -17,7 +17,7 @@ from emulation import baseline as emulation_baseline  # noqa: E402
 
 
 def test_suite_smoke():
-    """The suite runs end-to-end; on the real suppressor the tool RECOVERS and the ablation BAILS."""
+    """The real and suppressor suites run; the tool recovers the suppressor and the ddmin-only ablation does not."""
     r = run.run_real(5)
     s = run.run_suppressor(5, ablate=True)
     assert run._metric(r["baseline"]) > 0 and run._metric(r["tool"]) > 0, "real suite produced no reproductions"
@@ -28,17 +28,13 @@ def test_suite_smoke():
 
 
 def test_real_suppressor_coherence():
-    """The fresh anchor (six real bugs + the real suppressor) reproduces the committed anchor.json: genuine and
-    false credit of every arm within +/-0.02 (delta 0.000 in practice) and the tool's L3 provenance equal. B2
-    has its own leaf-exact gate (`python -m benchmarks.resilience --coherence`)."""
+    """A fresh anchor reproduces anchor.json: every gated arm within +/-0.02 and the tool's L3 provenance equal."""
     assert run.coherence(), "the fresh anchor must reproduce the committed anchor.json"
     return "anchor coherence within +/-0.02 (delta 0.000 in practice) incl. the L3 provenance"
 
 
 def test_l3_judge_eval_anchored():
-    """The committed judge-quality eval (data/reference/l3_judge_eval.json) re-derives its recall/rejection
-    from the STORED verdicts WITHOUT the model — so Llama's residual-recall (1.00) and cross-rejection are
-    a reproducible, gated artifact, not an observed-once-live number."""
+    """l3_judge_eval.json re-scores from its stored verdicts without the model, and its recall is 1.0."""
     import json as _json
 
     from benchmarks.eval import l3_eval
@@ -54,9 +50,8 @@ def test_l3_judge_eval_anchored():
 
 
 def test_l3_collect_and_judge():
-    """collect_cases pulls the real+suppressor L2-residual pairs (deterministic, model-free); base_cache
-    pairs are never re-collected (the fixed-point precondition); judge_cases routes through the open-model
-    backend (mocked) and PROPAGATES a parse_error."""
+    """collect_cases is deterministic and never re-collects base_cache pairs; judge_cases records the model and
+    propagates a parse_error."""
     from benchmarks.eval import l3_eval
     cases = l3_eval.collect_cases(seeds=3)
     assert cases and all("hash" in c and "target_text" in c and "rep_text" in c for c in cases), "no valid cases"
@@ -79,8 +74,8 @@ def test_l3_collect_and_judge():
 
 
 def test_l3_score():
-    """score() arithmetic: recovery = same-residual judged 'same', rejection = cross judged 'different'.
-    Asymmetric fixture so a `== want` -> `!= want` inversion (which flips BOTH rates) is caught."""
+    """score() on an asymmetric fixture: recovery counts residuals judged same, rejection counts cross pairs
+    judged different."""
     from benchmarks.eval import l3_eval
     cases = [{"kind": "same_residual", "hash": "h1", "truth_same": True},
              {"kind": "same_residual", "hash": "h2", "truth_same": True},     # both residual recovered -> 1.0
@@ -97,9 +92,8 @@ def test_l3_score():
 
 
 def test_real_credit_path_strict():
-    """id_l2l3's L3 cache read is STRICT (`v["same"] is True`): a non-bool cache value (a model that emitted
-    a STRING "true") must NOT credit — pins the fix against a bool() revert — while a genuine bool True still
-    credits and extra keys (conf/model) are ignored."""
+    """id_l2l3 credits only a cache entry whose ``same`` is the bool True: a string "true" or a numeric 1 does
+    not credit."""
     import random as _r
 
     import benchmarks.real as real
@@ -118,9 +112,9 @@ def test_real_credit_path_strict():
     saved = dict(real.L3CACHE)
     try:
         real.L3CACHE.clear()
-        real.L3CACHE[h] = {"same": "true", "conf": 1.0, "model": "x"}   # STRING poison: a bool() read would credit
+        real.L3CACHE[h] = {"same": "true", "conf": 1.0, "model": "x"}   # a string: bool() would credit
         assert real.id_l2l3(b, obs) is False, "string non-bool cache value credited — strict `is True` not enforced"
-        real.L3CACHE[h] = {"same": 1, "conf": 1.0}                      # NUMERIC poison: only `== True` (not `is True`) credits
+        real.L3CACHE[h] = {"same": 1, "conf": 1.0}                      # numeric 1: `== True` would credit
         assert real.id_l2l3(b, obs) is False, "numeric 1 credited — `is True` weakened to `== True`?"
         real.L3CACHE[h] = {"same": True}                                # genuine bool, extra keys absent
         assert real.id_l2l3(b, obs) is True, "a real bool True failed to credit"
@@ -131,10 +125,7 @@ def test_real_credit_path_strict():
 
 
 def test_l3_judge_fixed_point():
-    """_judge_to_fixed_point ITERATES until no new L2-residual pair (the pre-fix single pass left fresh pairs
-    unjudged -> conservative NO -> under-credit). Model-free (canned same=True, worst case for control-flow
-    change): it converges to a TRUE fixed point, AND a forced single pass (max_iters=1) is NOT yet a fixed
-    point — so the loop is provably load-bearing (a break-after-one regression would leave pairs unjudged)."""
+    """_judge_to_fixed_point converges to a true fixed point, and a single pass (max_iters=1) is not yet one."""
     from benchmarks.eval import l3_eval
     orig = l3_eval.judge_cases
     l3_eval.judge_cases = lambda cases, *, model, host=None: {
@@ -153,9 +144,7 @@ def test_l3_judge_fixed_point():
 
 
 def test_l3_judge_seed_cache_incremental():
-    """_judge_to_fixed_point(seed_cache=...) GROWS the cache: seeded verdicts are preserved BYTE-EXACT (never
-    re-judged -> no GPU-nondeterminism flip on the LOCKED A-D verdicts), and ONLY new pairs are judged. Pins
-    the incremental re-baseline that added bugs E,F to the cached anchor without disturbing A-D."""
+    """With seed_cache, seeded verdicts are preserved byte-exact and never re-judged; only new pairs are judged."""
     from benchmarks.eval import l3_eval
     orig = l3_eval.judge_cases
     try:
@@ -163,7 +152,7 @@ def test_l3_judge_seed_cache_incremental():
             c["hash"]: {"same": True, "conf": 1.0, "model": model} for c in cases}
         full, _, _ = l3_eval._judge_to_fixed_point("BASE", None, seeds=3)        # learn the full pair set
         assert len(full) >= 2, "fixture: need >=2 residual pairs to split"
-        # seed HALF with a DISTINGUISHABLE verdict; judge the rest with a NEW model id
+        # seed half with a distinguishable verdict; judge the rest with a new model id
         seed = {h: {"same": True, "conf": 0.42, "model": "SEEDED"} for h in list(full)[:len(full) // 2]}
         l3_eval.judge_cases = lambda cases, *, model, host=None: {
             c["hash"]: {"same": True, "conf": 1.0, "model": "NEW"} for c in cases}
@@ -179,8 +168,7 @@ def test_l3_judge_seed_cache_incremental():
 
 
 def test_l3_gen_cases_dedup_and_bugset():
-    """gen_cases de-dups by hash (unique pairs) and, via real.MODEL, spans the FULL benchmark bug set
-    (not the old 2-bug default) so the judge-quality eval samples the real population."""
+    """gen_cases emits unique-hash cases spanning the full benchmark bug set."""
     from benchmarks.eval import l3_eval
 
     import benchmarks.real as real
@@ -193,9 +181,8 @@ def test_l3_gen_cases_dedup_and_bugset():
 
 
 def test_l3_campaign_warns_on_nonconvergence():
-    """_judge_campaign prints a LOUD WARNING when the loop fails to reach a fixed point (pins the
-    `if not converged:` branch). Model-free + ISOLATED: judge_cases never accumulates (-> never converges)
-    and _DATA is redirected to a temp dir, so the shipped cache is untouched."""
+    """_judge_campaign warns when the loop does not reach a fixed point and still persists the partial cache
+    (written to a temp dir)."""
     import contextlib
     import io
     import pathlib
@@ -221,8 +208,7 @@ def test_l3_campaign_warns_on_nonconvergence():
 
 
 def test_live_run_binary_returncode_and_dump():
-    """benchmarks.live.run_binary maps the exit code to crash truth (== crash_rc) and captures the dump
-    text. Model-free: subprocess is faked, no real binary needed."""
+    """run_binary maps exit code == crash_rc to a crash and captures the dump text (subprocess faked)."""
     import subprocess
 
     from benchmarks import live
@@ -251,8 +237,8 @@ def test_live_run_binary_returncode_and_dump():
 
 
 def test_live_oracle_reproduces_offshelf():
-    """The off-the-shelf live runner (mocked binary + fake judge) drives the binary for crash truth, varies
-    the LIVE-captured dump, escalates to L3, and reproduces bug A at 0 false-credit — the deployable path."""
+    """The live runner with a mocked binary and a fake judge drives the binary, escalates to L3 and reproduces
+    bug A at 0 false credit."""
     import subprocess
 
     from benchmarks import live
@@ -287,8 +273,8 @@ def test_live_oracle_reproduces_offshelf():
 
 
 def test_live_offshelf_bug_c():
-    """Bug C (an ASSERT — exit 255, site-only dump, no backtrace) reproduces off-the-shelf with a mocked
-    binary — pins _CRASH_RC['C']=255 and the assert-dump path MODEL-FREE (the binary-agrees test SKIPs in CI)."""
+    """Bug C (an assert: exit 255, site-only dump) reproduces with a mocked binary; pins _CRASH_RC['C'] and the
+    assert-dump path."""
     import subprocess
 
     from benchmarks import live
@@ -308,7 +294,7 @@ def test_live_offshelf_bug_c():
         rows, oracle, identity = live.run_live("C", seeds=2, binary=live.__file__,
                                                judge=lambda t, r, **k: {"same": True, "conf": 0.9})
         agg = live._agg(rows)
-        assert agg["genuine"] == 1.0 and agg["false_credit"] == 0.0, agg     # exit 255 -> crash mapping pins _CRASH_RC['C']
+        assert agg["genuine"] == 1.0 and agg["false_credit"] == 0.0, agg     # exit 255 maps to a crash
         assert oracle.binary_runs > 0
     finally:
         subprocess.run = orig
@@ -316,9 +302,8 @@ def test_live_offshelf_bug_c():
 
 
 def test_live_binary_agrees_with_truth():
-    """If the REAL target binaries are present, EACH bug's LIVE crash truth matches the committed truth
-    table — and each bug routes to its OWN harness (A,C=multibug, B=cis, D=phy, E=dle; routing all to
-    multibug silently breaks B,D,E). SKIPs when any binary is absent (e.g. CI)."""
+    """With the real binaries present, each bug's live crash truth matches the committed truth table on its
+    own harness. SKIPs when a binary is absent."""
     from benchmarks import live
     truth = multibug.TRUTH
     bugs = tuple(truth)                                       # validate every bug the committed truth file declares
@@ -338,9 +323,8 @@ def test_live_binary_agrees_with_truth():
 
 
 def test_scenario_dedup_families():
-    """Scenario crash-dedup distinguishes all real families on VARIED crash logs — splitting A from B (both
-    SIGFPE) and C, D, E, F (four asserts at distinct sites) by crash SITE, not just fault type. The
-    load-bearing classify step."""
+    """CrashDeduper never assigns a varied crash log to the wrong family (it abstains instead), also under
+    severe report noise, and recalls at least 95%."""
     import random
 
     from benchmarks import scenario
@@ -354,11 +338,11 @@ def test_scenario_dedup_families():
         for b in scenario._BUGS:
             p = dd.classify(m.emit(b, rng))
             ok += int(p == b)
-            wrong += int(p is not None and p != b)             # a WRONG family = false-merge (a mis-route)
+            wrong += int(p is not None and p != b)             # a wrong family is a mis-route
             tot += 1
     assert wrong == 0, f"dedup must be FAIL-SAFE: {wrong} wrong-family false-merges (errors must abstain ∅, not mis-route)"
     assert ok / tot >= 0.95, f"dedup recall only {ok}/{tot}"
-    # the fail-safe property must hold even under SEVERE report-noise (errors -> more ∅, never a false-merge)
+    # under severe report noise errors must still be abstentions, never a wrong family
     hard = DumpModel.from_logs(multibug.LOGS, bugs=scenario._BUGS,
                                params=DumpParams(p_garble=0.6, p_truncate=0.6, p_lose_top=0.5))
     wrong_hard = sum(1 for _ in range(40) for b in scenario._BUGS
@@ -368,8 +352,8 @@ def test_scenario_dedup_families():
 
 
 def test_scenario_trace_realism():
-    """generate_campaign yields realistic traces: spread across all real bugs, each a noisy session with decoys
-    + cross-bug LOOK-ALIKES + the bug's real trigger pattern + its varied crash log."""
+    """generate_campaign spans every bug; each trace carries its trigger pattern and a crash log, and
+    look-alikes appear."""
     import random
 
     from benchmarks import scenario
@@ -385,9 +369,8 @@ def test_scenario_trace_realism():
 
 
 def test_scenario_pipeline_end_to_end():
-    """The full scenario pipeline (dedup -> route to the correct per-bug binary -> RDD minimise -> score) over
-    a small campaign on the REAL binaries with a fake judge: 0 false-credit, dedup routes correctly, genuine
-    PoCs delivered. SKIPs if a binary is absent (e.g. CI)."""
+    """The scenario on the real binaries with a fake judge: 0 false credit, dedup and genuine at least 0.75,
+    PoCs mostly exact-minimal. SKIPs without the binaries."""
     from benchmarks import live, scenario
     if not all(live._BINARIES[b].exists() for b in scenario._BUGS):
         return "SKIP (a target binary is absent — build the 6 bugs' harnesses first)"
@@ -401,10 +384,8 @@ def test_scenario_pipeline_end_to_end():
 
 
 def test_scenario_dedup_is_load_bearing():
-    """A WRONG dedup ROUTES the minimiser to the wrong binary -> NO genuine PoC for that trace (genuine is
-    gated on predicted==bug). Inject an always-'A' deduper: only A-traces stay genuine; B/C/D/E/F mis-route and
-    fail — at 0 false-credit (the minimiser is still sound, it just reproduced the wrong bug). SKIPs if a
-    binary is absent."""
+    """An always-'A' deduper routes only to A's binary: A traces stay genuine, the others do not, at 0 false
+    credit. SKIPs without the binaries."""
     from benchmarks import live, scenario
     if not all(live._BINARIES[b].exists() for b in scenario._BUGS):
         return "SKIP (a target binary is absent)"
@@ -427,9 +408,8 @@ def test_scenario_dedup_is_load_bearing():
 
 
 def test_scenario_soundness_mocked():
-    """Model-free scenario soundness — pins genuine>0 / fc==0 / route-on-PREDICTED WITHOUT the real binaries,
-    so the scenario soundness is NOT SKIP-only in CI. Mocks each bug's binary (crash on its trigger, its real
-    captured dump) + a fake judge; points _BINARIES at an existing file so the setup check passes."""
+    """The scenario with mocked binaries and a fake judge: genuine > 0, 0 false credit, every genuine row
+    correctly grouped, and an always-'A' deduper routes only to A."""
     import subprocess
     from pathlib import Path as _P
 
@@ -455,9 +435,9 @@ def test_scenario_soundness_mocked():
         s = scenario._summary(rows, confusion)
         assert s["false_credit"] == 0.0, s
         assert s["end_to_end_genuine"] > 0.0, s
-        for r in rows:                                         # route-on-prediction: a genuine row reproduced its
-            assert (not r.genuine) or r.predicted == r.bug, r  #   OWN correctly-deduped family
-        # the LOAD-BEARING gate + routing, MODEL-FREE: an always-A dedup routes ONLY to A; B/C/D mis-route
+        for r in rows:                                         # a genuine row was correctly grouped
+            assert (not r.genuine) or r.predicted == r.bug, r
+        # an always-A deduper routes only to A
         always_a = type("_AllA", (), {"classify": lambda self, o: "A"})()
         rows2, conf2, camps2 = scenario.run_scenario(8, judge=lambda t, r, **k: fj, deduper=always_a)
         assert set(camps2) == {"A"}, f"always-A dedup must ROUTE only to A, got {set(camps2)}"
@@ -471,12 +451,8 @@ def test_scenario_soundness_mocked():
 
 
 def test_scenario_multiseed_robust_invariants():
-    """PIECE 4 -- the off-the-shelf scenario over MULTIPLE seeds, model-free + binary-mocked so it RUNS IN CI.
-    It pins the ROBUST invariants the disclosed-live end-to-end rests on -- dedup robustly high + 0 false-credit across
-    EVERY seed -- AND that genuine reproduces ROBUSTLY (mean >= 0.75, every seed >= 0.65, in line with the
-    disclosed-live ~0.87). It does NOT reproduce the LIVE genuine RANGE itself: that is substantiated separately
-    by the disclosed-live benchmarks/data/reference/scenario_multiseed.json (8 live seeds: mean 0.872, range
-    [0.825, 0.925]), which a live model + OTA channel make non-bit-reproducible -- so the RANGE is that claim."""
+    """run_multiseed with mocked binaries and a fake judge: 0 false credit on every seed, dedup min > 0.8,
+    genuine mean >= 0.75 and every seed >= 0.65."""
     import subprocess
     from pathlib import Path as _P
 
@@ -505,21 +481,15 @@ def test_scenario_multiseed_robust_invariants():
     assert out["false_credit"]["max"] == 0.0, f"false-credit must be 0 across ALL seeds, got {out['false_credit']}"
     assert out["dedup_accuracy"]["min"] > 0.8, f"dedup must be robustly high across seeds, got {out['dedup_accuracy']}"
     g = out["genuine"]
-    # genuine must reproduce ROBUSTLY (not merely not-collapse): mean in line with the disclosed-live ~0.87,
-    # and EVERY seed materially reproducing -- tight enough to catch a real regression (deterministic fixture).
+    # thresholds tight enough to catch a regression (deterministic fixture)
     assert g["n"] == 4 and g["mean"] >= 0.75 and g["min"] >= 0.65, f"genuine must reproduce robustly every seed, got {g}"
     return (f"scenario multi-seed (mocked CI, 4 seeds): genuine mean {g['mean']:.2f} range [{g['min']:.2f},{g['max']:.2f}]; "
             f"dedup min {out['dedup_accuracy']['min']:.2f}; fc max {out['false_credit']['max']:.2f} (robust across seeds)")
 
 
 def test_l3_provenance_self_documents_source():
-    """PIECE 2 -- every benchmark family self-documents its L3 SOURCE, and the cached-real headline is
-    LIVE-FREE. (1) real + suppressor: source=cached_open_model, model read from the committed cache (not
-    hard-coded), the reproducibility-critical invariant live_calls==0 (id_l2l3 has NO live-model call -- a
-    cache miss is a conservative NO), and escalations == cache_hits + rule_no_fallback (every escalation
-    resolves one way). The EXACT committed counts (164/40, 0 fallback) are gated by coherence(); this pins
-    the structural invariant cheaply. (2) synthetic: source=deterministic_rule, model=None -- the resilience
-    headline never exercises the open model."""
+    """The real and suppressor runs report source=cached_open_model with live_calls == 0 and escalations ==
+    hits + rule fallbacks; B2 reports the deterministic rule."""
     r = run.run_real(5)
     s = run.run_suppressor(5, ablate=True)
     for tag, prov in (("real", r["l3_provenance"]), ("supp", s["l3_provenance"])):
@@ -528,16 +498,15 @@ def test_l3_provenance_self_documents_source():
         assert prov["escalations"] == prov["cache_hits"] + prov["rule_no_fallback"], f"{tag}: {prov}"
         assert prov["model"] and prov["model"] != "none", f"{tag} model must come from the cache, got {prov['model']!r}"
     from benchmarks import resilience
-    y = resilience.run(120, 1)                                   # the B2 sweep self-documents its source
+    y = resilience.run(120, 1)                                   # B2 reports its own source
     assert y["l3_provenance"] == resilience.L3_PROVENANCE == {"source": "deterministic_rule", "model": None}, y["l3_provenance"]
     return (f"L3 source self-documented: real cached_open_model ({r['l3_provenance']['model']}, live=0, "
             f"hits={r['l3_provenance']['cache_hits']}); B2 resilience deterministic_rule (no LLM)")
 
 
 def test_scenario_l3_provenance_live():
-    """PIECE 2 -- the live off-the-shelf scenario self-documents its LIVE L3 usage. _summary aggregates the
-    per-bug identity stats into l3_provenance (source=live_open_model); the live total matches the per-trace
-    deltas, and WITHOUT campaigns the field is omitted (back-compat)."""
+    """_summary aggregates the per-bug identity stats into l3_provenance (source=live_open_model), matching
+    the per-trace deltas; without campaigns the field is omitted. SKIPs without the binaries."""
     from benchmarks import live, scenario
     if not all(live._BINARIES[b].exists() for b in scenario._BUGS):
         return "SKIP (a target binary is absent — build the 6 bugs' harnesses first)"
@@ -552,13 +521,10 @@ def test_scenario_l3_provenance_live():
 
 
 def test_cached_and_synthetic_paths_never_call_live_judge():
-    """PIECE 2 -- make the live-free claim NON-VACUOUS. l3_provenance's live_calls is a hardcoded 0, so
-    asserting it alone is tautological; here we pin the BEHAVIOUR. (1) the cached-real + synthetic identity
-    modules must not even import the live judge; (2) wrapping rdd.l3.judge_ollama with a call counter, a full
-    cached-real (real + suppressor) + synthetic run makes ZERO live judge calls. A future regression that wires
-    a live model call into id_l2l3 (the reproducibility-breaking change) FAILS here."""
-    import rdd.identity as _ident                               # binds judge_ollama at import: LiveL2L3Identity's
-    import rdd.l3 as _l3                                        # default judge resolves THERE, so patch both names
+    """The cached-real and synthetic modules do not import the live judge, and a real + suppressor + B2 run
+    makes zero live judge calls (counted by wrapping rdd.l3.judge_ollama)."""
+    import rdd.identity as _ident                               # rdd.identity binds judge_ollama at import,
+    import rdd.l3 as _l3                                        # so patch both names
     from benchmarks import real, resilience, synthetic
     assert not hasattr(real, "judge_ollama"), "real.py must NOT import the live judge (cached path is live-free)"
     assert not hasattr(synthetic, "judge_ollama"), "synthetic.py must NOT import the live judge (deterministic rule)"
@@ -571,7 +537,7 @@ def test_cached_and_synthetic_paths_never_call_live_judge():
     try:
         run.run_real(3)
         run.run_suppressor(3)
-        resilience.run(120, 1)                                  # the B2 synthetic sweep (id_l2l3 deterministic rule)
+        resilience.run(120, 1)                                  # the B2 sweep
     finally:
         _l3.judge_ollama = _ident.judge_ollama = orig
     assert calls[0] == 0, f"cached-real + B2 synthetic paths must make ZERO live judge calls, made {calls[0]}"
@@ -579,23 +545,19 @@ def test_cached_and_synthetic_paths_never_call_live_judge():
 
 
 def test_causeswap_cause_swap_guard():
-    """PIECE 3 -- the Mode-2 cause-swap guard DEMONSTRATED on a co-present multi-bug deployment under a
-    CRASH-ONLY in-loop oracle (the case the guard is FOR), using the REAL A/C crash dumps + the REAL L2+L3
-    identity (the guard's check) + the full pipeline. The A+C co-presence AND the crash-only in-loop are
-    MODELLED + disclosed (the cached-real benchmark's in-loop IS identity-aware, so the guard is a no-op
-    there). The guard ELIMINATES the cause-swap false-credit while PRESERVING genuine reproduction
-    (demote-only). Deterministic -> also reproduces the committed reference byte-for-byte."""
+    """causeswap reproduces causeswap.json exactly; the guard takes the swap arm's false credit to 0 and
+    leaves the genuine arms unchanged."""
     import json
     from benchmarks import causeswap
     d = causeswap.run(30)
     ref = json.loads((run._REF / "causeswap.json").read_text(encoding="utf-8"))
     assert d == ref, "causeswap must reproduce the committed reference exactly (incl. the provenance prose)"
     sw = d["arms"]["swap"]
-    # the cause-swap: guard OFF mis-credits the co-present C crash as an A reproduction; guard ON DEMOTES it.
+    # guard off credits the C recipe as A; guard on demotes it
     assert sw["guard_off"]["false_credit"] > 0.5, f"guard OFF must false-credit the cause-swap, got {sw['guard_off']}"
     assert sw["guard_on"]["false_credit"] == 0.0, f"guard ON must DEMOTE the cause-swap to fc 0, got {sw['guard_on']}"
     assert sw["guard_off"]["genuine"] == 0.0 and sw["guard_on"]["genuine"] == 0.0, "the swap is never genuinely A"
-    # demote-only: the guard never reduces a genuine reproduction (both correct-target arms IDENTICAL on/off).
+    # demote-only: the correct-target arms are identical on and off
     for arm in ("genuine_A", "genuine_C"):
         a = d["arms"][arm]
         assert a["guard_on"]["genuine"] == a["guard_off"]["genuine"] > 0.5, f"{arm} genuine must be unchanged + high: {a}"
@@ -606,13 +568,8 @@ def test_causeswap_cause_swap_guard():
 
 
 def test_l2_threshold_not_overfit():
-    """PIECE 5 -- the L2 identity THRESHOLD is NOT overfit to the real bugs A--F (under the modelled OTA noise;
-    the eval validates the THRESHOLD, not the literature-grounded weights). On the real base dumps + modelled
-    variation: (1) same-vs-cross L2 similarity is near-perfectly separable (AUC >= 0.95) and STABLE across
-    variation seeds (not a seed-0 fluke); (2) the fit-on-A--F Youden-J optimum ~= the FIXED default 0.5
-    (|diff| <= 0.1 -> near-optimal, not arbitrary); (3) balanced accuracy is FLAT on a WIDE plateau CONTAINING
-    0.5 (not a fragile tuned peak); (4) the L3 band 0.05 is conservative (0 same-bug at risk). Deterministic ->
-    reproduces the committed reference byte-for-byte."""
+    """l2_threshold_eval reproduces its reference; AUC >= 0.95 on every seed, the default 0.5 lies on a wide
+    plateau in every seed and within 0.1 of the Youden optimum, and the L3 band risks no same-bug miss."""
     import json
 
     from benchmarks.eval import l2_threshold_eval as lt
@@ -622,14 +579,14 @@ def test_l2_threshold_not_overfit():
     assert d["sweep"] == ref["sweep"] and d["plateau"] == ref["plateau"] and d["band"] == ref["band"] and d["stability"] == ref["stability"], "sweep/plateau/band/stability must reproduce committed"
     assert d["auc"] >= 0.95 and d["stability"]["auc_min"] >= 0.95, f"same/cross must be near-separable + STABLE across seeds, got {d['auc']:.3f}/{d['stability']}"
     assert d["stability"]["default_in_plateau_all_seeds"] is True, f"the default 0.5 must be on the plateau in EVERY seed, got {d['stability']}"
-    lo_c, hi_c = d["stability"]["plateau_common"]               # the band that is a plateau in ALL seeds (semantic, not just reproduced)
+    lo_c, hi_c = d["stability"]["plateau_common"]               # the band that is a plateau in every seed
     assert lo_c <= d["default_threshold"] <= hi_c and (hi_c - lo_c) >= 0.2, f"the cross-seed COMMON plateau must contain 0.5 + be WIDE, got {d['stability']['plateau_common']}"
     assert abs(d["youden_threshold"] - d["default_threshold"]) <= 0.1, f"default must be ~data-optimal, got Youden {d['youden_threshold']:.3f}"
     lo, hi = d["plateau"]
     assert lo <= d["default_threshold"] <= hi and (hi - lo) >= 0.2, f"default 0.5 must sit inside a WIDE flat plateau, got {d['plateau']}"
     assert d["sweep"]["0.50"]["balanced"] >= d["best_balanced"] - 0.02, "the default 0.5 must be ~flat (not a fragile peak)"
     assert d["same"]["mean"] - d["cross"]["mean"] >= 0.5, f"same vs cross must separate: {d['same']['mean']:.2f} vs {d['cross']['mean']:.2f}"
-    # the L3 band is conservative: it risks NO same-bug miss and sits far below the same-bug score floor.
+    # the L3 band sits well below the same-bug score floor
     assert d["band"]["same_at_risk_below_band"] == 0.0, f"the L3 band must risk no same-bug miss, got {d['band']}"
     assert d["band"]["max_safe_band_same_min"] >= d["band"]["band"] + 0.2, f"the band must be far below the safe ceiling, got {d['band']}"
     return (f"L2 threshold NOT overfit (A--F, modelled noise): AUC {d['auc']:.3f} (stable {d['stability']['auc_min']:.3f}-{d['stability']['auc_max']:.3f}); "
@@ -637,9 +594,7 @@ def test_l2_threshold_not_overfit():
 
 
 def test_b1_headtohead_coherence():
-    """B1 (the real head-to-head, benchmarks.headtohead) reproduces its committed reference EXACTLY from the
-    FROZEN L3 memo with 0 live model calls. SKIPS without the built host-native binaries (like the other
-    real-binary tests); where they exist it gates EVERY published B1 number vs data/reference/headtohead.json."""
+    """B1's frozen replay reproduces headtohead.json with 0 live calls. SKIPs without the binaries."""
     from benchmarks import headtohead, live
     from benchmarks.scenario import _BUGS
     if not all(live._BINARIES[b].exists() for b in _BUGS):
@@ -649,13 +604,8 @@ def test_b1_headtohead_coherence():
 
 
 def test_b2_resilience_smoke():
-    """B2 (benchmarks.resilience) runs, exposes B1's FULL metric set per arm, is DETERMINISTIC (re-run
-    identical at a small size — the property the full gate rests on), and the AS-SHIPPED head-to-head
-    invariants hold across EVERY regime: RDD is sound (false_credit ~0, alpha-bounded) and materially
-    out-reproduces the fixed-K AirBug baseline (which false-credits) — at a higher device-read cost (the
-    honest trade). TWO arms only; the ablation / lever decomposition is B3. The full 2500x5 leaf-exact
-    reproducibility gate is the CI step `python -m benchmarks.run coherence` (it re-runs this B2 sweep + the
-    real anchor, model-free, so it runs in vanilla CI -- unlike the binary-gated B1 gate above)."""
+    """B2 runs, is deterministic at a small size, exposes the full metric set for every arm and regime, keeps
+    the tool's false credit within 0.02 in every regime, and reports no model."""
     from benchmarks import resilience, scoring
     a = resilience.run(150, 2)
     b = resilience.run(150, 2)
@@ -674,9 +624,8 @@ def test_b2_resilience_smoke():
 
 
 def test_baseline_false_credit_is_the_phantom_rate():
-    """The baseline's false credit is a property of the noise MODEL, not of the algorithm: a phantom crash carries
-    the target's own dump, so accept-first books it. With the phantom rate zeroed the baseline's false credit is
-    exactly 0 (and its recall rises); with it on, one confirming re-run removes almost all of it."""
+    """The baseline's false credit is the phantom-crash rate: with the phantom rate zeroed it is exactly 0 and
+    recall does not fall; one confirming re-run removes most of it."""
     from dataclasses import replace
     from benchmarks import scoring, synthetic
     from emulation.dump import DumpModel
@@ -701,10 +650,7 @@ def test_baseline_false_credit_is_the_phantom_rate():
 
 
 def test_b3_levers_coherence():
-    """B3 (the real lever decomposition, benchmarks.levers) reproduces its committed reference EXACTLY from the
-    FROZEN L3 memo with 0 live model calls. SKIPS without the built host-native binaries (like the other
-    real-binary tests); where they exist it gates EVERY published B3 number — the 4-arm cube over A--F, the
-    suppressor arms, and the 3 lever deltas — vs data/reference/levers.json."""
+    """B3's frozen replay reproduces levers.json with 0 live calls. SKIPs without the binaries."""
     from benchmarks import levers, live
     from benchmarks.scenario import _BUGS
     if not all(live._BINARIES[b].exists() for b in _BUGS):
@@ -714,11 +660,8 @@ def test_b3_levers_coherence():
 
 
 def test_leaf_diffs_comparator():
-    """The hoisted coherence comparator (scoring.leaf_diffs — shared by B1/B2/B3) pinned DIRECTLY, so a future
-    edit can't silently weaken every headline's reproducibility gate: a numeric leaf matches within tol (not
-    exactly), a NaN-as-null leaf must stay null, bool/string match exactly, a bool fresh must NOT match an int
-    ref (1 != True), a missing key is a diff, and skip_top skips ONLY at the TOP level (a NESTED 'l3_live' must
-    still be gated, else a per-arm metric could drift undetected)."""
+    """scoring.leaf_diffs: tol-numeric, null stays null, bool/str exact, bool does not match int, a missing
+    key is a diff, and skip_top applies at the top level only."""
     from benchmarks import scoring
     ld = scoring.leaf_diffs
     assert ld({"a": 1.0}, {"a": 1.0 + 1e-12}) == [], "a numeric leaf within tol must match"
@@ -729,16 +672,15 @@ def test_leaf_diffs_comparator():
     assert ld({"a": "x"}, {"a": "y"}) == [("a", "x", "y")], "string matches exactly"
     assert ld({"a": True}, {"a": 1}) == [("a", True, 1)], "a bool fresh must NOT match an int ref (1 is not True)"
     assert ld({}, {"a": 1.0}) == [("a", None, 1.0)], "a missing key (-> None lookup) must diff"
-    # skip_top is TOP-LEVEL ONLY: a top-level l3_live is ignored, a NESTED one is still gated
+    # skip_top is top-level only: a nested l3_live is still gated
     assert ld({"l3_live": 9, "x": 1.0}, {"l3_live": 0, "x": 1.0}, skip_top=("l3_live",)) == [], "top-level l3_live must be skipped"
     assert ld({"r": {"l3_live": 9}}, {"r": {"l3_live": 0}}, skip_top=("l3_live",)) == [("r.l3_live", 9, 0)], "a NESTED l3_live must still be gated"
     return "leaf_diffs: tol-numeric + null + bool/str exact + bool!=int + missing-key + skip_top TOP-LEVEL-only"
 
 
 def test_b1_reference_invariants():
-    """headtohead.json is well-formed: both arms carry B1's metric set, the shared dedup front-end gives both
-    arms the same accuracy, and the tool's false credit is within its alpha bound. (Whether the tool beats the
-    baseline is a result to be read, not a test to be passed.)"""
+    """headtohead.json is well-formed: both arms carry the metric set and share the dedup accuracy, and the
+    tool's false credit is within its alpha bound."""
     import json
     ref = json.loads((run._REF / "headtohead.json").read_text(encoding="utf-8"))
     ab, rd, sp = ref["airbug"], ref["rdd"], ref["suppressor"]
@@ -753,28 +695,24 @@ def test_b1_reference_invariants():
 
 
 def test_b3_lever_consistency():
-    """B3 (levers.json) STRUCTURAL gate — model-free + binary-free, so it runs in vanilla CI where the
-    binary-gated test_b3_levers_coherence SKIPs. It does NOT re-run B3; it RECOMPUTES the published lever
-    deltas from the committed arm numbers and asserts they MATCH the committed `levers` block (so a hand-edit
-    that desyncs a delta from its arms is caught), plus the published SIGNS: the IDENTITY lever adds genuine
-    (oracle -> ablation), the ROBUST MINIMISER recovers the suppressor (bare ddmin bails, the tool recovers),
-    and the ORACLE/gate lever is the false-credit INVARIANCE (the fixed-K baseline false-credits, the 3
-    pipeline arms do not)."""
+    """levers.json is internally consistent: the lever deltas equal the differences of the committed arm
+    numbers, the ddmin-only ablation scores 0 on the suppressor, and the three pipeline arms' false credit
+    is within 0.02. Model- and binary-free."""
     import json
     ref = json.loads((run._REF / "levers.json").read_text(encoding="utf-8"))
     real, sup, lev = ref["real"], ref["suppressor"], ref["levers"]
-    arms = ["baseline", "oracle", "ablation", "tool"]           # the renamed ladder (arm_c -> oracle)
+    arms = ["baseline", "oracle", "ablation", "tool"]           # the four-arm ladder
     assert list(real) == arms and list(sup) == arms and list(lev["oracle_fc_invariance"]) == arms, \
         f"B3 must carry the 4-arm ladder baseline/oracle/ablation/tool, got real={list(real)}"
     close = lambda a, b: abs(a - b) <= 1e-9                      # noqa: E731
-    # the lever deltas must be INTERNALLY CONSISTENT with the arms they are computed from (catches a desync)
+    # each delta must equal the difference of the arms it is computed from
     idd = real["ablation"]["genuine"]["mean"] - real["oracle"]["genuine"]["mean"]
     assert close(idd, lev["identity_genuine_real"]), f"identity delta desynced: arms={idd} vs levers={lev['identity_genuine_real']}"
     msup = sup["tool"]["genuine"] - sup["ablation"]["genuine"]
     assert close(msup, lev["minimiser_genuine_suppressor"]), f"minimiser delta desynced: arms={msup} vs levers={lev['minimiser_genuine_suppressor']}"
     for a in arms:
         assert close(lev["oracle_fc_invariance"][a], real[a]["false_credit"]["mean"]), f"oracle_fc_invariance[{a}] desynced from the arm fc"
-    # bare ddmin on a suppressed full window returns [] (the seed-bail the robust minimiser exists for)
+    # bare ddmin returns [] on a suppressed full window
     assert sup["ablation"]["genuine"] == 0.0, f"bare ddmin must BAIL (0) on the suppressor, got {sup['ablation']['genuine']}"
     fci = lev["oracle_fc_invariance"]
     assert max(fci["oracle"], fci["ablation"], fci["tool"]) <= 0.02, f"the 3 pipeline arms must stay within the alpha bound, got {fci}"

@@ -1,28 +1,27 @@
 #!/usr/bin/env bash
-# Bug E — build the SUBSET-selectable data-length-update doubled-LL_LENGTH_REQ assert oracle binary on
-# the REAL vulnerable Zephyr LL controller, and verify its channel-OFF exhaustive sweep + true 2-minimal.
+# Bug E — build the subset-selectable data-length-update doubled-LL_LENGTH_REQ assert oracle binary on the
+# vulnerable Zephyr LL controller and verify its channel-off exhaustive sweep + true 2-minimal.
 #
-# The harness (patches/bugE-dle-harness.patch) adds ONE ZTEST (test_bug_e) to the ctrl_data_length_update suite; it is a
-# NO-OP unless selected by env HARNESS_BUG=E (the native unit_testing binary runs the WHOLE suite -- no per-test
-# CLI filter -- so selection is by getenv, the existing PROBE_ID pattern). HARNESS_SUBSET is a
-# bitmask over the LL-PDU window so an external minimiser can drive a channel-OFF exhaustive sweep.
+# The harness (patches/bugE-dle-harness.patch) adds one ZTEST (test_bug_e) to the ctrl_data_length_update
+# suite; a no-op unless selected by env HARNESS_BUG=E (whole suite, no per-test CLI filter, selection by
+# getenv -- the existing PROBE_ID pattern). HARNESS_SUBSET is a bitmask over the LL-PDU window.
 #
-#   HARNESS_BUG=E  test_bug_e: doubled LL_LENGTH_REQ assert. SAME retained-rx-node MECHANISM as bugs C and D
-#             (a retained NODE_RX reused as the procedure NTF with no fallback alloc) but a DISTINCT crash
-#             SITE. Built VERBATIM on the known-good test_data_length_update_periph_rem with a conditional
-#             2nd LL_LENGTH_REQ injected in its own event. REQ#1 starts rp_comm(DATA_LENGTH) and RETAINS
-#             node_ref.rx; REQ#2, dispatched to the head ctx by llcp_rr_rx, overwrites+clears it; at the
-#             tx-ack rp_comm_ntf (ull_llcp_common.c:1138) the NULL node hits LL_ASSERT(ntf) -> mocked
+#   HARNESS_BUG=E  test_bug_e: doubled LL_LENGTH_REQ assert. The same retained-rx-node mechanism as bugs C
+#             and D (a retained NODE_RX reused as the procedure NTF with no fallback alloc) but a distinct
+#             crash site. Built verbatim on the known-good test_data_length_update_periph_rem with a
+#             conditional 2nd LL_LENGTH_REQ injected in its own event. REQ#1 starts rp_comm(DATA_LENGTH) and
+#             retains node_ref.rx; REQ#2, dispatched to the head ctx by llcp_rr_rx, overwrites and clears it;
+#             at the tx-ack rp_comm_ntf (ull_llcp_common.c:1138) the NULL node hits LL_ASSERT(ntf) -> mocked
 #             bt_ctlr_assert_handle -> exit(-1). 5-bit window: bits0..2 = transparent decoys, bit3 =
-#             LL_LENGTH_REQ #1, bit4 = LL_LENGTH_REQ #2 (load-bearing). Channel-OFF true 2-minimal =
-#             {REQ1,REQ2} = 24 (0x18). The assert emits its OWN message (ASSERTION FAIL [ntf] @
+#             LL_LENGTH_REQ #1, bit4 = LL_LENGTH_REQ #2 (load-bearing). Channel-off true 2-minimal =
+#             {REQ1,REQ2} = 24 (0x18). The assert emits its own message (ASSERTION FAIL [ntf] @
 #             ull_llcp_common.c:1138); no SIGFPE handler needed. Python rc 255 / shell 255.
 #
 # -rdynamic is passed for parity with the other bug scripts; Bug E reproduces identically without it (the
 # assert message is the artifact, not a backtrace).
 #
-# Leaves build-dle/testbinary as the Bug E subset-window binary. SEPARATE build dir; /work/build and the
-# other build-* dirs are left untouched. Idempotent. Re-uses the clone + SDK. Run: bash scripts/build-bugE.sh
+# Leaves build-dle/testbinary. Separate build dir; /work/build and the other build-* dirs are untouched.
+# Idempotent; re-uses the clone + SDK. Run: bash scripts/build-bugE.sh
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"                # code/src/emulation/zephyr-targets/
