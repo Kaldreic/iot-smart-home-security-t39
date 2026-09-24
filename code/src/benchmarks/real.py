@@ -11,8 +11,7 @@ from __future__ import annotations
 
 import random
 
-from benchmarks.identity_cache import (L2, L3CACHE, L3_BAND_LO, TARGET_TEXT,  # noqa: F401
-                                       agg as _agg, id_l2l3, l3_provenance, l3_reset)
+from benchmarks.identity_cache import L2, L3CACHE, L3_BAND_LO, TARGET_TEXT, id_l2l3  # noqa: F401  (re-exports)
 from emulation.multibug import BUGS, MODEL, MultibugOracle, _mbug, id_exact  # noqa: F401  (device re-exports)
 
 

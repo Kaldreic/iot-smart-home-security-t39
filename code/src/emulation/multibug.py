@@ -21,7 +21,7 @@ from rdd.sprt import Rep
 _DATA = Path(__file__).resolve().parent / "data"
 LOGS = _DATA / "logs"          # the captured base dumps (device data)
 
-TRUTH = json.loads((_DATA / "truth-multibug.json").read_text())     # {"A":..,..,"F":..} channel-off truth
+TRUTH = json.loads((_DATA / "truth-multibug.json").read_text(encoding="utf-8"))     # {"A":..,..,"F":..} channel-off truth
 WINDOW = {"A": 8, "B": 8, "C": 5, "D": 5, "E": 5, "F": 5}
 TRUE_MIN = {"A": [frozenset({7})], "B": [frozenset({7})],           # channel-off exhaustive minimals
             "C": [frozenset({3, 4})], "D": [frozenset({3, 4})],

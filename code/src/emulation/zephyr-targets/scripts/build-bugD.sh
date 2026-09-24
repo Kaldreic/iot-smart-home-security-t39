@@ -7,7 +7,7 @@
 # per-test CLI filter -- so selection is by getenv, the existing PROBE_ID pattern). HARNESS_SUBSET is a
 # bitmask over the LL-PDU window so an external minimiser can drive a channel-OFF exhaustive sweep.
 #
-#   HARNESS_BUG=D  test_bug_d: confirmed PHY doubled-IND assert (morebugs.md). A genuine MULTI-PACKET
+#   HARNESS_BUG=D  test_bug_d: confirmed PHY doubled-IND assert. A genuine MULTI-PACKET
 #             minimal (like Bug C). 5-bit window: bits0..2 = transparent (droppable) drained local
 #             LE-Pings, bit3 = LL_PHY_UPDATE_IND #1, bit4 = LL_PHY_UPDATE_IND #2 (load-bearing). The
 #             LL_PHY_REQ precondition (procedure start) is injected whenever any IND is present. A

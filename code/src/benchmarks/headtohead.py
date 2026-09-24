@@ -1,7 +1,7 @@
 """benchmarks.headtohead — B1: the real-target head-to-head, AirBug vs RDD through the full shared pipeline.
 
 The MAIN result. fuzz-campaign -> shared crash-grouping -> per-bug window -> [AirBug | RDD] minimiser -> PoC ->
-score, on the real native_sim Zephyr targets. Both arms run over the IDENTICAL campaign, grouping, window,
+score, on the real host-native Zephyr targets. Both arms run over the IDENTICAL campaign, grouping, window,
 channel and real device; ONLY the minimiser + its in-loop crash-identity differ, so the comparison isolates
 the tool:
   * AirBug arm = the enum minimiser (benchmarks.baseline) + exact-id identity (emulation.baseline.exact_crash_id)
@@ -9,9 +9,9 @@ the tool:
   * RDD arm    = the robust pipeline (rdd.minimize) + the live open-model L3 cascade (rdd.LiveL2L3Identity)
     -> reported as a RANGE over N=8 seeds; the live L3 verdicts are FROZEN to the committed cache so CI
     re-verifies a reproducible point.
-Both arms drive the SAME real native_sim binary via one captured dump-model per target (built once, shared).
+Both arms drive the SAME real host-native binary via one captured dump-model per target (built once, shared).
 
-HONEST BOUNDARY (disclosed): the "real device" is the real Zephyr controller compiled to a native_sim ELF and
+HONEST BOUNDARY (disclosed): the "real device" is the real Zephyr controller compiled to a host-native (``unit_testing``) ELF and
 run via subprocess -- NOT a runtime container (Docker only builds it). The radio/OTA channel is MODELLED
 (Gilbert-Elliott). The shared L2 crash-grouping is GENEROUS to the baseline (AirBug's real methodology uses a
 weaker exact-id grouping), so RDD's win is conservative. Scored against the channel-off virtual-perfect the
@@ -40,7 +40,7 @@ from rdd.identity import LiveL2L3Identity
 
 
 def _setup_target(bug, *, model_name, host, judge, dump_params, memo):
-    """Capture the real native_sim target ONCE and build the two arms over the SAME dump-model: the RDD oracle
+    """Capture the real host-native target ONCE and build the two arms over the SAME dump-model: the RDD oracle
     (live L2/L3 identity) and the AirBug oracle (exact-id identity). Returns (rdd_oracle, rdd_identity, ab_oracle)."""
     rdd_oracle, rdd_identity = live.build_live_campaign(bug, model=model_name, host=host, judge=judge,
                                                         dump_params=dump_params, memo=memo)
@@ -140,7 +140,7 @@ def run_suppressor_showcase(seeds: int = 8, *, model_name: str = "llama3.1:8b", 
     the trigger but, on this non-monotone oracle, FALSE-CREDITS a non-crashing subset under channel noise and is
     less minimal; RDD stays sound (fc 0) + exact. (The dramatic 'bare ddmin SEED-bails to 0' result is the
     DDMIN-ONLY ablation in B3, not this AirBug-vs-RDD arm.) DISCLOSED: this target is TRUTH-TABLE-backed
-    (Docker-captured), not a live native_sim subprocess; it emits bug A's real conn-update dump, so RDD's live
+    (Docker-captured), not a live host-binary subprocess; it emits bug A's real conn-update dump, so RDD's live
     L3 (shared memo) and AirBug's exact-id both judge bug-A dumps. Returns {airbug, rdd, l3_live} (rates over ``seeds``)."""
     ref = multibug.MODEL.clean_obs("A")
     ref_exact = exact_crash_id(ref)
@@ -200,23 +200,24 @@ def freeze(n_traces: int = 42, seeds: int = 8, *, model_name: str = "llama3.1:8b
     memo: dict = {}
     out = run(n_traces, seeds, model_name=model_name, host=host, judge=judge, memo=memo)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_path.write_text(json.dumps(memo, indent=1) + "\n")
+    cache_path.write_text(json.dumps(memo, indent=1) + "\n", encoding="utf-8")
     ref_path.parent.mkdir(parents=True, exist_ok=True)
-    ref_path.write_text(json.dumps(out, indent=1) + "\n")
+    ref_path.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n", encoding="utf-8")
     return out
 
 
 def frozen(n_traces: int = 42, seeds: int = 8, *, cache_path: Path = _CACHE) -> dict:
     """Reproduce B1 from the committed memo with NO live model: pre-load the complete memo + a conservative-NO
     guard judge (which must never fire if the memo is complete -> out['l3_live'] == 0)."""
-    memo = json.loads(Path(cache_path).read_text())
+    memo = json.loads(Path(cache_path).read_text(encoding="utf-8"))
     return run(n_traces, seeds, judge=lambda *a, **k: {"same": False}, memo=dict(memo))
 
 
 def coherence(n_traces: int = 42, seeds: int = 8, tol: float = 1e-9) -> bool:
     """The FROZEN replay reproduces the committed reference EXACTLY (every leaf) and makes 0 live model calls.
     The top-level ``l3_live`` is skipped — the reference records the live-freeze count, a frozen replay is 0."""
-    ref, fresh = json.loads(_REF.read_text()), frozen(n_traces, seeds)
+    ref = json.loads(_REF.read_text(encoding="utf-8"))
+    fresh = scoring.clean_nan(frozen(n_traces, seeds))   # NaN-as-null on both sides (as levers/resilience)
     diffs = scoring.leaf_diffs(fresh, ref, tol=tol, skip_top=("l3_live",))
     ok = fresh["l3_live"] == 0 and not diffs
     print(f"B1 COHERENCE — frozen replay vs committed headtohead.json "
@@ -229,7 +230,7 @@ def coherence(n_traces: int = 42, seeds: int = 8, tol: float = 1e-9) -> bool:
 
 def main() -> int:
     ap = argparse.ArgumentParser(prog="benchmarks.headtohead",
-                                 description="B1: AirBug vs RDD on the real native_sim targets via the full shared pipeline")
+                                 description="B1: AirBug vs RDD on the real host-native targets via the full shared pipeline")
     ap.add_argument("--traces", type=int, default=42)
     ap.add_argument("--seeds", type=int, default=8)
     ap.add_argument("--model", default="llama3.1:8b")
@@ -243,7 +244,7 @@ def main() -> int:
     out = (freeze(a.traces, a.seeds, model_name=a.model, host=a.host) if a.freeze
            else frozen(a.traces, a.seeds) if a.frozen
            else run(a.traces, a.seeds, model_name=a.model, host=a.host))
-    print(f"=== B1 head-to-head — {a.seeds} seeds x {a.traces} traces; real native_sim + live L3 ({a.model}) ===")
+    print(f"=== B1 head-to-head — {a.seeds} seeds x {a.traces} traces; real host-native binary + live L3 ({a.model}) ===")
     print(f"  {'metric':16} {'AirBug (point)':>18} {'RDD (live range)':>26}")
     for m in ("genuine", "genuine_routed", "false_credit", "exact_minimal", "mean_size_gap", "reads"):
         ab, rd = out["airbug"][m], out["rdd"][m]
@@ -255,7 +256,7 @@ def main() -> int:
           f"AirBug genuine {sp['airbug']['genuine']:.3f} / fc {sp['airbug']['false_credit']:.3f}   "
           f"RDD genuine {sp['rdd']['genuine']:.3f} / fc {sp['rdd']['false_credit']:.3f}")
     print("  RDD = live open-model L3 (range over seeds; verdicts frozen to the cache for a reproducible CI point);")
-    print("  AirBug = exact-id (bit-reproducible). Scored vs the channel-off virtual-perfect. native_sim + MODELLED channel.")
+    print("  AirBug = exact-id (bit-reproducible). Scored vs the channel-off virtual-perfect. host-native binary + MODELLED channel.")
     return 0
 
 

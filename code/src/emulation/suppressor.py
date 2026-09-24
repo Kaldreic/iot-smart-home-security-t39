@@ -1,8 +1,8 @@
 """emulation.suppressor — the real non-monotone LL_LENGTH_REQ suppressor target as a HW-free oracle.
 
 crash <=> trigger (bit3) present AND LL_LENGTH_REQ (bit4) absent — a genuine non-monotone real bug (masks
-8-15 SIGFPE, 24-31 suppressed). The crash IS bug A's conn-update SIGFPE, so it emits bug A's real dump and
-uses bug A's identity (reuses ``emulation.multibug``'s MODEL + MBug); only the non-monotone reachability is
+8-15 SIGFPE, 24-31 suppressed). The crash IS bug A's conn-update SIGFPE, so it re-uses bug A's captured dump
+(the lengthreq harness installs no SIGFPE handler and prints no backtrace of its own) and bug A's identity (reuses ``emulation.multibug``'s MODEL + MBug); only the non-monotone reachability is
 new. The identity matcher (the baseline's exact-id, or the tool's L2/L3) is INJECTED by the benchmark
 runner. Device data (the Docker-captured truth table) lives in emulation/data/. Replace this module with a
 real radio + device and the RDD tool is unchanged (the benchmark re-wires its oracle)."""
@@ -20,7 +20,7 @@ from rdd.sprt import Rep
 _DATA = Path(__file__).resolve().parent / "data"
 # the REAL length_req-suppressor truth, Docker-captured on the vulnerable Zephyr binary (src/emulation/zephyr-targets recipe):
 # 5-PDU window, crash iff bit3 (interval=0 trigger) set AND bit4 (LL_LENGTH_REQ) NOT set => non-monotone.
-_LR_TRUTH = {int(k): v for k, v in json.loads((_DATA / "truth-lengthreq.json").read_text()).items()}
+_LR_TRUTH = {int(k): v for k, v in json.loads((_DATA / "truth-lengthreq.json").read_text(encoding="utf-8")).items()}
 
 
 def lr_which_crash(subset) -> bool:

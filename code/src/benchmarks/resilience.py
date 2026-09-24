@@ -108,14 +108,14 @@ def freeze(n_bugs: int = 2500, n_seeds: int = 5, *, ref_path: Path = _REF) -> di
     deterministic and model-free; the reference IS the frozen result)."""
     out = run(n_bugs, n_seeds)
     ref_path.parent.mkdir(parents=True, exist_ok=True)
-    ref_path.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n")
+    ref_path.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n", encoding="utf-8")
     return out
 
 
 def coherence(tol: float = 1e-9) -> bool:
     """The fresh sweep reproduces the committed reference EXACTLY (every leaf), at the reference's own
     (n_bugs, n_seeds). Deterministic + model-free, so this is the vanilla-CI reproducibility gate."""
-    ref = json.loads(_REF.read_text())
+    ref = json.loads(_REF.read_text(encoding="utf-8"))
     fresh = scoring.clean_nan(run(ref["n_bugs"], ref["n_seeds"]))
     diffs = scoring.leaf_diffs(fresh, ref, tol=tol)
     print(f"B2 COHERENCE — fresh {ref['n_bugs']}x{ref['n_seeds']} sweep vs committed resilience.json "
@@ -157,7 +157,7 @@ def main() -> int:
     out = freeze(a.bugs, a.seeds) if a.freeze else run(a.bugs, a.seeds)
     _print(out)
     if a.out:
-        Path(a.out).write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n")
+        Path(a.out).write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n", encoding="utf-8")
         print(f"  -> {a.out}")
     return 0
 

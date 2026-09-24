@@ -11,9 +11,12 @@ same-bug reproductions (false negatives → it stops at max_try). Our L2 (fuzzy:
 through structural variation; L3 (LLM) handles the severely garbled tail. The BASE dumps are REAL,
 captured from the real binary (the committed dump logs ``emulation/data/logs/dump-bug-*.txt``); only the
 per-rep VARIATION is modelled — and every variation models a concrete real-device effect (named below).
+One disclosed exception: the committed Bug-B log is an abbreviated transcript whose frame lines carry no
+bracketed return address, so ``parse_base_dump`` yields a header-only report (no stack) for B and the
+variation model has no frames to perturb there (see code/README.md, "Known limitations").
 
-Output: ``rdd.observation.DumpObs`` — field-compatible with the L2 ``CrashObservation`` —
-plus the ground-truth ``bug`` id for scoring. ``to_crash_observation`` adapts it to the real L2.
+Output: ``rdd.observation.DumpObs`` — field-compatible with the L2 ``CrashObservation``;
+``to_crash_observation`` adapts it to the real L2. The ground-truth bug id is carried by the oracle, not here.
 """
 
 from __future__ import annotations
@@ -35,7 +38,7 @@ class Frame:
 
 @dataclass(frozen=True)
 class BaseDump:
-    bug: str                       # "A" / "C"
+    bug: str                       # "A".."F" (or a synthetic bNNNN id)
     fault: str                     # coarse fault token ("SIGFPE", "ASSERTION FAIL [ntf]")
     site: str | None               # canonical file:line if the report carries one (asserts do)
     frames: tuple[Frame, ...]      # backtrace, top-first (empty for a site-only assert report)
@@ -123,7 +126,7 @@ class DumpModel:
     @classmethod
     def from_logs(cls, logdir, params: DumpParams | None = None, bugs=("A", "C")) -> "DumpModel":
         logdir = Path(logdir)
-        base = {b: parse_base_dump((logdir / f"dump-bug-{b.lower()}.txt").read_text(), b)
+        base = {b: parse_base_dump((logdir / f"dump-bug-{b.lower()}.txt").read_text(encoding="utf-8"), b)
                 for b in bugs}
         return cls(base=base, params=params or DumpParams())
 

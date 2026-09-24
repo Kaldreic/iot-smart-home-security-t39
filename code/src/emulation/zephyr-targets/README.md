@@ -18,15 +18,17 @@ the vulnerable controller guard, applies its harness patch from `patches/`, and
 | `build-bugD.sh` | `build-phy/` | D |
 | `build-bugE.sh` | `build-dle/` | E |
 | `build-bugF.sh` | `build-cisc/` | F |
-| `build-lengthreq.sh` | `build-lengthreq/` | non-monotone suppressor harness |
+| `build-lengthreq.sh` | `../zephyr-cve-lengthreq/build-lengthreq/` (its own workspace) | non-monotone suppressor harness |
 
 **Requires Docker.** The first build pulls the pinned `zephyr-build` image (~31 GB), shallow-clones
 Zephyr (~1 GB) and downloads the Zephyr SDK (~42 MB), then builds — budget disk + time. Run e.g.
 `bash scripts/build-multibug.sh`. You only need these to
 re-run the live benchmarks from scratch — the offline reproduce gate
 (`python -m benchmarks.run coherence`) and every committed report number need none of this.
+Every script honours `HARNESS_WS=<dir>` to relocate its workspace; `build-lengthreq.sh` insists on a
+`*-lengthreq` directory so it never dirties the shared clone.
 
-The built `testbinary` is a **32-bit i386** `native_sim` ELF. To *run* it on a 64-bit host (the `b1`/`b3`/
+The built `testbinary` is a **32-bit i386** host executable (Zephyr's `unit_testing` board). To *run* it on a 64-bit host (the `b1`/`b3`/
 `scenario`/`live` benchmarks), install the 32-bit runtime once: `sudo dpkg --add-architecture i386 && sudo
 apt-get update && sudo apt-get install -y libc6:i386` (Debian/Ubuntu) or `sudo dnf install -y glibc.i686` (Fedora/RHEL). Without it, the binary fails to exec
 with a misleading `FileNotFoundError` (the ELF interpreter `/lib/ld-linux.so.2` is absent).

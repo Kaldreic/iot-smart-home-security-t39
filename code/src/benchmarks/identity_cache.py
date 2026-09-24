@@ -23,7 +23,7 @@ _DATA = Path(__file__).resolve().parent / "data"
 L2 = L2Matcher({b: MODEL.clean_obs(b) for b in BUGS})
 TARGET_TEXT = {b: render_dump(MODEL.clean_obs(b)) for b in BUGS}
 _VPATH = _DATA / "llm_cache" / "l3_verdicts.json"
-L3CACHE = json.loads(_VPATH.read_text()) if _VPATH.exists() else {}
+L3CACHE = json.loads(_VPATH.read_text(encoding="utf-8")) if _VPATH.exists() else {}
 L3_BAND_LO = 0.05      # L2 score below this on a "different" verdict = confidently different (trust L2);
 #                        in [L3_BAND_LO, threshold) = uncertain -> escalate to L3 (FrugalGPT gate)
 L3_STATS = {"calls": 0, "hits": 0, "misses": []}
@@ -55,7 +55,8 @@ def id_l2l3(target_bug: str, obs) -> bool:                          # RDD: L2 + 
     v = L3CACHE.get(h)
     if v is not None:
         L3_STATS["hits"] += 1
-        return v["same"] is True                                    # strict: a non-bool value can't false-credit
+        return isinstance(v, dict) and v.get("same") is True       # strict + corrupt-safe: a non-dict/non-bool
+        #                                                             entry degrades to NO, never a false credit
     L3_STATS["misses"].append({"hash": h, "target_bug": target_bug,
                                "target_text": TARGET_TEXT[target_bug], "rep_text": render_dump(obs)})
     return False                                                    # conservative on a cache miss

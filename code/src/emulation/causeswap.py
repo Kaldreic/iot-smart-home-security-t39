@@ -82,6 +82,6 @@ class _CoPresentOracle:
 
 
 class _NoGuardOracle(_CoPresentOracle):
-    """Guard OFF: no ``identity_truth`` attribute, so ``rdd.pipeline`` getattr-probes it as None and skips the
+    """Guard OFF: ``identity_truth`` is set to None, so ``rdd.pipeline``'s getattr probe sees None and skips the
     Phase-4b gate (the pre-guard behaviour). Everything else is identical -> a clean A/B for the guard's effect."""
     identity_truth = None                          # getattr(...) is None -> pipeline skips the Phase-4b gate

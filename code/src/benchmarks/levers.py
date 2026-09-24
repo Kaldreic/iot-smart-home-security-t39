@@ -1,7 +1,7 @@
 """benchmarks.levers — B3: the real-target lever decomposition, RDD's advantage attributed to its 3 levers.
 
 The third headline (peer to B1 ``benchmarks.headtohead`` + B2 ``benchmarks.resilience``): on the REAL
-native_sim Zephyr targets, decompose RDD's reproduction advantage into its three design levers by toggling
+host-native Zephyr targets, decompose RDD's reproduction advantage into its three design levers by toggling
 ONE at a time — a 4-arm cube run DIRECT-WINDOW (each real bug's own window; NO dedup front-end, so the arms
 differ ONLY in the toggled lever):
 
@@ -27,14 +27,14 @@ L3 = "live range + frozen CI gate" (like B1): the two L2/L3 arms (ablation, tool
 (the open-model judge) across N=8 seeds -> the authentic genuine RANGE is the headline; the live verdicts are
 FROZEN to the committed cache so CI re-verifies a reproducible point (out['l3_live']==0 on a frozen replay). The
 two exact-id arms (baseline, oracle) call NO model -> bit-reproducible. All four arms drive the SAME real
-native_sim binary per bug (built once, shared) over the SAME per-(bug, seed) channel seed (fair).
+host-native binary per bug (built once, shared) over the SAME per-(bug, seed) channel seed (fair).
 
 METRICS (B1's set), per arm, scored vs the channel-off virtual-perfect the minimiser NEVER sees (genuine <=>
 the PoC PROVABLY crashes the RIGHT bug): genuine / false_credit / exact_minimal (of genuine) / mean_size_gap
 (of genuine) / reads. The A--F arms are seed-RANGES (mean/min/max over seeds); the suppressor arms are rates
 over seeds (one bug). Reported in two parts: ``real`` (A--F) + ``suppressor`` + the 3 ``levers`` deltas.
 
-HONEST BOUNDARY (disclosed, as in B1): the "real device" is the real Zephyr controller compiled to a native_sim
+HONEST BOUNDARY (disclosed, as in B1): the "real device" is the real Zephyr controller compiled to a host-native (``unit_testing``)
 ELF and run via subprocess (NOT a runtime container; Docker only builds it); the radio/OTA channel is MODELLED
 (Gilbert-Elliott). Direct-window (vs B1's full fuzz->dedup pipeline) isolates the levers from the grouping
 front-end. The suppressor is the real non-monotone LL_LENGTH_REQ target (truth-table-backed, Docker-captured;
@@ -78,7 +78,7 @@ _METRICS = ("genuine", "false_credit", "exact_minimal", "mean_size_gap", "reads"
 
 
 def _setup_target(bug, *, model_name, host, judge, memo):
-    """Capture the real native_sim target ONCE and build the two oracles over the SAME dump-model: the live
+    """Capture the real host-native target ONCE and build the two oracles over the SAME dump-model: the live
     L2/L3 oracle (ablation + tool) and the exact-id oracle (baseline + oracle arms). Returns {'l3': (o, id), 'exact': (o, None)}."""
     l3_oracle, l3_identity = live.build_live_campaign(bug, model=model_name, host=host, judge=judge, memo=memo)
     ref_exact = exact_crash_id(l3_oracle.model.clean_obs(bug))            # the captured clean dump's exact id
@@ -200,23 +200,23 @@ def freeze(seeds: int = 8, *, model_name: str = "llama3.1:8b", host=None, judge=
     memo: dict = {}
     out = run(seeds, model_name=model_name, host=host, judge=judge, memo=memo)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_path.write_text(json.dumps(memo, indent=1) + "\n")
+    cache_path.write_text(json.dumps(memo, indent=1) + "\n", encoding="utf-8")
     ref_path.parent.mkdir(parents=True, exist_ok=True)
-    ref_path.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n")
+    ref_path.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n", encoding="utf-8")
     return out
 
 
 def frozen(seeds: int = 8, *, cache_path: Path = _CACHE) -> dict:
     """Reproduce B3 from the committed memo with NO live model: pre-load the complete memo + a conservative-NO
     guard judge (which must never fire if the memo is complete -> out['l3_live'] == 0)."""
-    memo = json.loads(Path(cache_path).read_text())
+    memo = json.loads(Path(cache_path).read_text(encoding="utf-8"))
     return run(seeds, judge=lambda *a, **k: {"same": False}, memo=dict(memo))
 
 
 def coherence(seeds: int = 8, tol: float = 1e-9) -> bool:
     """The FROZEN replay reproduces the committed reference EXACTLY (every leaf) and makes 0 live model calls.
     The top-level ``l3_live`` is skipped — the reference records the live-freeze count, a frozen replay is 0."""
-    ref = json.loads(_REF.read_text())
+    ref = json.loads(_REF.read_text(encoding="utf-8"))
     fresh = scoring.clean_nan(frozen(seeds))
     diffs = scoring.leaf_diffs(fresh, ref, tol=tol, skip_top=("l3_live",))
     ok = fresh["l3_live"] == 0 and not diffs
@@ -230,7 +230,7 @@ def coherence(seeds: int = 8, tol: float = 1e-9) -> bool:
 
 def _print(out: dict) -> None:
     g = lambda arm, m: out["real"][arm][m]["mean"] if out["real"][arm][m] else float("nan")   # noqa: E731
-    print(f"=== B3 lever decomposition — {out['n_seeds']} seeds, real native_sim ({out['n_bugs']} bugs A--F) + the suppressor ===")
+    print(f"=== B3 lever decomposition — {out['n_seeds']} seeds, real host-native binaries ({out['n_bugs']} bugs A--F) + the suppressor ===")
     print(f"  {'arm':9} {'A--F genuine/fc':>22} {'exact/gap':>14}    {'suppressor g/fc':>15}")
     for lbl, *_ in _ARMS:
         s = out["suppressor"][lbl]
@@ -245,7 +245,7 @@ def _print(out: dict) -> None:
     print(f"          identity (genuine, A--F) oracle->ablation {lv['identity_genuine_real']:+.3f};  "
           f"robust minimiser (genuine, suppressor) ablation->tool {lv['minimiser_genuine_suppressor']:+.3f}")
     print("  RDD L2/L3 arms (ablation, tool) = live open-model L3 (range over seeds; frozen to the cache for a reproducible CI point);")
-    print("  baseline + oracle = exact-id (bit-reproducible). Scored vs the channel-off virtual-perfect. native_sim + MODELLED channel.")
+    print("  baseline + oracle = exact-id (bit-reproducible). Scored vs the channel-off virtual-perfect. host-native binary + MODELLED channel.")
 
 
 def main() -> int:

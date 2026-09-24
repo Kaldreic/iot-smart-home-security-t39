@@ -176,14 +176,14 @@ def _judge_campaign(model: str, host, seeds: int, max_iters: int = 10, seed_cach
     n_err = sum(1 for v in accumulated.values() if "parse_error" in v)
     cache = _DATA / "llm_cache"
     cache.mkdir(parents=True, exist_ok=True)
-    (cache / "l3_verdicts.json").write_text(json.dumps(accumulated, indent=1) + "\n")
+    (cache / "l3_verdicts.json").write_text(json.dumps(accumulated, indent=1) + "\n", encoding="utf-8")
     cases_out = dict(cases_by_hash)                            # the newly-judged cases (provenance)
     cp = _DATA / "l3_cases.json"
     if seed_cache and cp.exists():                            # incremental: keep prior cases for preserved verdicts
-        for c in json.loads(cp.read_text()):
+        for c in json.loads(cp.read_text(encoding="utf-8")):
             if c["hash"] in accumulated and c["hash"] not in cases_out:
                 cases_out[c["hash"]] = c
-    (_DATA / "l3_cases.json").write_text(json.dumps(list(cases_out.values()), indent=1) + "\n")
+    (_DATA / "l3_cases.json").write_text(json.dumps(list(cases_out.values()), indent=1) + "\n", encoding="utf-8")
     print(f"judged with {model}: {len(accumulated)} pairs ({'a FIXED POINT' if converged else 'NOT converged'}), "
           f"{n_same} 'same', {n_err} parse-errors -> data/llm_cache/l3_verdicts.json")
     print("  now run `python -m benchmarks.run coherence` to verify the real anchor reproduces from the "
@@ -192,13 +192,13 @@ def _judge_campaign(model: str, host, seeds: int, max_iters: int = 10, seed_cach
 
 def _eval_judge(model: str, host):
     from .. import real                                         # score the judge over the SAME bug set the
-    cases = gen_cases(real.MODEL)                               # benchmark runs (A,B,C,D), not a 2-bug default
+    cases = gen_cases(real.MODEL)                               # benchmark runs (A--F), not a 2-bug default
     verdicts = judge_cases(cases, model=model, host=host)
     sc = score(cases, verdicts)
     ref = _DATA / "reference" / "l3_judge_eval.json"           # ANCHOR the recall/rejection: a committed
     ref.parent.mkdir(parents=True, exist_ok=True)              # artifact a reader can re-score model-free
     ref.write_text(json.dumps({"model": model, "bugs": list(real.BUGS), "score": sc,
-                               "cases": cases, "verdicts": verdicts}, indent=1) + "\n")
+                               "cases": cases, "verdicts": verdicts}, indent=1) + "\n", encoding="utf-8")
     print(f"L3 judge eval ({model}, bugs={''.join(real.BUGS)}): {json.dumps(sc)} -> data/reference/l3_judge_eval.json")
 
 
@@ -216,7 +216,7 @@ def main():
         seed = None
         if a.seed_committed:
             vp = _DATA / "llm_cache" / "l3_verdicts.json"
-            seed = json.loads(vp.read_text()) if vp.exists() else {}
+            seed = json.loads(vp.read_text(encoding="utf-8")) if vp.exists() else {}
             print(f"--seed-committed: preserving {len(seed)} committed verdicts; judging only NEW pairs")
         _judge_campaign(a.model, a.host, a.seeds, seed_cache=seed)
     else:

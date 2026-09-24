@@ -40,7 +40,7 @@ from .. import real
 
 _DATA = Path(__file__).resolve().parent.parent / "data"
 _SWEEP = [0.2, 0.3, 0.4, 0.45, 0.5, 0.55, 0.6, 0.7, 0.8, 0.9]   # L2 thresholds to sweep
-_BAND = 0.05                                                    # the L3-escalation floor (benchmarks.real L3_BAND_LO)
+_BAND = real.L3_BAND_LO                                         # the L3-escalation floor (one constant, shared)
 
 
 def _scores(n_same: int, n_cross: int, seed: int):
@@ -148,7 +148,7 @@ def main() -> int:
     out = evaluate()
     ref = _DATA / "reference" / "l2_threshold_eval.json"
     ref.parent.mkdir(parents=True, exist_ok=True)
-    ref.write_text(json.dumps(out, indent=1) + "\n")
+    ref.write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
     print(f"=== L2-THRESHOLD overfit/sensitivity eval (real A--F bugs, modelled noise; {out['n_same']} same / {out['n_cross']} cross) ===")
     print(f"  ROC AUC (same vs cross)        : {out['auc']:.4f}   (stable {out['stability']['auc_min']:.3f}-{out['stability']['auc_max']:.3f} over {out['stability']['n_seeds']} seeds)")
     print(f"  same  similarity  mean {out['same']['mean']:.3f}  min {out['same']['min']:.3f}   cross mean {out['cross']['mean']:.3f}  max {out['cross']['max']:.3f}")

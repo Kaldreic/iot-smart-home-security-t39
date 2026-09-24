@@ -96,8 +96,9 @@ class Outcome(enum.Enum):
     INVALID = "invalid"               # the exchange never happened (pairing/MITM drop)
 
 
-# the canonical Outcome -> tool Rep map the device oracles return per rep (the full 3-key form;
-# live.py keeps its own 2-key variant that routes REPRODUCED through the identity check by hand).
+# the canonical Outcome -> tool Rep map (the full 3-key form, used as-is by causeswap; the other device
+# oracles map only the two non-REPRODUCED outcomes through it and route REPRODUCED through the identity
+# check by hand).
 OUT2REP = {Outcome.REPRODUCED: Rep.YES, Outcome.NOT_REPRODUCED: Rep.NO, Outcome.INVALID: Rep.INVALID}
 
 

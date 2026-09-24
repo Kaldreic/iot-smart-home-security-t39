@@ -4,7 +4,6 @@ Run:  ``PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks``   (after `
 """
 
 from __future__ import annotations
-from emulation import multibug
 
 import sys
 from pathlib import Path
@@ -12,6 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # code/src -> import rdd + benchmarks
 
 from benchmarks import run  # noqa: E402
+from emulation import multibug  # noqa: E402
 
 
 def test_suite_smoke():
@@ -26,12 +26,12 @@ def test_suite_smoke():
 
 
 def test_real_suppressor_coherence():
-    """The fresh real+suppressor suite reproduces the committed PRESERVED-arm numbers EXACTLY
-    (baseline==arm_a, tool==arm_b_plus, suppressor ablation bails==arm_b) vs realbench_robust.json. The
+    """The fresh real+suppressor suite reproduces the committed PRESERVED-arm numbers within the gate's
+    +/-0.02 tolerance (delta 0.000 in practice) (baseline==arm_a, tool==arm_b_plus, suppressor ablation bails==arm_b) vs realbench_robust.json. The
     synthetic resilience sweep (B2) has its OWN exact, model-free gate, pinned by test_b2_resilience_smoke
     here and reproduced in full by `python -m benchmarks.resilience --coherence`."""
     assert run.coherence(), "fresh real+suppressor suite must reproduce committed baseline (arm_a) + tool (arm_b_plus)"
-    return "real+suppressor coherence EXACT (baseline==arm_a, tool==arm_b_plus, ablation bails)"
+    return "real+suppressor coherence within +/-0.02 (delta 0.000: baseline==arm_a, tool==arm_b_plus, ablation bails)"
 
 
 def test_l3_judge_eval_anchored():
@@ -43,7 +43,7 @@ def test_l3_judge_eval_anchored():
     from benchmarks.eval import l3_eval
     p = l3_eval._DATA / "reference" / "l3_judge_eval.json"
     assert p.exists(), "missing committed judge-eval reference (run `l3_eval eval --model ...` to generate)"
-    d = _json.loads(p.read_text())
+    d = _json.loads(p.read_text(encoding="utf-8"))
     fresh = l3_eval.score(d["cases"], d["verdicts"])           # re-score offline from committed verdicts
     assert abs(fresh["l3_residual_recovery"] - d["score"]["l3_residual_recovery"]) < 1e-12, (fresh, d["score"])
     assert abs(fresh["l3_cross_rejection"] - d["score"]["l3_cross_rejection"]) < 1e-12, (fresh, d["score"])
@@ -433,7 +433,7 @@ def test_scenario_soundness_mocked():
     from pathlib import Path as _P
 
     from benchmarks import live, scenario
-    logs = {b: (multibug.LOGS / f"dump-bug-{b.lower()}.txt").read_text() for b in scenario._BUGS}
+    logs = {b: (multibug.LOGS / f"dump-bug-{b.lower()}.txt").read_text(encoding="utf-8") for b in scenario._BUGS}
 
     class _CP:
         def __init__(self, rc, out):
@@ -480,7 +480,7 @@ def test_scenario_multiseed_robust_invariants():
     from pathlib import Path as _P
 
     from benchmarks import live, scenario
-    logs = {b: (multibug.LOGS / f"dump-bug-{b.lower()}.txt").read_text() for b in scenario._BUGS}
+    logs = {b: (multibug.LOGS / f"dump-bug-{b.lower()}.txt").read_text(encoding="utf-8") for b in scenario._BUGS}
 
     class _CP:
         def __init__(self, rc, out):
@@ -556,7 +556,8 @@ def test_cached_and_synthetic_paths_never_call_live_judge():
     modules must not even import the live judge; (2) wrapping rdd.l3.judge_ollama with a call counter, a full
     cached-real (real + suppressor) + synthetic run makes ZERO live judge calls. A future regression that wires
     a live model call into id_l2l3 (the reproducibility-breaking change) FAILS here."""
-    import rdd.l3 as _l3
+    import rdd.identity as _ident                               # binds judge_ollama at import: LiveL2L3Identity's
+    import rdd.l3 as _l3                                        # default judge resolves THERE, so patch both names
     from benchmarks import real, resilience, synthetic
     assert not hasattr(real, "judge_ollama"), "real.py must NOT import the live judge (cached path is live-free)"
     assert not hasattr(synthetic, "judge_ollama"), "synthetic.py must NOT import the live judge (deterministic rule)"
@@ -565,13 +566,13 @@ def test_cached_and_synthetic_paths_never_call_live_judge():
     def _counting(*a, **k):
         calls[0] += 1
         return orig(*a, **k)
-    _l3.judge_ollama = _counting
+    _l3.judge_ollama = _ident.judge_ollama = _counting
     try:
         run.run_real(3)
         run.run_suppressor(3)
         resilience.run(120, 1)                                  # the B2 synthetic sweep (id_l2l3 deterministic rule)
     finally:
-        _l3.judge_ollama = orig
+        _l3.judge_ollama = _ident.judge_ollama = orig
     assert calls[0] == 0, f"cached-real + B2 synthetic paths must make ZERO live judge calls, made {calls[0]}"
     return "live-free pinned behaviourally: 0 live judge calls across cached-real + B2 synthetic; no judge_ollama import"
 
@@ -586,7 +587,7 @@ def test_causeswap_cause_swap_guard():
     import json
     from benchmarks import causeswap
     d = causeswap.run(30)
-    ref = json.loads((run._REF / "causeswap.json").read_text())
+    ref = json.loads((run._REF / "causeswap.json").read_text(encoding="utf-8"))
     assert d == ref, "causeswap must reproduce the committed reference exactly (incl. the provenance prose)"
     sw = d["arms"]["swap"]
     # the cause-swap: guard OFF mis-credits the co-present C crash as an A reproduction; guard ON DEMOTES it.
@@ -615,7 +616,7 @@ def test_l2_threshold_not_overfit():
 
     from benchmarks.eval import l2_threshold_eval as lt
     d = lt.evaluate()
-    ref = json.loads((lt._DATA / "reference" / "l2_threshold_eval.json").read_text())
+    ref = json.loads((lt._DATA / "reference" / "l2_threshold_eval.json").read_text(encoding="utf-8"))
     assert abs(d["auc"] - ref["auc"]) < 1e-9 and abs(d["youden_threshold"] - ref["youden_threshold"]) < 1e-9, "must reproduce committed"
     assert d["sweep"] == ref["sweep"] and d["plateau"] == ref["plateau"] and d["band"] == ref["band"] and d["stability"] == ref["stability"], "sweep/plateau/band/stability must reproduce committed"
     assert d["auc"] >= 0.95 and d["stability"]["auc_min"] >= 0.95, f"same/cross must be near-separable + STABLE across seeds, got {d['auc']:.3f}/{d['stability']}"
@@ -636,12 +637,12 @@ def test_l2_threshold_not_overfit():
 
 def test_b1_headtohead_coherence():
     """B1 (the real head-to-head, benchmarks.headtohead) reproduces its committed reference EXACTLY from the
-    FROZEN L3 memo with 0 live model calls. SKIPS without the built native_sim binaries (like the other
+    FROZEN L3 memo with 0 live model calls. SKIPS without the built host-native binaries (like the other
     real-binary tests); where they exist it gates EVERY published B1 number vs data/reference/headtohead.json."""
     from benchmarks import headtohead, live
     from benchmarks.scenario import _BUGS
     if not all(live._BINARIES[b].exists() for b in _BUGS):
-        return "SKIP (native_sim binaries absent — build via src/emulation/zephyr-targets/)"
+        return "SKIP (host-native binaries absent — build via src/emulation/zephyr-targets/)"
     assert headtohead.coherence(42, 8), "B1 frozen replay must reproduce the committed reference (delta=0, 0 live calls)"
     return "B1 head-to-head: frozen replay reproduces the committed reference (every leaf; 0 live calls)"
 
@@ -677,13 +678,13 @@ def test_b2_resilience_smoke():
 
 def test_b3_levers_coherence():
     """B3 (the real lever decomposition, benchmarks.levers) reproduces its committed reference EXACTLY from the
-    FROZEN L3 memo with 0 live model calls. SKIPS without the built native_sim binaries (like the other
+    FROZEN L3 memo with 0 live model calls. SKIPS without the built host-native binaries (like the other
     real-binary tests); where they exist it gates EVERY published B3 number — the 4-arm cube over A--F, the
     suppressor arms, and the 3 lever deltas — vs data/reference/levers.json."""
     from benchmarks import levers, live
     from benchmarks.scenario import _BUGS
     if not all(live._BINARIES[b].exists() for b in _BUGS):
-        return "SKIP (native_sim binaries absent — build via src/emulation/zephyr-targets/)"
+        return "SKIP (host-native binaries absent — build via src/emulation/zephyr-targets/)"
     assert levers.coherence(8), "B3 frozen replay must reproduce the committed reference (delta=0, 0 live calls)"
     return "B3 lever decomposition: frozen replay reproduces the committed reference (every leaf; 0 live calls)"
 
@@ -712,13 +713,13 @@ def test_leaf_diffs_comparator():
 
 def test_b1_reference_invariants():
     """B1 (headtohead.json) STRUCTURAL gate — model-free + binary-free, so it runs in vanilla CI where the
-    binary-gated test_b1_headtohead_coherence SKIPs. It does NOT re-run B1 (that needs the native_sim
+    binary-gated test_b1_headtohead_coherence SKIPs. It does NOT re-run B1 (that needs the host-native
     binaries); it gates the committed reference's PUBLISHED STORY against a silent drift / hand-edit: RDD
     out-reproduces AirBug end-to-end AND minimiser-isolated, RDD is sound (fc 0) while the fixed-K AirBug
     false-credits, RDD's PoCs are tighter, both arms share ONE (identical) dedup front-end, RDD pays more
     reads (the honest cost trade), and the real suppressor showcase has RDD strictly above AirBug at fc 0."""
     import json
-    ref = json.loads((run._REF / "headtohead.json").read_text())
+    ref = json.loads((run._REF / "headtohead.json").read_text(encoding="utf-8"))
     ab, rd, sp = ref["airbug"], ref["rdd"], ref["suppressor"]
     metrics = {"genuine", "genuine_routed", "false_credit", "dedup_accuracy", "exact_minimal", "mean_size_gap", "reads"}
     assert metrics <= set(ab) and metrics <= set(rd), f"B1 arms must carry B1's metric set, got {set(ab)} / {set(rd)}"
@@ -752,7 +753,7 @@ def test_b3_lever_consistency():
     and the ORACLE/gate lever is the false-credit INVARIANCE (the fixed-K baseline false-credits, the 3
     pipeline arms do not)."""
     import json
-    ref = json.loads((run._REF / "levers.json").read_text())
+    ref = json.loads((run._REF / "levers.json").read_text(encoding="utf-8"))
     real, sup, lev = ref["real"], ref["suppressor"], ref["levers"]
     arms = ["baseline", "oracle", "ablation", "tool"]           # the renamed ladder (arm_c -> oracle)
     assert list(real) == arms and list(sup) == arms and list(lev["oracle_fc_invariance"]) == arms, \

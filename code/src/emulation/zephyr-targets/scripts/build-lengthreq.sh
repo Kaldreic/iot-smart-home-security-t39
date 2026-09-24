@@ -46,6 +46,7 @@ rm -f .git/shallow.lock .git/index.lock
 git fetch -q --depth 1 origin $VULN && git checkout -q -f $VULN
 git fetch -q --depth 1 origin $FIX
 git checkout -q -f $VULN -- $GUARD
+[ "$(git rev-parse HEAD)" = "$VULN" ] || { echo "GUARD: not on VULN parent"; exit 1; }
 git show $FIX:$T > $T
 git apply /work/oracle.patch                          # the LOCKED 4-PDU oracle harness (test_oracle)
 
@@ -63,6 +64,7 @@ s = s.replace(
     "\tINJECT(0x04U, LL_FEATURE_REQ, &feat);     /* window[2] */",
     "\tINJECT(0x04U, LL_FEATURE_REQ, &feat);     /* window[2] */\n"
     "\tINJECT(0x10U, LL_LENGTH_REQ, &len);       /* window[4]: REAL suppressor, BEFORE the trigger */", 1)
+assert "pdu_data_llctrl_length_req len" in s and "LL_LENGTH_REQ, &len" in s, "LL_LENGTH_REQ injection did not apply"
 open(f, "w").write(s)
 print("  injected LL_LENGTH_REQ as window[4]")
 PY
@@ -84,6 +86,7 @@ cmake -B build-lengthreq -GNinja -DBOARD=unit_testing -DZEPHYR_BASE="$ZEPHYR_BAS
   -DCONFIG_BT_GATT_CACHING=n -DZEPHYR_SDK_INSTALL_DIR=/work/zephyr-sdk-0.16.5 \
   "$ZEPHYR_BASE/$TESTDIR" >/dev/null
 ninja -C build-lengthreq >/dev/null
+[ -x /work/build-lengthreq/testbinary ] || { echo "build failed: no testbinary"; exit 1; }
 
 echo "### channel-OFF exhaustive sweep (5-PDU window: 0=PING 1=VER 2=FEAT 3=TRIGGER 4=LENGTH_REQ) ###"
 LOG=/work/build-lengthreq/truth-lengthreq.txt

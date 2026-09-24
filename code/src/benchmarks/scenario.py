@@ -4,7 +4,7 @@ pipeline  fuzz-campaign -> crash-dedup -> per-bug window -> RDD -> PoC,  over al
 This module owns the whole eval-side pipeline: the SIMULATED pre-RDD front-end (the fuzzing campaign +
 the crash deduper, below), then routing each deduped crash to the real per-bug binary (from
 ``benchmarks.live``), driving RDD over that bug's fixed window, and scoring the end-to-end run. The fuzzing
-campaign is the ONLY simulated stage (no HW radio against native_sim): we synthesise a campaign of packet-log
+campaign is the ONLY simulated stage (no HW radio; the host-native binary): we synthesise a campaign of packet-log
 TRACES (illustrative decoy PDUs + the bugs' real trigger patterns + cross-bug look-alikes) and, for each, a
 crash log = a MODELLED-varied instance of that bug's REAL captured dump (the same report-noise model
 ``benchmarks.live`` uses). The downstream STAGES are real:
@@ -231,8 +231,8 @@ def main() -> int:
     ap.add_argument("--traces", type=int, default=40)
     ap.add_argument("--model", default="llama3.1:8b")
     ap.add_argument("--host", default=None)
-    ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--seeds", type=int, default=1, help=">1 runs the multi-seed range (substantiates genuine)")
+    ap.add_argument("--seed", type=int, default=0, help="seed of the single run (ignored when --seeds > 1)")
+    ap.add_argument("--seeds", type=int, default=1, help=">1 runs the multi-seed range over seeds 0..N-1 (substantiates genuine)")
     a = ap.parse_args()
     if a.seeds > 1:                                            # the multi-seed RANGE (the disclosed-live end-to-end claim)
         m = run_multiseed(a.traces, a.seeds, model_name=a.model, host=a.host)

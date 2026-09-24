@@ -50,7 +50,7 @@ jobs:
         run: PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks
       - name: Reproducibility gate — the real anchor + the B2 sweep reproduce the committed references (model-free, ~3 min)
         # `run coherence` is the unified model-free gate (real anchor + B2 exact). B1 + B3 are binary-gated -> the
-        # self-test above reproduces them only where the native_sim binaries are built (absent in CI -> they SKIP).
+        # self-test above reproduces them only where the host-native binaries are built (absent in CI -> they SKIP).
         run: PYTHONHASHSEED=0 python -m benchmarks.run coherence
 
   ci-ok:

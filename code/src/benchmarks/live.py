@@ -9,7 +9,7 @@ live-L3 identity and INJECTS it into the device oracle, and runs the off-the-she
   * NO precomputed L3 cache — every L2 escalation fires a LIVE open-model judgment via
     ``rdd.LiveL2L3Identity`` (memoised per DISTINCT crash pair within the run, the tool's own runtime memo).
   * The crash dump is captured LIVE from the binary's stderr and parsed (``emulation.dump.parse_base_dump``).
-  * The OTA conditions ``native_sim`` lacks — radio flakiness (the L1 channel) and UART/log report-noise (the
+  * The OTA conditions the host build lacks — radio flakiness (the L1 channel) and UART/log report-noise (the
     dump variation) — are MODELLED and DISCLOSED, exactly as in ``benchmarks.real``. LIVE = the binary's
     crash truth + dump, and the open-model L3. MODELLED = the wireless transport.
 

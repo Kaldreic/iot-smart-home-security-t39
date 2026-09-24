@@ -77,8 +77,9 @@ def clean_nan(o):
 def leaf_diffs(fresh, ref, *, path: str = "", tol: float = 1e-9, skip_top: tuple = ()) -> list:
     """Recursive leaf compare of a fresh (NaN-cleaned) result vs the committed reference — the shared
     coherence gate of every headline (B1/B2/B3). Gates EVERY published number (every arm x metric x
-    range/CI bound), not a hand-picked subset; a numeric leaf matches within ``tol``, a NaN-as-null leaf
-    must stay null, and bools/strings match exactly. ``skip_top`` names TOP-LEVEL keys to ignore — a frozen
+    range/CI bound), not a hand-picked subset; a scalar numeric leaf matches within ``tol``, a NaN-as-null
+    leaf must stay null, bools/strings match exactly, and a LIST leaf (B2's ``[mean, lo, hi]`` triples) must
+    match element-for-element exactly (no tolerance). ``skip_top`` names TOP-LEVEL keys to ignore — a frozen
     replay's ``l3_live`` is correctly 0 while the reference records the live-freeze count. Returns the list
     of ``(path, fresh, ref)`` mismatches (empty == coherent)."""
     diffs = []

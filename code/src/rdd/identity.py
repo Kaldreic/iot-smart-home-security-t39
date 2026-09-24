@@ -93,11 +93,11 @@ class LiveL2L3Identity:
         """Persist the verdict memo so a later campaign can reuse it (and stays reproducible given it)."""
         p = Path(path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(json.dumps(self.memo, indent=1) + "\n")
+        p.write_text(json.dumps(self.memo, indent=1) + "\n", encoding="utf-8")
 
     @classmethod
     def from_memo_file(cls, base_obs: dict[str, DumpObs], path, **kw) -> "LiveL2L3Identity":
         """Construct with a memo pre-loaded from ``path`` (empty if absent) -- live-fills the rest."""
         p = Path(path)
-        memo = json.loads(p.read_text()) if p.exists() else {}
+        memo = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
         return cls(base_obs, memo=memo, **kw)

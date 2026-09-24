@@ -1,8 +1,8 @@
 """emulation.live — the REAL Zephyr controller binary as a live, hardware-free oracle.
 
-Drives the actual ``native_sim`` ELF via ``subprocess``: a packet-window subset is injected (as a HARNESS_SUBSET
+Drives the actual host-native ``unit_testing`` (ztest) ELF via ``subprocess``: a packet-window subset is injected (as a HARNESS_SUBSET
 bitmask) and the binary's EXIT CODE is the crash truth, captured LIVE per probe; on a crash its stderr IS
-the real backtrace (parsed via ``emulation.dump.parse_base_dump``). The OTA conditions ``native_sim`` lacks
+the real backtrace (parsed via ``emulation.dump.parse_base_dump``). The OTA conditions the host build lacks
 -- radio flakiness (the L1 channel) and UART/log report-noise (the dump variation) -- are MODELLED and
 DISCLOSED. The identity matcher (the tool's live-L3 cascade) is INJECTED by the benchmark runner, so the
 tool runs verbatim. The harness binaries live under the gitignored ``upstream/zephyr-cve/`` build area.
@@ -17,7 +17,7 @@ from pathlib import Path
 
 from emulation.channel import GEChannelParams, L1Channel, Outcome
 from emulation.dump import DumpModel, parse_base_dump
-from emulation.multibug import TRUE_MIN as _MB_TRUE_MIN, WINDOW as _WINDOW
+from emulation.multibug import TRUE_MIN as _MB_TRUE_MIN, WINDOW as _WINDOW  # noqa: F401  (_WINDOW is re-exported: benchmarks read live._WINDOW)
 from rdd.sprt import Rep
 
 _HERE = Path(__file__).resolve().parent
@@ -46,10 +46,15 @@ class _Bug:
 
 def run_binary(binary, bug: str, subset, crash_rc: int, timeout: float = 10.0):
     """Inject ``subset`` (PDU-window indices, as HARNESS_SUBSET bitmask) into the REAL binary; return
-    ``(crashed, dump_text)`` — crashed iff the exit code is this bug's crash code; dump_text = its output."""
+    ``(crashed, dump_text)`` — crashed iff the exit code is this bug's crash code; dump_text = its output.
+    A binary that hangs past ``timeout`` is killed and counted as NOT crashed (a hang is not the target
+    crash; AirBugCatcher's own PoC runner applies the same crash-detection timeout), never an exception."""
     mask = sum(1 << i for i in subset)
-    r = subprocess.run([str(binary)], env={**os.environ, "HARNESS_BUG": bug, "HARNESS_SUBSET": str(mask)},
-                       capture_output=True, timeout=timeout)
+    try:
+        r = subprocess.run([str(binary)], env={**os.environ, "HARNESS_BUG": bug, "HARNESS_SUBSET": str(mask)},
+                           capture_output=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return False, f"TIMEOUT: {binary} produced no exit within {timeout}s (HARNESS_BUG={bug}, HARNESS_SUBSET={mask})"
     text = r.stderr.decode(errors="replace") + r.stdout.decode(errors="replace")
     return r.returncode == crash_rc, text
 

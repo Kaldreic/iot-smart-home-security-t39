@@ -7,7 +7,7 @@
 # per-test CLI filter -- so selection is by getenv, the existing PROBE_ID pattern). HARNESS_SUBSET is a
 # bitmask over the LL-PDU window so an external minimiser can drive a channel-OFF exhaustive sweep.
 #
-#   HARNESS_BUG=B  test_bug_b: confirmed CIS divide-by-zero (morebugs.md). A SINGLE-PACKET minimal
+#   HARNESS_BUG=B  test_bug_b: confirmed CIS divide-by-zero. A SINGLE-PACKET minimal
 #             (like Bug A). 8-bit WIDE window, trigger-LAST: bits0..3 = transparent (droppable)
 #             drained local LE-Pings, bit7 (0x80) = the malformed LL_CIS_REQ trigger (iso_interval=0
 #             AND conn_event_count=0). On accept, llcp_rp_cc_tx_rsp (ull_llcp_cc.c:177) divides by
@@ -17,7 +17,7 @@
 #             NOT a -8 signal death -- match returncode==136).
 #
 # -rdynamic is passed so backtrace_symbols_fd resolves the exported controller frames in the dump
-# (the static faulting fn llcp_rp_cc_tx_rsp shows as a raw offset, as noted in morebugs.md; the
+# (the static faulting fn llcp_rp_cc_tx_rsp shows as a raw offset; the
 # exported LLCP/CIS spine frames resolve by name). gdb (--cap-add SYS_PTRACE) anchors the exact site.
 #
 # Leaves build-cis/testbinary as the Bug B subset-window binary. SEPARATE build dir; /work/build and
