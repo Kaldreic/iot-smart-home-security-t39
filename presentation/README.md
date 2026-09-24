@@ -12,5 +12,5 @@ pnpm slides:export   # PDF export (uses the Chromium that pnpm install downloads
 
 - `slides.md` — cover slide and section imports
 - `slides/` — one file per section
-- `public/` — figures; those reproduced from the two source papers remain their authors' copyright
+- `public/` — figures; those reproduced from the two source papers remain the copyright of their authors and publisher
 - `style.css` — deck styles

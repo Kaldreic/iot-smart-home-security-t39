@@ -1249,9 +1249,7 @@
 }
 
 .motto {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
+  display: inline-block;
   padding: 0.45rem 1.2rem;
   border-top: 1.5px solid var(--sapienza-red);
   border-bottom: 1.5px solid var(--sapienza-red);

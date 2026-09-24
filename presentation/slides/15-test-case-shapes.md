@@ -2,7 +2,7 @@
 
 <div class="slide-tagline">5 devices · 3 protocols · 14 h 38 m total</div>
 
-<div class="callout"><strong>5G NR</strong> leads at 93% expected reproduction, <strong>Bluetooth</strong> follows, and <strong>Wi-Fi</strong> is the hardest target (50%) — the paper attributes the gap to Wi-Fi's complex stateful protocol.</div>
+<div class="callout"><strong>5G NR</strong> leads (93% on the OnePlus phone), <strong>Bluetooth</strong> follows, and <strong>Wi-Fi</strong> is the hardest target (50%) — the paper attributes the gap to Wi-Fi's complex stateful protocol.</div>
 
 <div class="results">
   <div>

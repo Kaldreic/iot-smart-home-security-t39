@@ -2,7 +2,7 @@
 
 <div class="slide-tagline">The MITM advantage — and why 5G NR wins the most</div>
 
-<div class="callout"><strong>Simple replay</strong> only triggers bugs sporadically on Bluetooth, scoring zero on 5G NR and Wi-Fi. <strong>AirBugCatcher</strong> reproduces across all three — with 5G NR reaching <strong>93%</strong> because most of those bugs fire on a single mutated RRC packet.</div>
+<div class="callout"><strong>Simple replay</strong> only triggers bugs sporadically on Bluetooth, scoring zero on 5G NR and Wi-Fi. <strong>AirBugCatcher</strong> reproduces across all three — with the OnePlus phone reaching <strong>93%</strong> because most of its bugs fire on a single mutated RRC packet.</div>
 
 <div class="cmp-grid">
   <div class="cmp cmp-abc">

@@ -33,7 +33,7 @@ python -m pip install -e .
 ```
 
 The only dependencies are `numpy` and `drain3`. Everything below runs offline on CPU,
-except the three commands marked as needing the live judge.
+except the commands marked as needing the live judge.
 
 ## Run
 
