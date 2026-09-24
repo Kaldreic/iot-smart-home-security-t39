@@ -31,8 +31,8 @@ reproduces the report's numbers exactly.
 
 ## Source papers
 
-1. **[WiShield: Fine-grained Countermeasure Against Malicious Wi-Fi Sensing in Smart Home](https://www.yangzhice.com/docforweb/WiShield/WiShield_ACSAC.pdf)** — ACSAC 2024.
-2. **[AIRBUGCATCHER: Automated Wireless Reproduction of IoT Bugs](https://asset-group.github.io/papers/airbugcatcher.pdf)** — ACSAC 2024.
+1. **[WiShield: Fine-grained Countermeasure Against Malicious Wi-Fi Sensing in Smart Home](https://www.yangzhice.com/docforweb/WiShield/WiShield_ACSAC.pdf)** — Y. Yan and Z. Yang, ACSAC 2024 · [DOI](https://doi.org/10.1109/ACSAC63791.2024.00057)
+2. **[AirBugCatcher: Automated Wireless Reproduction of IoT Bugs](https://asset-group.github.io/papers/airbugcatcher.pdf)** — G. Hua, M. E. Garbelini and S. Chattopadhyay, ACSAC 2024 · [DOI](https://doi.org/10.1109/ACSAC63791.2024.00058)
 
 ## Authors
 
