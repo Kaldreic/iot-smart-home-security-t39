@@ -31,27 +31,25 @@
 \IEEEtitleabstractindextext{%
 \begin{abstract}
 Over-the-air fuzzing is still effective at finding vulnerabilities in the
-wireless stacks of smart-home devices. Turning a noisy crash log into a
-clear, replayable Proof-of-Concept, however, is still slow and demands
-specialised skill. The main problem is that the wireless medium is
-unpredictable, so the test \emph{oracle} a reproduction tool relies on
-returns inconsistent results. That rules out the precise input-minimisation
-algorithms, which need a stable verdict each time they ask. We introduce
-\emph{Robust Delta-Debugging} (RDD), which restores that stable-verdict
-assumption in software. A truncated Sequential Probability Ratio Test (SPRT)
-folds the noisy result of each attempt into one reliable decision with a
-controlled false-positive rate. A two-tier crash-identity oracle first uses a
-deterministic matcher, then sends only the uncertain cases to a single
-open-weight language model, recognising the same bug across the varied crash
-dumps the noise produces. A non-monotone-robust minimiser then drives delta
-debugging to the smallest reproduction recipe. It credits that recipe only
-after an independent re-confirmation, whose tunable false-positive rate keeps
-mistakes rare. On real Zephyr controller bugs the prototype recovers 0.863
-of reproductions at zero false credit, against 0.759 and 0.137 for a
-faithful re-implementation of the state-of-the-art tool, and 0.916 versus
-0.282 under heavy synthetic stress. These results point to a promising
-research direction, and we map the experiments and structural limits that
-determine its scope.
+wireless stacks of smart-home devices, but turning a noisy crash log into a
+replayable proof of concept remains slow, because the unpredictable medium makes
+the test \emph{oracle} a reproduction tool relies on answer inconsistently, which
+the precise input-minimisation algorithms cannot tolerate. We introduce
+\emph{Robust Delta-Debugging} (RDD), which approximates the stable verdict those
+algorithms assume: a truncated Sequential Probability Ratio Test (SPRT) folds the
+noisy outcomes of repeated attempts into one decision with a bounded
+false-positive rate; a two-tier crash-identity oracle uses a deterministic matcher
+and escalates only its uncertain cases to a single open-weight language model; a
+suppressor-robust minimiser drives delta debugging and credits a recipe only
+after an independent re-confirmation under the same bound. On six real Zephyr
+Bluetooth-controller bugs under a simulated noisy channel, a prototype recovers
+0.848 of reproductions with no false credit in 336 campaigns, against 0.759 and
+0.137 for a re-implementation of the state-of-the-art tool's strategy, at five
+times the device reads; on a 75,000-campaign synthetic sweep it recovers 0.824
+against 0.266. The advantage is a property of the simulator's noise assumptions:
+with report variation and phantom crashes switched off the baseline recovers
+0.978 with no false credit at a fifth of the cost. We state these dependencies,
+and the experiments that would test them on real radios, as the research agenda.
 \end{abstract}
 
 \begin{IEEEkeywords}

@@ -1,74 +1,64 @@
 \section{Introduction}\label{sec:introduction}
 
-Modern homes more and more depend on wireless devices such as smart speakers,
-video doorbells, and thermostats that connect over Bluetooth, Wi-Fi, or a
-cellular network. The software controlling these radios is typically large,
-complex, and closed-source, which makes vulnerabilities inevitable. Because these
-systems receive signals over the air, anyone nearby can attempt to exploit a
-weakness without a password or prior access. Proximity alone is enough. The risk
-is not small. Vast numbers of these radios are deployed inside trusted home
-environments and are rarely updated, so a single flaw can become a persistent,
-unauthorised way in.
+Modern homes depend on wireless devices such as smart speakers, video doorbells
+and thermostats that connect over Bluetooth, Wi-Fi or a cellular network. The
+software behind these radios is large, complex and usually closed, so
+vulnerabilities are to be expected, and because the devices receive signals over
+the air, anyone in range can try to exploit one without a password or prior
+access. Many such radios sit inside trusted homes and are rarely updated, so a
+single flaw can become a persistent way in.
 
-The standard way to surface such flaws is \emph{fuzzing}, which sends a target
-many malformed or out-of-order packets and watches for anything that crashes it.
-Fuzzing is effective. The \textsc{SweynTooth} campaign discovered twelve new
-Bluetooth Low Energy vulnerabilities across seven vendors, while
-\textsc{BrakTooth} found another sixteen in Bluetooth Classic
-devices~\cite{sweyntooth2020,braktooth2022}. Simply detecting a crash, though,
-does not give a developer enough to fix the issue.
+The standard way to surface such flaws is \emph{fuzzing}: sending a target many
+malformed or out-of-order packets and watching for anything that crashes it. The
+\textsc{SweynTooth} campaign found twelve new Bluetooth Low Energy vulnerabilities
+across seven vendors and \textsc{BrakTooth} sixteen in Bluetooth Classic
+devices~\cite{sweyntooth2020,braktooth2022}. Detecting a crash, though, does not
+give a developer enough to fix it. What a developer needs is a
+\emph{proof of concept} (PoC): the minimal set of packets that reliably triggers
+the fault. Distilling that from a campaign that sent tens of thousands of packets
+and recorded a terse memory dump is the slow part, and
+\textsc{AirBugCatcher}~\cite{airbugcatcher2024} is the most recent tool we know
+of that automates it. Where it is forced to compromise is the way into our
+proposal.
 
-What a developer needs is a \emph{Proof-of-Concept} (PoC): the minimal set of
-packets that reliably triggers the fault and pins down the specific message and
-code path involved. Distilling that sequence is the slow part. A campaign may
-send tens of thousands of packets, yet when a crash occurs it typically records
-only a terse memory dump, with no indication of which packets mattered.
-Diagnosing each crash by hand stalls a triage team.
-\textsc{AirBugCatcher}~\cite{airbugcatcher2024} is currently the leading tool for
-automating this last step. Seeing where it is forced to compromise is the way
-into our proposal.
+The difficulty is the medium. Re-sending the same packets does not always give
+the same result, because the device keeps hidden state and the channel adds
+noise. Every reproduction tool depends on an \emph{oracle}~\cite{oracleproblem2015},
+the component that decides whether a sequence triggered the bug, and here the
+oracle answers inconsistently. Delta debugging~\cite{ddmin2002} is an established
+technique for isolating failure-inducing inputs, but its guarantees assume that a
+query always gets the same answer and that adding packets never removes a crash.
+When either assumption fails it can discard the critical packet and converge on
+an incorrect or empty result. \textsc{AirBugCatcher} avoids the algorithm: it
+enumerates small combinations of suspect packets and runs each once, which keeps
+the search cheap but forgoes minimality and accepts the first crash it sees.
 
-The main challenge comes from the unpredictable nature of wireless communication.
-Re-sending the same packets does not always yield the same result, because
-devices keep hidden internal state and the channel adds noise. Every reproduction
-tool depends on an \emph{oracle}~\cite{oracleproblem2015}, the component that
-decides whether a sequence triggered the bug, yet that oracle can return
-inconsistent results, which makes accurate sequence minimisation hard. Delta
-debugging~\cite{ddmin2002} is a proven technique for isolating failure-inducing
-inputs, but it assumes the oracle is always consistent. When that assumption
-fails, the method can discard critical packets and converge on an incorrect or
-empty result. \textsc{AirBugCatcher} copes by restricting recipes to a small,
-fixed size and testing combinations within a time budget. It averages over the
-noise rather than eliminating it, and so gives up the efficiency and minimality
-that delta debugging is meant to provide.
+We introduce \emph{Robust Delta-Debugging} (RDD), which approximates the stable
+verdict delta debugging assumes. A truncated Sequential Probability Ratio Test
+(SPRT) repeats the noisy ``did it crash?'' question and folds the answers into one
+decision with a bounded false-positive rate. Because that decision is only as good
+as the tool's ability to tell whether two crash dumps come from the same bug, a
+two-tier identity oracle pairs a rule-based matcher with a single open-weight
+language model for the cases the matcher cannot settle. A suppressor-robust driver
+keeps the search alive where a packet conceals the crash, and nothing is credited
+until an independent re-confirmation reproduces it under the same bound.
 
-We introduce \emph{Robust Delta-Debugging} (RDD), which restores the
-stable-verdict assumption in software and so lets delta debugging work even on
-noisy wireless targets. Rather than circumventing the problem, RDD repairs the
-core issue the algorithm depends on. It uses a sequential statistical test, a
-truncated Sequential Probability Ratio Test (SPRT), to pose the noisy
-``did it crash?'' question repeatedly and aggregate the answers into a single
-reliable verdict with a controlled false-positive rate. That verdict is only as
-reliable as the tool's ability to tell whether two crash dumps come from the same
-bug, so RDD adds a two-tier identity oracle: a fast, rule-based matcher for most
-cases, and a single open-weight model for the ambiguous ones. A robust minimiser
-then drives the search even where a packet conceals the crash. Nothing is
-reported until an independent check re-confirms the recipe by reproducing the
-crash, which keeps a wrongly credited PoC improbable by the same tunable margin.
-
-This report makes four main contributions. The first identifies the oracle,
-rather than the search strategy, as the binding constraint in wireless
-reproduction. The second introduces RDD, a sound pipeline that reinstates the
-stable-verdict assumption through a statistically stabilised oracle. The third
-evaluates the approach with a prototype, measured against a faithful
-re-implementation of \textsc{AirBugCatcher} on real Zephyr controller bugs and
-under heavy synthetic stress, recovering 0.863 of reproductions at zero false
-credit where the baseline manages 0.759 at 0.137, and 0.916 versus 0.282
-under tougher conditions. % B1 headtohead.json + B2 resilience.json OVERALL
-The fourth turns the method's structural limits into a focused research agenda.
-The work is academically oriented. Its results are measured on public, open-source
-targets, so anyone can reproduce them, and the deliverable is a supported research
-direction with clear next steps, not a finished product. Section~\ref{sec:background} gives the background.
-Section~\ref{sec:our_approach} presents RDD. Section~\ref{sec:evaluation} provides
-the evidence and proposed experiments. Section~\ref{sec:related_work} reviews the
-related work. Section~\ref{sec:conclusions} concludes.
+The report makes four contributions. It identifies the oracle, rather than the
+search strategy, as the binding constraint in wireless reproduction. It
+introduces RDD, a pipeline whose false-credit rate is bounded by a tunable
+$\alpha$ under stated preconditions. It evaluates a prototype against a
+re-implementation of \textsc{AirBugCatcher}'s reproduction strategy on six real
+Zephyr controller bugs under a simulated noisy channel, where RDD recovers 0.848
+of reproductions with no false credit in 336 campaigns against 0.759 and 0.137,
+at five times the device reads, and on a 75,000-campaign synthetic sweep, where
+it recovers 0.824 against 0.266; it then shows that the advantage is a property
+of the simulator's two noise assumptions, since with report variation and
+phantom crashes switched off the baseline recovers 0.978 with no false credit at
+a fifth of the cost. % headtohead.json, resilience.json, benchmarks.run sensitivity
+Finally it turns those dependencies and the method's structural limits into a
+research agenda. The targets are public, and the benchmark code and the frozen
+judge verdicts are released, so the numbers reproduce without a model.
+Section~\ref{sec:background} gives the background, Section~\ref{sec:our_approach}
+presents RDD, Section~\ref{sec:evaluation} the evidence and the proposed
+experiments, Section~\ref{sec:related_work} the related work, and
+Section~\ref{sec:conclusions} concludes.

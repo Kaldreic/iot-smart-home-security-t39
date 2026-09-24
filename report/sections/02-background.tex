@@ -31,11 +31,11 @@ that share a signature and walks a backward window from each crash to collect th
 fuzzed packets most likely responsible, distilling each group into a concise set
 of suspect packets. Then, online, it rebuilds the attack on a fresh, live
 connection. Acting as a man-in-the-middle, it lets the handshake proceed,
-intercepts and mutates only the suspect packets, and re-runs the scenario,
-repeating within a time budget until the expected crash returns or the budget is
-spent. Two design choices underpin the approach: the suspect set is kept small,
-and the medium's non-determinism is handled by repeating trials under a budget
-rather than by making any single verdict trustworthy.
+intercepts and mutates only the suspect packets, and runs the generated test
+cases one after another, each once, until one triggers the expected bug or the
+group's trial budget expires. Two design choices underpin the approach: the
+suspect set is kept small, and the medium's non-determinism is handled by trying
+many candidates rather than by making any single verdict trustworthy.
 
 \subsection{The oracle problem and flakiness under noise}
 
@@ -73,11 +73,13 @@ ensure that a smaller, different subset could not also cause the failure. Findin
 the absolute minimum is NP-complete~\cite{hdd2006}, so practical tools rely on
 this local guarantee.
 
-These methods depend on certain assumptions about the test results, as explained
-in the original work. \texttt{ddmin} requires the oracle to be \emph{consistent},
-meaning the same input always gives the same result, and it assumes failures are
-\emph{monotone}, so if a set of packets causes a crash, adding more packets will
-not stop it. Channel noise breaks the consistency assumption. If a test fails to
+These methods depend on assumptions about the test, stated in the original
+work. \texttt{ddmin} treats the test as a function of its input, so the same
+input always gives the same answer, and its efficiency and minimality rest on
+failures being \emph{monotone}: if a set of packets causes a crash, adding
+packets does not stop it. The algorithm tolerates an ``unresolved'' outcome at the
+cost of more tests, but not an answer that flips between calls. Channel noise
+breaks exactly that. If a test fails to
 reproduce the crash, the algorithm cannot tell if it was due to an innocent half
 or just bad luck with the radio, so it might discard the half with the real
 culprit and end up with the wrong answer or no answer at all. The monotonicity
@@ -87,17 +89,17 @@ Section~\ref{sec:our_approach}.
 
 \subsection{Where that leaves \textsc{AirBugCatcher}}
 
-Because it cannot rely on the oracle, \textsc{AirBugCatcher} switches from delta
-debugging to bounded enumeration. It tests combinations of suspect packets up to a
-set size and repeats each test within a time limit. This approach is practical but
-has two main drawbacks. First, the size limit means that if the real recipe is
-larger, the tool will never find it, no matter how long it runs. Second, repeating
-tests increases the chance of seeing a real reproduction but does not make any
-single result reliable. \textsc{AirBugCatcher} checks each crash against the
-expected signature before accepting it, flagging mismatches instead of counting
-them. However, this exact match is not perfect on closed firmware, so a crash with
-the same signature as a different fault can still be accepted. As a result, two
-types of errors build up: real reproductions lost to channel noise, and
-\emph{false credits}, where PoCs are reported as working but do not actually
-reproduce the bug. To bring back delta debugging, we need to restore a trustworthy
-verdict despite the noise, which is the focus of the next section.
+Because it cannot rely on the oracle, \textsc{AirBugCatcher} does not use delta
+debugging. It enumerates combinations of suspect packets up to a fixed size, in
+order of proximity to the crash, and runs each generated test case once until the
+group's trial budget expires. This is practical but has two consequences. First,
+a recipe larger than the cap is never found, however long the tool runs. Second,
+each candidate gets one attempt: a real reproduction missed by the channel is
+lost, and the tool accepts the first execution whose crash carries the expected
+identifier. If a device can crash with the target's signature on a harmless
+candidate, for instance because an earlier attempt left it in a bad state,
+accept-first books that as a reproduction. Two kinds of error therefore compete:
+real reproductions lost to noise, and \emph{false credits}, recipes credited on a
+crash they did not cause. Whether the second kind occurs in practice depends on
+the device; the next section states how we model it. To bring delta debugging
+back, the verdict must be made trustworthy enough despite the noise.

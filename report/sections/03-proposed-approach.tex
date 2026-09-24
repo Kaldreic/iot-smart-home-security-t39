@@ -1,25 +1,23 @@
 \section{Overview of the proposed approach}\label{sec:our_approach}
 
-Robust Delta-Debugging (RDD) adapts delta debugging for noisy wireless
-environments by fixing the part of the process that the algorithm relies on. In
-these settings, the same input can produce different results, making each test
-unpredictable. This means the standard \texttt{ddmin} algorithm~\cite{ddmin2002}
-might accidentally remove the crucial packet. RDD solves this by stabilising the
-verdict in software. It uses a sequential test to reduce false positives, even if
-individual tests are unreliable. If noise distorts a crash dump, a two-tier
-identity oracle can still identify the bug. The robust minimiser continues to work
-even when a masking packet would cause standard \texttt{ddmin} to fail, and no
-result is accepted until an independent check confirms the recipe by the same
-adjustable margin.
+Robust Delta-Debugging (RDD) adapts delta debugging to a noisy wireless target by
+repairing the part the algorithm relies on. Where the same input can give
+different results, the standard \texttt{ddmin} algorithm~\cite{ddmin2002} may
+discard the crucial packet on one unlucky answer. RDD answers each query with a
+sequential test whose false-positive rate is bounded, recognises the bug through
+a varied crash dump with a two-tier identity oracle, keeps working where a
+masking packet would make \texttt{ddmin} return nothing, and credits a recipe
+only after an independent re-confirmation held to the same bound. It does not
+restore a stable verdict; it bounds the rate at which a verdict is wrong, and
+within one reduction it holds answers fixed with a cache.
 
-On the outside, the tool looks like a standard minimiser: it takes a group of
-suspect packets from a crash and returns a concise PoC. Inside, it works
-differently. A robust \texttt{ddmin} driver runs the main loop and interacts with
-the device only through a reproduction oracle. It sends the oracle one candidate
-recipe at a time and receives a verdict, without directly handling the radio. The
-device itself is not part of the tool (Fig.~\ref{fig:pipeline}). During testing, the device is a simulated
-channel; in real use, it is a physical radio that can be swapped in as long as it
-allows spaced, independent retries. Below, the over-the-air medium comes first, then the tool's five components.
+From the outside the tool is a minimiser: it takes a group of suspect packets and
+returns a concise proof of concept. Inside, a robust \texttt{ddmin} driver runs the
+loop and speaks to the device only through a reproduction oracle, one candidate
+recipe at a time (Fig.~\ref{fig:pipeline}). The device is not part of the tool:
+in the evaluation it is a simulated channel around a host build of the real
+controller; in deployment it would be a radio and a device that allow spaced,
+independent attempts.
 
 \begin{figure*}[!t]
 \centering
@@ -87,175 +85,149 @@ allows spaced, independent retries. Below, the over-the-air medium comes first, 
 
 \subsection{The over-the-air medium (L1)}
 
-The channel is not part of the tool; it is the device the oracle interacts with
-and the source of noise --- the lowest of the three layers
-Figure~\ref{fig:pipeline} labels L1 to L3, with the crash-identity matcher (L2) and
-judge (L3) detailed below. Keeping it separate makes RDD hardware-independent. Both
-RDD and \textsc{AirBugCatcher} use a software simulator (the Zephyr controller
-compiled for its host-native \texttt{unit\_testing} target, without radio hardware), so the wireless environment is
-simulated on purpose. The evaluation uses a \emph{Gilbert--Elliott} burst
-channel~\cite{gilbert1960,elliott1963}, a two-state Markov model: in the ``good''
-state, packets pass through easily, while in the ``bad'' state, the link drops
-several packets before recovering. This setup realistically challenges
-reproduction. A single bad run can drop a whole section of a valid recipe, making
-it seem ineffective. On top of this, a calibrated flakiness layer makes even
-a delivered recipe sometimes fail to register a crash, at rates taken from real
-flaky-test data. Both tools face the same channel conditions, ranging from almost perfect to
-very noisy, and all regimes are reported, not just the best case.
+The medium is the lowest of the three layers Fig.~\ref{fig:pipeline} labels L1 to
+L3, the other two being the tiers of the identity oracle. Both RDD and
+\textsc{AirBugCatcher} are evaluated on a software target (the Zephyr controller
+compiled for its host-native \texttt{unit\_testing} target, without radio
+hardware), so the medium is simulated. Each attempt passes through a
+\emph{Gilbert--Elliott} burst channel~\cite{gilbert1960,elliott1963}, a two-state
+Markov chain whose ``bad'' state raises the loss rate for a few attempts, on top
+of which a flakiness layer decides whether an attempt registers the crash: a
+true reproducer is missed on about 0.44 of valid attempts, an attempt fails to
+connect on 0.02 to 0.27 depending on the state, and a non-reproducing recipe is
+reported as crashing, with the target's own dump, on 0.02 to 0.07 (a
+\emph{phantom} crash). The miss and phantom rates come from a corpus of flaky
+software tests~\cite{flakytests2014}, not from wireless measurements. In every
+reported run RDD resets the connection before each attempt, which in the
+simulator resamples the channel state and makes attempts independent; the burst
+structure therefore does not affect RDD's numbers, and the baseline, which reads
+each candidate once, is not affected by it either.
 
 \subsection{The truncated-SPRT reproduction oracle}
 
-At its core RDD uses a truncated Sequential Probability Ratio Test
-(SPRT)~\cite{sprt1945}. Rather than ask ``does this recipe crash?'' once and trust
-a coin-flip, it evaluates each recipe several times and accumulates the answers
-into a decision with a bounded error. The test weighs two hypotheses: $H_0$, that
-the recipe does not really reproduce the bug and crashes only at some low
-background rate $p_0$, and $H_1$, that it does, at a high rate $p_1$. Each fresh
-trial adds evidence, and the test keeps listening until the evidence is strong
-enough to decide, or until a fixed per-candidate budget of trials is reached. At
-that point the result is ruled inconclusive (the \emph{truncation}). The decision
-thresholds come straight from the error rates we are willing to tolerate: $\alpha$,
-the chance of wrongly accepting a bad recipe (a false credit), and $\beta$, the
-chance of missing a real reproducer. Wald's thresholds write those tolerances as a
-ratio~\cite{sprt1945}. The test is usable because $\alpha$ is controlled, provided
-two conditions hold: the trials are de-correlated (spaced or reset enough that one
-trial's luck does not carry into the next), and an authentic non-reproducer's
-per-trial rate stays at or below the conservatively-set $p_0$. The prototype sets
-a tight $\alpha = 0.01$ (a strict bound on the severe error) against a looser
-$\beta = 0.10$, with $p_0 = 0.05$, $p_1 = 0.55$, and a per-candidate budget of
-sixteen trials.
-
-The test cannot give a clear answer when a recipe's true rate falls between $p_0$
-and $p_1$, known as the \emph{indifference zone}. In this area, no sequential test
-with a fixed budget can reliably distinguish between a reproducer and a
-non-reproducer, so error rates are not guaranteed. This is a built-in limitation of
-sequential testing~\cite{sprt1945}. Making the band narrower or increasing the
-budget reduces the zone but cannot remove it completely, as seen in the deep-noise
-experiments in Section~\ref{sec:evaluation}. Since all randomness comes from a
-single injected pseudo-random generator, each run can be replayed exactly from its
-seed, making the process fully auditable.
-
-Truncation is practical. A recipe that reliably reproduces quickly passes the
-upper threshold, while a clearly non-working one is dismissed just as fast. The
-test budget is used only for borderline cases, which is the efficiency Wald's
-sequential design aims for~\cite{sprt1945}. If the budget runs out without a clear
-result, RDD conservatively treats the candidate as a non-reproducer, so indecision
-affects recall, not false credit. This balance allows a statistical oracle to work
-within the minimisation loop without excessive read costs.
+RDD decides each query with a truncated Sequential Probability Ratio Test
+(SPRT)~\cite{sprt1945}. Rather than trust one attempt, it repeats the attempt and
+accumulates the outcomes into a decision with a bounded error. The test weighs
+$H_0$, that the recipe reproduces only at some low background rate $p_0$, against
+$H_1$, that it reproduces at a high rate $p_1$; each attempt adds evidence, and
+the test stops when the log-likelihood ratio crosses one of Wald's thresholds,
+$\log((1-\beta)/\alpha)$ above or $\log(\beta/(1-\alpha))$ below, or when a fixed
+budget of attempts is spent. $\alpha$ is the chance of wrongly accepting a
+non-reproducing recipe (a false credit) and $\beta$ the chance of rejecting a
+real one. The bound on $\alpha$ holds when the attempts are independent and the
+non-reproducer's true rate is at most $p_0$; a true rate strictly between $p_0$
+and $p_1$, the \emph{indifference zone}, is decided by no sequential test with a
+bounded error, a limitation intrinsic to the method that the deep-noise regime of
+Section~\ref{sec:evaluation} exhibits. The prototype uses $\alpha = 0.01$,
+$\beta = 0.10$, $p_0 = 0.05$, $p_1 = 0.55$ and a budget of sixteen valid attempts;
+$p_0$ sits above the modelled phantom rate and $p_1$ near the modelled reproduce
+rate, so both preconditions hold in the simulator by choice of parameters. Two
+departures from Wald's test bias it towards the safe answer: an inconclusive test
+at the budget is ruled ``no'', so the realised miss rate can exceed $\beta$, and a
+``yes'' additionally requires at least three valid attempts. Failed connections
+are discarded, not counted as misses. Given the committed judge verdicts, every
+run replays exactly from its seed.
 
 \subsection{The monotone result cache}
 
-During minimisation for a single bug, RDD keeps a small cache of verdicts for each
-run, used only by the in-seed \texttt{ddmin}. It uses the monotone closure: if a
-superset of a known reproducer is tested, it is assumed to reproduce; if a subset
-of a known non-reproducer is tested, it is assumed not to reproduce. Only
-confirmed, reliable verdicts are stored. This reduces the number of oracle calls by
-avoiding repeated queries for already settled cases. If the closure cannot answer,
-the SPRT is used. Outside the seed, where monotonicity cannot be assumed, the
-driver skips the cache.
+Within the starting window found for one bug, RDD caches decided verdicts and
+answers by monotone closure: a superset of a known reproducer reproduces, a
+subset of a known non-reproducer does not. Only verdicts that crossed a test
+boundary are cached; a wrong decided verdict, which occurs with probability up
+to $\alpha$ or $\beta$, propagates through the closure and is caught only by the
+final validation. The closure is sound only if the starting window is free of
+suppressors, which holds when the uncached probes that selected it were correct
+and the bug has a single cause; outside the starting window the driver does not
+use the cache.
 
 \subsection{The two-tier crash-identity oracle (L2$\rightarrow$L3)}
 
-RDD also needs to determine if two crash dumps are from the same bug.
-\textsc{AirBugCatcher} uses exact crash signatures, but in noisy conditions, the
-same crash can appear with different register values, timing artefacts, or
-incomplete frames, so exact matching can fail. RDD handles this with a cost-gated
-cascade similar to \emph{FrugalGPT}~\cite{frugalgpt2023}: it starts with fast,
-deterministic checks and only uses the more expensive model for cases that remain
-uncertain.
+An attempt that crashes must be recognised as the target bug. Under noise the same
+crash arrives with different addresses, a truncated backtrace or interleaved log
+lines, so an exact match fails. RDD uses a cost-gated cascade in the manner of
+\emph{FrugalGPT}~\cite{frugalgpt2023}: a deterministic matcher first, a language
+model only for what it cannot settle.
 
-Tier~1 (L2, deterministic) compares two crash dumps with four signals, none of them
-an exact stack-hash. A stack longest-common-subsequence (LCS) matcher aligns the
-top five call frames and carries most of the weight (0.55), with a Jaccard overlap on the crash
-site as a second opinion (0.25). A coarse fault-class check keeps different crash types
-apart (0.05), and \emph{Drain}~\cite{drain2017} mines log templates (0.15) that look past the
-volatile details, like timestamps and addresses, that differ between runs. These signals are combined
-into a single score, with a threshold set to maximise \emph{Youden's
-$J$}~\cite{youden1950}, which balances true positives and false positives.
-Calibration on six real bugs shows a clear separation between same-bug and
-different-bug scores, with an area under the ROC curve of 0.993. The default
-threshold of 0.5 is close to the Youden optimum (0.529) and sits on a stable
-accuracy plateau. % l2_threshold_eval.json: auc 0.9928, youden 0.5286, default 0.5
+The matcher (L2) compares two reports with four signals: a longest-common-subsequence
+alignment of the top five backtrace frames (weight 0.55), a Jaccard overlap of
+crash-site tokens (0.25), a coarse fault-class check (0.05), and an overlap of log
+templates mined online with \emph{Drain}~\cite{drain2017} (0.15), which ignores
+the volatile details. The threshold was fixed at 0.5 before any calibration. A
+post-hoc sweep on the six real bugs, over 360 same-bug and 360 different-bug pairs
+produced by the report-variation model with no held-out set, gives an area under
+the ROC curve of 0.993, a Youden~\cite{youden1950} optimum of 0.529 and balanced
+accuracy on a plateau over $[0.45, 0.80]$; it supports the choice but does not
+show that it generalises. % l2_threshold_eval.json
 
-Tier~2 (L3, escalation-only) is used only when L2 finds the dumps different but
-their similarity falls within a specific grey area just below the 0.5 threshold
-($[0.05, 0.5)$). In this case, RDD uses a single open-weight judge
-(Llama~3.1~8B~\cite{llama3_2024}) to read both dumps and decide if they describe
-the same bug. This judge is a crash-\emph{identity} classifier, not a reproduction
-predictor, and only sees the information L2 already used. In evaluation, it
-correctly matches all same-bug pairs (recall 1.0), but tends to over-merge,
-rejecting only 0.081 of truly different-bug pairs. % l3_judge_eval.json: residual_recovery 1.0, cross_rejection 0.0814
-Therefore, the main cross-bug discrimination relies on L2's calibrated threshold,
-not L3. The tendency of the single model to over-merge is why a calibrated judging
-panel is suggested in Section~\ref{sec:evaluation}.
+The judge (L3) is consulted only when the matcher says ``different'' with a score
+in $[0.05, 0.5)$, a band that holds about half of the different-bug pairs in the
+calibration set. It is a single open-weight model (Llama~3.1~8B~\cite{llama3_2024})
+asked whether the two reports describe the same bug; it sees the same reports the
+matcher saw. In evaluation it recovered every same-bug pair the matcher had
+abstained on (57 of 57) and also accepted every different-bug pair that reached
+it (40 of 40). % l3_judge_eval.json
+The cascade therefore rejects a different-bug report only when the matcher scores
+it below 0.05; cross-bug discrimination rests on the matcher, and the judge is a
+recall aid. No experiment in this report presents a different bug's report to the
+in-loop oracle, so the consequence, crediting a recipe that reproduces a different
+bug, is not measured; Section~\ref{sec:evaluation} lists the experiment that
+would.
+
+Report variation itself is a model. Each observed crash is emitted from the
+captured base dump with the backtrace truncated with probability 0.35, its top
+frames lost with 0.20, a frame added or removed with 0.15, an unrelated log line
+interleaved with 0.40 and the report severely garbled with 0.08; the rates are
+ours, chosen as a moderate operating point. The identity layer's advantage over
+exact matching in Section~\ref{sec:evaluation} is a function of these rates.
 
 \subsection{Non-monotone-robust delta debugging}
 
-RDD uses a strengthened version of delta debugging on top of its stable oracle.
-Standard \texttt{ddmin}~\cite{ddmin2002} assumes monotonicity, but on wireless
-targets, a small subset might not reliably trigger a crash while a larger one does.
-Even worse, a \emph{suppressor} packet in the seed window can hide the crash so
-completely that plain \texttt{ddmin} fails on its first try and returns nothing.
-RDD's version is designed for these non-monotone cases: instead of relying on the
-monotone closure when the full window appears dead, it consults the raw, uncached
-oracle to rebuild a seed without suppressors, and only accepts a recipe after
-independent re-validation.
+Standard \texttt{ddmin}~\cite{ddmin2002} assumes monotonicity: if a set of packets
+crashes the device, adding packets does not stop the crash. A \emph{suppressor}
+packet in the window violates it, and if the full window contains one, the first
+test fails and \texttt{ddmin} returns nothing. RDD's driver first tests the full
+window with the uncached oracle; if it does not crash, it searches for a crashing
+starting window by bounded leave-$k$-out and build-up probing, cheapest first,
+and only then runs \texttt{ddmin} inside that window, where the cache is sound.
+At the end each excluded packet is added back once: if adding it makes the crash
+disappear, it is reported as a suppressor. Strictly pairwise suppressors are out of
+scope. The result is 1-minimal with respect to the oracle's verdicts: a false
+``no'' on a single-packet removal leaves an unnecessary packet, which the size-gap
+metric of Section~\ref{sec:evaluation} measures.
 
-The most significant failure RDD fixes is the \emph{seed bail}. Standard
-\texttt{ddmin} starts by checking if the full suspect window reproduces the crash.
-If a suppressor is present, the first test fails and the algorithm returns an empty
-set, missing a real bug. RDD's version detects this problem and looks for a
-sub-window without suppressors to start the reduction, so the bisection works on a
-valid seed instead of failing immediately. At the end, each excluded packet is
-added back one by one: if adding a packet causes the crash to disappear, it is
-identified as a suppressor, not just an innocent omission. This approach allows RDD
-to handle suppressor cases where naive \texttt{ddmin} fails.
+\subsection{The final validation}
 
-\subsection{The soundness gate (final validation)}
+RDD credits a recipe only after a second, uncached sequential test with a tighter
+$\beta$ on the same noisy channel. For a given non-reproducing recipe both the
+in-loop verdict and this re-confirmation must wrongly accept it, each with
+probability at most $\alpha$ when the two runs are independent and the recipe's
+true rate is at most $p_0$; over a reduction that queries $k$ non-reproducing
+candidates the per-campaign bound is about $k\alpha^2$. Identity errors are shared
+by both runs and are not covered by the bound. Genuine and false credit are
+assigned by the evaluation, not by the tool: the scorer compares each credited
+recipe to a channel-off run of the device.
 
-RDD only outputs a PoC after an independent final validation. The final recipe is
-checked again by a second, uncached SPRT with a stricter false-negative rate, using
-the same noisy channel. Since a recipe must pass both the in-loop SPRT and this
-independent check, the false-positive rate is the product of two $\alpha$-bounded
-events (about $\alpha^2$), conditional on the test's preconditions rather than a
-structural impossibility. If a recipe only
-worked due to a lucky channel event, it will fail the re-confirmation and be
-discarded, which keeps the measured false credit at zero. The \emph{genuine} versus
-\emph{false-credit} label is determined by our evaluation, not the tool itself: the
-scorer compares each PoC to the channel-off ground truth, while the baseline,
-lacking this final check, accumulates false credits.
+\subsection{Positioning: a SWOT view}\label{ssec:swot}
 
-\subsection{Positioning: a SWOT (strengths, weaknesses, opportunities, threats) view}\label{ssec:swot}
+\textbf{Strengths.} Delta debugging returns with its 1-minimality relative to the
+oracle, where \textsc{AirBugCatcher} enumerates up to a fixed size. The false-credit
+rate is $\alpha$-bounded under stated preconditions, and the re-confirmation
+squares it. The identity cascade escalates only the uncertain residual, so the
+model is cheap and its verdicts can be committed and replayed.
 
-\textbf{Strengths.} RDD brings back provably 1-minimal delta debugging, meaning no
-single packet can be removed without losing the crash. This minimum is defined by
-the oracle, not as a global minimum, while \textsc{AirBugCatcher} can only check up
-to a fixed size. The SPRT oracle's $\alpha$ directly controls false credit. The
-tiered identity oracle escalates to a single model only on the uncertain residual,
-which keeps it cheap and fully reproducible instead of polling a whole panel on
-every comparison. The independent re-validation acts as another $\alpha$-bounded check.
-The prototype achieves 0.863 genuine recovery at zero false credit on real bugs,
-compared to 0.759 and 0.137 for the baseline. % B1 headtohead.json
+\textbf{Weaknesses.} The evaluation is a simulator whose two noise models,
+phantom crashes and report variation, produce the advantage
+(Section~\ref{sec:evaluation}); RDD costs four to five times the baseline's
+device reads; the judge does not discriminate on the pairs it receives; the
+indifference zone leaves the deepest noise unrecoverable; the matcher's threshold
+is calibrated on six bugs with no held-out set.
 
-\textbf{Weaknesses.} The evaluation uses a software simulator with a modelled
-channel. The SPRT indifference zone is a real limitation, shown by recovery
-dropping to 0.750 in the noisiest conditions. % B2 resilience.json deep_noise tool 0.74984
-The identity threshold is based on six bugs, and the large synthetic dataset tests
-only one crash mechanism.
+\textbf{Opportunities.} Measuring the phantom and variation rates on a real link
+turns the sensitivity table into a prediction; cross-target campaigns on other
+stacks with tools such as \textsc{U-Fuzz}~\cite{ufuzz2024} would calibrate the
+identity layer on held-out bugs; a calibrated panel could replace the single judge.
 
-\textbf{Opportunities.} Testing recovered PoCs on real radios over a
-software-defined link would validate the channel model. Running cross-target
-campaigns on other Bluetooth, Wi-Fi, and cellular stacks with tools like
-\textsc{U-Fuzz}~\cite{ufuzz2024} would help calibrate identity further. Using an
-open-weight panel with an adaptive trial budget could improve results in very noisy
-conditions.
-
-\textbf{Threats.} The method assumes that the device can be reset for each trial,
-which may not be possible in practice. Real radios have more complex multipath
-effects than the two-state model captures. Also, relying on a single L3 model
-introduces a risk of systematic bias. These issues shape the research agenda in
+\textbf{Threats.} The method assumes a device that can be reset between attempts;
+real radios show correlated behaviour the reset may not remove; a single model
+judge carries a systematic bias. These shape the experiments proposed in
 Section~\ref{sec:evaluation}.
-
-Taken together, the five components form an interdependent chain: each one solves a
-problem that would otherwise block the next. The main contribution is how these
-parts work together, not any single component.

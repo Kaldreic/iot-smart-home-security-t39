@@ -1,95 +1,159 @@
 \section{Evaluation}\label{sec:evaluation}
 
-We tested the proposed approach using a working prototype, treating its results as
-proof-of-concept evidence for the research direction, not as final system results.
-The analysis compares RDD to a faithful re-implementation of
-\textsc{AirBugCatcher}'s reproduction strategy~\cite{airbugcatcher2024} (bounded
-enumeration with exact crash-signature matching) on the same simulated channel, so
-any differences are due to the method, not the environment. The main questions are
-whether RDD improves results on real bugs and whether it performs well under tough
-conditions. A third question, whether it works off the shelf and end to end, is
-discussed later. The main metrics are paired: \emph{genuine} recovery is the
-fraction of campaigns that return a PoC which provably crashes the correct bug
-(checked against a channel-off ground truth the tool never sees), and \emph{false
-credit} is the fraction where a PoC does not reproduce the intended fault. The
-\emph{size-gap} shows how much larger a recovered recipe is compared to the true
-minimum. Table~\ref{tab:headlines} summarises the results.
+We tested the approach with a working prototype and treat the results as
+proof-of-concept evidence for a research direction, not as a field result. The
+comparison is against a re-implementation of \textsc{AirBugCatcher}'s reproduction
+strategy~\cite{airbugcatcher2024}: bounded enumeration of suspect-packet
+combinations up to three packets, in order of proximity to the crash, one
+attempt per candidate, accepting the first candidate whose crash carries the
+expected signature. It is our reading of the published method, not the authors'
+tool, and it runs with no trial-time budget, so it enumerates more candidates
+than the original would. Both tools face the same simulated device and channel,
+so a difference between them is a difference between the two strategies
+\emph{under our noise model}; Section~\ref{ssec:eval-noise} measures how much of
+the difference the model itself contributes.
+
+Every arm is scored by the same rule. A campaign is a \emph{genuine} reproduction
+if the arm credited a recipe \emph{and} that recipe crashes the target with the
+channel switched off, a ground truth the tools never see; it is a \emph{false
+credit} if the arm credited a recipe that does not. A recipe the tool returns but
+declines to validate counts for neither. The \emph{size gap} is the mean number of
+packets a genuine recipe carries beyond the true minimum, and \emph{reads} counts
+device attempts per campaign. A third arm, the baseline with one confirming
+re-run before it credits a candidate, is the read-matched control.
+Table~\ref{tab:headlines} summarises the results.
 
 \begin{table*}[!t]
 \renewcommand{\arraystretch}{1.3}
-\caption{Main results: RDD against the faithful \textsc{AirBugCatcher} baseline on
-the same channel. Size-gap is the mean extra packets over the true minimum; the best
-of each compared pair is in bold.}
+\caption{Main results on the same simulated channel. Size gap is the mean extra
+packets over the true minimum, over genuine reproductions only; the best value of
+each column within a benchmark is in bold.}
 \label{tab:headlines}
 \centering
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l l c c c c@{}}
 \toprule
-Benchmark & Configuration & Genuine $\uparrow$ & False credit $\downarrow$ & Size-gap $\downarrow$ & Device reads\\
+Benchmark & Configuration & Genuine $\uparrow$ & False credit $\downarrow$ & Size gap $\downarrow$ & Reads\\
 \midrule
-Real head-to-head            & \textsc{AirBugCatcher} & 0.759 & 0.137 & 0.483 & 9\\
-{\footnotesize 6 bugs, full pipeline} & RDD & \textbf{0.863} & \textbf{0.000} & \textbf{0.119} & 45\\
+Real head-to-head            & \textsc{AirBugCatcher}                & 0.759 & 0.137 & 0.483 & 9\\
+{\footnotesize 6 bugs, 336 campaigns} & \textsc{AirBugCatcher} $+$ 1 confirmation & 0.708 & 0.006 & 0.931 & 24\\
+                             & RDD                                   & \textbf{0.848} & \textbf{0.000} & \textbf{0.117} & 45\\
 \addlinespace
-Resilience at scale          & \textsc{AirBugCatcher} & 0.282 & 0.638 & 0.567 & 37\\
-{\footnotesize 15,000 bugs, 75,000 campaigns} & RDD & \textbf{0.916} & \textbf{0.000} & \textbf{0.357} & 149\\
+Resilience at scale          & \textsc{AirBugCatcher}                & 0.266 & 0.632 & 0.52 & 40\\
+{\footnotesize 15,000 bugs, 75,000 campaigns} & \textsc{AirBugCatcher} $+$ 1 confirmation & 0.359 & 0.090 & 0.92 & 342\\
+                             & RDD                                   & \textbf{0.824} & \textbf{0.000} & \textbf{0.21} & 142\\
 \bottomrule
 \end{tabular*}
 \end{table*}
 
 \subsection{Real bugs, head to head}\label{ssec:eval-real}
 
-The evaluation examines six controller bugs, labelled A--F, in the Zephyr Bluetooth
-Low Energy stack compiled for Zephyr's host-native \texttt{unit\_testing} target. One is a
-disclosed vulnerability with a CVE identifier, a division-by-zero in
-connection-parameter handling. The other five are reachable controller faults
-exercised through harness patches on the same vulnerable Zephyr controller, one of
-them sharing the first bug's binary. % multibug.py + zephyr-targets/README: A = CVE-2024-4785; B--F reachable faults; build-multibug builds A+C
-Only one of the six is a named CVE, and the report deliberately distinguishes the
-formally disclosed vulnerability from the others.
+The evaluation uses six controller bugs, labelled A--F, in the Zephyr Bluetooth
+Low Energy stack compiled for Zephyr's host-native \texttt{unit\_testing} target.
+One is a disclosed vulnerability with a CVE identifier, a division by zero in
+connection-parameter handling; the other five are reachable controller faults
+exercised through harness patches on the same vulnerable controller, one of them
+sharing the first bug's binary. Each bug has a fixed window of eight (A, B) or
+five (C--F) packets whose minimal recipe has one or two packets, so the
+enumeration baseline reaches every true minimum within its first six candidates
+when the channel lets it; the difficulty of these bugs lies in the noise, not in
+the search. The committed crash dump of bug B carries no backtrace, which makes
+exact matching stronger on B than elsewhere.
 
-When run through the full pipeline (fuzz campaign, shared crash-grouping, a
-backward window per bug, then either minimiser), RDD achieves a genuine recovery
-rate of 0.863 with zero false credit, while the baseline gets 0.759 with
-0.137 false credit. % B1 headtohead.json
-Across the eight seeds RDD spans $[0.76, 0.93]$ and the baseline $[0.67, 0.81]$ (paired per seed).
-RDD also produces more concise recipes: their extra size over the true minimum is
-about four times smaller (0.12 vs.\ 0.48 extra packets), and most are exactly
-minimal. The 0.863 figure is the true end-to-end result, including a
-crash-grouping front-end shared by both tools, which sometimes assigns a trace to
-the wrong bug and limits what either minimiser can achieve. If the front-end is
-removed and reduction starts directly from each bug's window, isolating the
-minimiser and its oracle, RDD recovers 0.967 of reproductions over thirty
-seeds against the baseline's 0.867. % realbench_robust.json arm_b_plus 0.9667 vs arm_a 0.8667
-The trade-off for RDD is the number of reads: about 45 simulator queries per
-campaign, compared to 9 for the baseline, mostly used for SPRT confirmation and
-some escalations to the open-weight model.
+Through the full pipeline (a synthesised fuzz trace, a crash-grouping front end
+shared by both tools, a backward window per bug, then either minimiser), RDD
+recovers 0.848 of reproductions with no false credit in 336 campaigns; the
+baseline recovers 0.759 with 0.137 false credit. % headtohead.json
+Over the eight runs RDD spans $[0.76, 0.91]$ and the baseline $[0.67, 0.81]$,
+paired per run. RDD's recipes are also tighter: 0.12 extra packets against 0.48,
+and 0.89 of them exactly minimal. Both tools suffer the shared front end, which
+sometimes assigns a trace to the wrong bug; on correctly grouped traces the rates
+are 0.920 and 0.824. Reduced directly from each bug's window on the truth-table
+oracle over thirty runs, RDD recovers 0.933 against the baseline's 0.867
+(false credit 0.089). % anchor.json
+The cost is reads: about 45 device attempts per campaign against 9, spent on the
+sequential test's repeated trials; escalations to the language model are identity
+checks on attempts already made, not extra reads.
 
-Why focus on the baseline's 0.137 false credit? In a workflow for human
-analysts, a false credit is costly because it leads experts to investigate crashes
-that were not actually reproduced. RDD eliminates this error. This is most evident
-with the real suppressor bug, where a later packet can hide the crash: plain
-bisection fails completely (0.000), the baseline gets 0.875 with 0.125 false
-credit, and RDD recovers everything with zero false credit. % suppressor: B1 headtohead.json (AirBug 0.875/0.125, RDD 1.0); plain-ddmin 0.000 from B3 levers.json ablation
-This scenario is exactly what the robust minimiser is designed for, and the next
-experiment tests it further.
+The baseline's false credit is a consequence of accept-first: it books the first
+candidate whose crash carries the expected signature, and under our channel a
+non-reproducing candidate occasionally does. One confirming re-run removes almost
+all of it (0.137 to 0.006) at 24 reads, but costs recall (0.708) because a true
+reproduction must now survive both the channel and exact matching twice. RDD
+produced no false credit in these 336 campaigns, in the 180 truth-table campaigns
+on A--F, in the 30 on the suppressor, or in the 75,000 synthetic campaigns of
+Section~\ref{ssec:eval-scale}; the corresponding 95\,\% upper bounds on its false
+credit rate are 0.9\,\%, 1.7\,\%, 10\,\% and 0.004\,\%. The tool's property is the
+$\alpha$-bounded rate of Section~\ref{sec:our_approach}; zero is the measured outcome.
+
+On the real suppressor bug, where a later packet hides the crash, the baseline
+recovers 0.875 with 0.125 false credit and RDD recovers every campaign with none;
+bare delta debugging, started from the non-crashing full window, returns nothing,
+which is the cost RDD's own choice of \texttt{ddmin} would incur without its
+seed-finder (Section~\ref{ssec:eval-levers}).
+
+\subsection{How much is the noise model}\label{ssec:eval-noise}
+
+Two assumed models drive the comparison: the channel's phantom crashes (a
+non-reproducing recipe reported as crashing with the target's own dump, 0.02 to
+0.07 per attempt), and the crash-report variation applied to every observed crash
+(Section~\ref{sec:our_approach}). Table~\ref{tab:noise} repeats the thirty-run
+truth-table experiment with each switched off.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{The six real bugs, thirty runs each, under weaker noise models. Cells are
+genuine / false credit; reads are given in the text.}
+\label{tab:noise}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}%
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Noise model & Baseline & $+$ 1 confirmation & RDD\\
+\midrule
+as committed            & 0.867 / 0.089 & 0.761 / 0.006 & 0.933 / 0.000\\
+report variation off    & 0.911 / 0.067 & 0.911 / 0.000 & 0.928 / 0.000\\
+phantom crashes off     & 0.933 / 0.000 & 0.750 / 0.000 & 0.933 / 0.000\\
+both off                & 0.978 / 0.000 & 0.933 / 0.000 & 0.928 / 0.000\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The baseline's false credit vanishes exactly when phantom crashes do, and its
+recall gap closes when report variation does; with both off it recovers 0.978
+with no false credit at about ten reads per campaign, ahead of RDD's 0.928 at
+about 48. RDD's results are almost invariant to the two models because the
+sequential test absorbs the phantoms and the identity layer absorbs the
+variation, which is what they were built for. The comparison is therefore a
+statement about the noise the medium is assumed to produce: where a device
+reports spurious crashes of the target signature or garbles its reports, RDD
+recovers more at higher cost; where it does neither, plain enumeration with one
+confirming re-run is the better tool.
 
 \subsection{Resilience at scale}\label{ssec:eval-scale}
 
 Because only a handful of real emulable bugs exist, we probe robustness with a
-large synthetic corpus anchored to the real target: fifteen thousand bugs across
-six adversarial regimes (standard, high-cardinality, suppressor, far-trigger,
-deep-noise, and wide-window), giving seventy-five thousand campaigns per tool. The
-regimes deliberately twist the structures that trouble delta debugging: large input
-spaces, non-monotone suppressors, awkward trigger positions, and noise deep enough
-to push a true reproduce-rate into the SPRT's indifference zone. At this scale the
-L3 tier uses a deterministic site-string rule rather than the open-weight model, a
-conservative stand-in that keeps the sweep model-free and reproducible; the model
-itself is exercised in the head-to-head and live runs. RDD averages
-0.916 genuine recovery at zero false credit. The baseline averages 0.282 at
-0.638 (Fig.~\ref{fig:regimes}). % B2 resilience.json OVERALL
-The $75{,}000$-campaign bootstrap intervals, resampled by bug, are RDD
-$[0.914, 0.918]$ and baseline $[0.276, 0.288]$, far from overlapping.
-RDD pays for the gap in reads, as on the real bugs, roughly 149 device queries
-per campaign against the baseline's 37.
+synthetic corpus anchored to the real target: fifteen thousand bugs across six
+regimes (standard, high-cardinality, suppressor, far-trigger, deep-noise, and
+wide-window), 75,000 campaigns per tool. The regimes were chosen by us to stress
+structures known to trouble the two search strategies: large input spaces,
+non-monotone suppressors, awkward trigger positions, and noise deep enough to push
+a true reproduce rate into the SPRT's indifference zone; only the last stresses
+RDD. About a third of the population (0.79 in high-cardinality, 0.24 to 0.27
+elsewhere) has minimal recipes larger than the baseline's three-packet cap and is
+unreachable for it by construction. At this scale the identity layer's second tier
+is a rule that accepts a report containing the target's crash-site symbol or
+file; it uses the target's known site, so it stands in for the judge's recall
+rather than bounding it, and the sweep runs with no model.
+
+RDD averages 0.824 genuine recovery with no false credit; the baseline averages
+0.266 with 0.632, and with one confirming re-run 0.359 with 0.090 at 342 reads
+per campaign, because confirmation removes the phantom stop that ended its
+campaigns early (Fig.~\ref{fig:regimes}). % resilience.json OVERALL
+Each campaign draws its own noise stream, so the bootstrap intervals over bugs
+are meaningful: RDD $[0.820, 0.829]$, baseline $[0.261, 0.272]$. They quantify
+sampling error over our generator, not agreement with real bugs. RDD's reads are
+roughly 142 per campaign against the baseline's 40.
 
 \begin{figure}[!t]
 \centering
@@ -109,47 +173,43 @@ per campaign against the baseline's 37.
   enlarge x limits=0.1,
   ymajorgrids,
 ]
-\addplot+[fill=blue!70,draw=blue!70] coordinates {(standard,0.952)(high-card,0.947)(suppressor,0.944)(far-trig,0.953)(deep-noise,0.750)(wide-win,0.951)};
-\addplot+[fill=orange!85,draw=orange!85] coordinates {(standard,0.378)(high-card,0.053)(suppressor,0.371)(far-trig,0.307)(deep-noise,0.326)(wide-win,0.259)};
+\addplot+[fill=blue!70,draw=blue!70] coordinates {(standard,0.896)(high-card,0.891)(suppressor,0.879)(far-trig,0.897)(deep-noise,0.490)(wide-win,0.893)};
+\addplot+[fill=orange!85,draw=orange!85] coordinates {(standard,0.351)(high-card,0.037)(suppressor,0.352)(far-trig,0.300)(deep-noise,0.296)(wide-win,0.261)};
 \legend{RDD, \textsc{AirBugCatcher}}
 \end{axis}
 \end{tikzpicture}
-\caption{Genuine recovery per regime (12,500 campaigns each). RDD stays above 0.94
-except in deep-noise (the SPRT indifference zone); the baseline degrades sharply,
-worst on high-cardinality inputs.}% B2 resilience.json per-regime point estimates
+\caption{Genuine recovery per regime (12,500 campaigns each). RDD stays above 0.87
+except in deep-noise (0.49, the SPRT indifference zone); the baseline is worst on
+high-cardinality inputs, most of which exceed its cap.}% resilience.json per-regime point estimates
 \label{fig:regimes}
 \end{figure}
 
-Looking at each regime gives a clearer picture. The baseline does not fail equally
-in all cases: it performs best in the standard and suppressor regimes (0.378 and
-0.371) but fails almost completely on high-cardinality inputs (0.053), where
-the true recipe is larger than its fixed size limit and repetition cannot help.
-RDD stays above 0.94 in all regimes except deep-noise, because its minimiser is
-not limited by size and its oracle samples through the channel instead of just
-averaging. Deep-noise (0.750) is the only exception, and this is due to the
-SPRT's indifference band~\cite{sprt1945}, not a flaw in the implementation. RDD's recipes here are also larger ($1.30$ vs
-$0.70$ extra packets), as it reproduces harder cases the baseline misses. The
-band is a design choice: making $p_0$ tighter or increasing the budget reduces the
-band, trading more reads for better recall. RDD accepts lower recall in deep-noise
-to keep false credit at zero, which is the purpose of the soundness gate.
+The regimes separate the mechanisms. The baseline does best in the standard and
+suppressor regimes (0.351, 0.352) and fails almost completely on high-cardinality
+inputs (0.037). RDD stays between 0.88 and 0.90 everywhere except deep-noise, where
+it drops to 0.490: at that severity the per-attempt reproduce rate of a true
+recipe falls to roughly 0.2 to 0.35, inside the indifference zone $(p_0, p_1) =
+(0.05, 0.55)$, so the truncated test mostly ends inconclusive, which the tool
+scores as a non-reproduction rather than a credit. Its recipes there are no
+tighter than the baseline's (0.66 against 0.65 extra packets). Narrowing the band
+or raising the trial budget reduces the zone at the price of more reads; RDD
+accepts the lost recall to keep the false-credit bound, which is the purpose of
+the gate.
 
 \subsection{Where the advantage comes from}\label{ssec:eval-levers}
 
-RDD consists of multiple components, prompting the question of which are most
-impactful. To address this, we evaluated each part individually on real bugs,
-starting from the baseline and incrementally adding features
-(Table~\ref{tab:levers}). These runs reduce each bug straight from its window,
-without the shared crash-grouping front-end of Table~\ref{tab:headlines}, so the
-baseline here reads 0.771 rather than the full-pipeline 0.759, and these eight-seed
-figures sit below the thirty-seed isolated rates of Section~\ref{ssec:eval-real}
-(0.867 baseline, 0.967 full RDD). The results are
-clear, even when they do not always favour RDD.
+RDD has several components, and Table~\ref{tab:levers} adds them one at a time
+on the real bugs, reducing each bug directly from its window without the shared
+front end of Table~\ref{tab:headlines}. These are 48 campaigns (six bugs, eight
+runs), so the baseline reads 0.771 here against 0.759 above and 0.867 over thirty
+runs; the per-run baseline range is $[0.67, 1.00]$, and only the identity and
+minimiser deltas fall outside it.
 
 \begin{table}[!t]
 \renewcommand{\arraystretch}{1.2}
 \caption{Each component's contribution on the real bugs; each row adds one. The
-oracle eliminates false credit, the identity layer restores genuine recovery, the
-minimiser survives the suppressor.}
+oracle removes false credit, the identity layer restores recall, the minimiser
+survives the suppressor.}
 \label{tab:levers}
 \centering
 \setlength{\tabcolsep}{4pt}%
@@ -159,67 +219,80 @@ minimiser survives the suppressor.}
 Configuration & (A--F) & (A--F) & (suppressor)\\
 \midrule
 \textsc{AirBugCatcher} baseline    & 0.771 & 0.188 & 0.875\\
-$+$ SPRT oracle                    & 0.729 & \textbf{0.000} & 0.000\\
-$+$ two-tier identity              & \textbf{0.938} & 0.000 & 0.000\\
-$+$ robust minimiser (full RDD)    & 0.938 & 0.000 & \textbf{1.000}\\
+$+$ SPRT oracle                    & 0.688 & \textbf{0.000} & 0.000\\
+$+$ two-tier identity              & \textbf{0.917} & 0.000 & 0.000\\
+$+$ robust minimiser (full RDD)    & 0.917 & 0.000 & \textbf{1.000}\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Adding the SPRT oracle and its validation gate reduces false credit from 0.188 to
-zero, a result that holds as additional features are introduced. % levers.json oracle_fc_invariance
-This demonstrates the oracle's primary strength. Its impact on genuine recovery is
-less pronounced: for real bugs, recovery decreases slightly (from 0.771 to
-0.729) because the oracle is paired with the baseline's exact crash matcher. For
-suppressors, recovery drops to zero, as plain bisection still fails with a masked
-seed. Thus, the oracle primarily enhances safety rather than recovery. Recovery
-improves with subsequent steps. Replacing the exact matcher with the two-tier
-L2$\rightarrow$L3 identity increases genuine recovery on real bugs from 0.729 to
-0.938, as it can identify the same crash across different
-dumps that exact matching would miss. % levers.json identity_genuine_real 0.2083
-The robust minimiser uniquely benefits suppressors, raising recovery from zero to
-1.000 by finding a suppressor-free seed where plain \texttt{ddmin} fails. % levers.json minimiser_genuine_suppressor 1.0
-Each step maintains zero false credit: the oracle ensures safety, while the
-identity layer and minimiser enhance recovery.
-
-\subsection{Off the shelf, end to end}\label{ssec:eval-live}
-
-The reproducible results above also hold live. On the real Zephyr binary with a
-live open-weight model, over eight seeds of forty traces, RDD reaches 0.872 genuine
-recovery (range $[0.825, 0.925]$), zero false credit, and 0.931 crash-deduplication
-accuracy, matching the fixed 0.863.
-% scenario_multiseed.json Cost-gating works: the deterministic L2 settles most comparisons, the open-weight model only a few dozen per seed.
+Replacing accept-first enumeration by the sequential oracle and \texttt{ddmin}
+brings false credit from 0.188 to zero, and it stays there as the other
+components are added. % levers.json oracle_fc_invariance
+This step changes two things at once, the oracle and the search, so we attribute
+to it only the false-credit result; its effect on recall (0.771 to 0.688, per-run
+range $[0.33, 1.00]$) is within run-to-run variation. On the suppressor bug it
+scores zero, because \texttt{ddmin} bails on a masked full window. Replacing the
+exact matcher by the two-tier identity raises recall from 0.688 to 0.917
+(+0.229), the largest single gain, and it is a gain against the modelled report
+variation of Section~\ref{ssec:eval-noise}. The robust minimiser changes nothing
+on the monotone bugs and takes the suppressor from zero to every campaign, by
+finding a suppressor-free starting window where plain \texttt{ddmin} finds none.
 
 \subsection{Threats to validity}\label{ssec:eval-threats}
 
-Three risks qualify these results.
-First, internal: both the SPRT oracle and the transition from enumeration to
-\texttt{ddmin} are introduced simultaneously between the baseline and the first
-step, making it difficult to isolate the oracle's effect on genuine recovery. To
-address this, we run both tools on the same channel and attribute to the oracle
-only the clearly measured false-credit result. Second, external: the evaluation
-uses a single simulated stack, one fault type in the synthetic data, and a modelled
-channel, so the findings may not generalise to other stacks or real radio links.
-For this reason, we recommend on-hardware and cross-target experiments. Third,
-construct: ``genuine'' is defined by the scorer's channel-off ground truth,
-treating reproduction as a deterministic crash. Bugs that appear only with channel
-noise are scored as non-reproductions, which means we trade recall for the
-zero-false-credit guarantee. This is a deliberate and acknowledged bias.
+\textbf{The simulator.} The device is a deterministic host build of the Zephyr
+controller; the channel is a Gilbert--Elliott burst process with miss and phantom
+rates taken from a corpus of flaky software tests, not from wireless measurements,
+and the crash-report variation is a model with rates we chose (backtrace
+truncation 0.35, top-frame loss 0.20, frame churn 0.15, log interleaving 0.40,
+severe garbling 0.08). Section~\ref{ssec:eval-noise} shows that the headline
+advantage is a consequence of these models. A phantom crash is modelled as
+carrying the target's own signature, the case that defeats exact matching; a
+device that phantoms other crashes, or none, would favour the baseline. RDD
+resets the session before every attempt, which in the simulator makes attempts
+independent; the burst structure therefore never affects RDD, and the effect of
+correlated attempts, which violate the sequential test's precondition, is not
+evaluated.
+
+\textbf{The baseline.} It is our re-implementation of one published strategy at
+one fifth of RDD's reads. The read-matched control shows that one confirming
+re-run removes almost all of its false credit; a budget-matched variant with a
+different search was not run.
+
+\textbf{Identity.} The deterministic matcher was calibrated post hoc on the same
+six bugs (360 same-bug and 360 different-bug pairs generated by the variation
+model, no held-out set). The judge accepted every one of the 40 different-bug
+pairs the cascade escalates to it and every one of the 57 same-bug pairs, so the
+cascade rejects a different-bug report only when the matcher scores it below the
+escalation floor, which covers about half of the different-bug pairs in the
+calibration set. No experiment here presents a different bug's report to the
+in-loop oracle, because each harness emits only its target's crash; the resulting
+risk, crediting a recipe that reproduces a different bug, is unmeasured. The
+judge's verdicts are replayed from a committed cache; live inference is not
+bit-reproducible.
+
+\textbf{Construct.} ``Genuine'' is defined against a channel-off run of a
+deterministic binary. A bug that appears only with channel noise is scored as a
+non-reproduction, a bias that trades recall for the false-credit bound; the
+truncated test's forced ``no'' contributes most of RDD's deep-noise loss. Six
+bugs, one stack, one CVE and one synthetic fault mechanism bound what the numbers
+can say.
 
 \subsection{Proposed experiments}\label{ssec:eval-next}
 
-These results inform a research plan, with initial steps that do not require
-hardware. The primary objective is to validate the channel model under real
-conditions by replaying recovered PoCs on actual radios over a software-defined link
-to determine if the modelled burst process aligns with observed behaviour. The next
-step is to repeat the study on other Bluetooth, Wi-Fi, and cellular stacks using
-independent public fuzzing logs to assess whether a single calibrated identity
-threshold is sufficient for all stacks or requires adjustment for each. Expanding
-testing to include more fault types would extend the identity layer beyond the
-single crash mechanism used in the synthetic data, making it more representative of
-real devices. Another objective is to enhance the judge: replacing the single
-open-weight model with a calibrated panel, evaluated against human agreement
-(Cohen's $\kappa$~\cite{cohenkappa1960}), may help reduce the over-merging observed
-here. The unavoidable limitation, the indifference zone, suggests using an adaptive
-trial budget that increases reads only in the noisiest cases, though this offers
-limited improvement.
+The results order the research plan. First, measure the two assumed rates on a
+real link: replay recovered recipes over a software-defined radio and record how
+often a non-reproducing recipe crashes the device, with which signature, and how
+often the same crash is reported differently; the noise-sensitivity table then
+becomes a prediction. Second, present different-bug reports to the in-loop oracle,
+on a binary that ships several reachable bugs in one window, and measure
+cross-bug credit. Third, run correlated attempts, with reset and settling
+disabled, to find the burst regime at which the sequential test's error bound
+fails. Fourth, repeat the study on other Bluetooth, Wi-Fi and cellular stacks
+using public fuzzing logs, with the matcher's threshold calibrated on held-out
+bugs. Fifth, replace the single judge by a calibrated panel evaluated against
+human agreement (Cohen's $\kappa$~\cite{cohenkappa1960}), since a judge that never
+rejects adds recall but no discrimination. The indifference zone remains; an
+adaptive trial budget that spends reads only in the noisiest cases is the
+mitigation to test.
