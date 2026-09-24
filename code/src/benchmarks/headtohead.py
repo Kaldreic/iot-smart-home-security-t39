@@ -88,13 +88,14 @@ def run_headtohead(n_traces: int = 42, *, seed: int = 0, model_name: str = "llam
                                         dump_params=dump_params, memo=memo)
         return setups[bug]
 
-    rows = {"airbug": [], "rdd": []}
+    rows = {"airbug": [], "airbug_confirm": [], "rdd": []}
     confusion = {b: {p: 0 for p in (*_BUGS, None)} for b in _BUGS}
     for i, t in enumerate(traces):
         predicted = deduper.classify(t.crash_obs)                         # SHARED crash-grouping (the tool sees only the log)
         confusion[t.bug][predicted] += 1
         if predicted is None:
-            rows["airbug"].append(_miss(t)); rows["rdd"].append(_miss(t))
+            for arm in rows:
+                rows[arm].append(_miss(t))
             continue
         rdd_oracle, _ri, ab_oracle = setup_for(predicted)
         bug_obj = live._Bug(bug=predicted, window=live._WINDOW[predicted], crash_sig=f"bug-{predicted}")
@@ -102,9 +103,11 @@ def run_headtohead(n_traces: int = 42, *, seed: int = 0, model_name: str = "llam
         rdd_oracle.calls = 0
         rr = dict(scoring.run_tool_campaign(rdd_oracle, [bug_obj], random.Random(trace_seed), decorrelate=True)[0])
         rows["rdd"].append(_record(t, predicted, rr, rdd_oracle.calls))
-        ab_oracle.calls = 0
-        ar = dict(scoring.run_baseline_campaign(ab_oracle, [bug_obj], random.Random(trace_seed), decorrelate=True)[0])
-        rows["airbug"].append(_record(t, predicted, ar, ab_oracle.calls))
+        for arm, confirm in (("airbug", 0), ("airbug_confirm", 1)):       # the read-matched control: +1 confirming run
+            ab_oracle.calls = 0
+            ar = dict(scoring.run_baseline_campaign(ab_oracle, [bug_obj], random.Random(trace_seed), decorrelate=True,
+                                                    confirm=confirm)[0])
+            rows[arm].append(_record(t, predicted, ar, ab_oracle.calls))
     return rows, confusion, setups
 
 
@@ -148,7 +151,7 @@ def run_suppressor_showcase(seeds: int = 8, *, model_name: str = "llama3.1:8b", 
     def ab_id(b, obs):
         return exact_crash_id(obs) == ref_exact
 
-    per = {"airbug": [], "rdd": []}
+    per = {"airbug": [], "airbug_confirm": [], "rdd": []}
     l3_live = 0
     for s in range(seeds):
         rdd_identity = LiveL2L3Identity({"A": ref}, model=model_name, host=host, memo=memo, judge=judge)
@@ -156,10 +159,11 @@ def run_suppressor_showcase(seeds: int = 8, *, model_name: str = "llama3.1:8b", 
         rr = dict(scoring.run_tool_campaign(ro, [LRBUG], random.Random(s), decorrelate=True)[0])
         per["rdd"].append(_record_direct(rr, ro.calls))
         l3_live += rdd_identity.stats["l3_live"]
-        ao = LengthReqOracle(identity=ab_id)
-        ar = dict(scoring.run_baseline_campaign(ao, [LRBUG], random.Random(s), decorrelate=True)[0])
-        per["airbug"].append(_record_direct(ar, ao.calls))
-    return {"airbug": _arm_summary(per["airbug"]), "rdd": _arm_summary(per["rdd"]), "l3_live": l3_live}
+        for arm, confirm in (("airbug", 0), ("airbug_confirm", 1)):
+            ao = LengthReqOracle(identity=ab_id)
+            ar = dict(scoring.run_baseline_campaign(ao, [LRBUG], random.Random(s), decorrelate=True, confirm=confirm)[0])
+            per[arm].append(_record_direct(ar, ao.calls))
+    return {arm: _arm_summary(per[arm]) for arm in per} | {"l3_live": l3_live}
 
 
 def run(n_traces: int = 42, seeds: int = 8, *, model_name: str = "llama3.1:8b", host=None,
@@ -170,7 +174,7 @@ def run(n_traces: int = 42, seeds: int = 8, *, model_name: str = "llama3.1:8b", 
     persist it, or pre-load a complete ``memo`` (with a conservative-NO ``judge``) for a reproducible replay
     -- ``out['l3_live']`` is then 0. Returns per-arm aggregates (mean/min/max over seeds) + the live-call count."""
     memo = {} if memo is None else memo
-    per = {"airbug": [], "rdd": []}
+    per = {"airbug": [], "airbug_confirm": [], "rdd": []}
     l3_live = 0
     for s in range(seeds):
         rows, _conf, setups = run_headtohead(n_traces, seed=s, model_name=model_name, host=host,
@@ -183,7 +187,7 @@ def run(n_traces: int = 42, seeds: int = 8, *, model_name: str = "llama3.1:8b", 
     for arm in per:
         out[arm] = {m: _agg_seed(per[arm], m) for m in metrics}
     supp = run_suppressor_showcase(seeds, model_name=model_name, host=host, judge=judge, memo=memo)
-    out["suppressor"] = {"airbug": supp["airbug"], "rdd": supp["rdd"]}    # the real non-monotone showcase (rates)
+    out["suppressor"] = {arm: supp[arm] for arm in per}                  # the real non-monotone showcase (rates)
     out["l3_live"] += supp["l3_live"]
     return out
 
@@ -213,6 +217,14 @@ def frozen(n_traces: int = 42, seeds: int = 8, *, cache_path: Path = _CACHE) -> 
     return run(n_traces, seeds, judge=lambda *a, **k: {"same": False}, memo=dict(memo))
 
 
+def refreeze(n_traces: int = 42, seeds: int = 8) -> dict:
+    """Write the committed reference from the FROZEN replay (no live model): used after a change to the
+    scorer or the pipeline that leaves the noise streams, and hence the committed L3 memo, valid."""
+    out = frozen(n_traces, seeds)
+    _REF.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n", encoding="utf-8")
+    return out
+
+
 def coherence(n_traces: int = 42, seeds: int = 8, tol: float = 1e-9) -> bool:
     """The FROZEN replay reproduces the committed reference EXACTLY (every leaf) and makes 0 live model calls.
     The top-level ``l3_live`` is skipped — the reference records the live-freeze count, a frozen replay is 0."""
@@ -238,23 +250,26 @@ def main() -> int:
     ap.add_argument("--freeze", action="store_true", help="run LIVE + persist the memo + the reference (regenerate)")
     ap.add_argument("--frozen", action="store_true", help="reproduce from the committed memo (no live model)")
     ap.add_argument("--coherence", action="store_true", help="frozen replay must reproduce the committed reference")
+    ap.add_argument("--refreeze", action="store_true", help="write the reference from the frozen replay (no live model)")
     a = ap.parse_args()
     if a.coherence:
         return 0 if coherence(a.traces, a.seeds) else 1
     out = (freeze(a.traces, a.seeds, model_name=a.model, host=a.host) if a.freeze
+           else refreeze(a.traces, a.seeds) if a.refreeze
            else frozen(a.traces, a.seeds) if a.frozen
            else run(a.traces, a.seeds, model_name=a.model, host=a.host))
     print(f"=== B1 head-to-head — {a.seeds} seeds x {a.traces} traces; real host-native binary + live L3 ({a.model}) ===")
-    print(f"  {'metric':16} {'AirBug (point)':>18} {'RDD (live range)':>26}")
+    print(f"  {'metric':16} {'AirBug':>10} {'AirBug + 1 confirm':>20} {'RDD (range over seeds)':>26}")
     for m in ("genuine", "genuine_routed", "false_credit", "exact_minimal", "mean_size_gap", "reads"):
-        ab, rd = out["airbug"][m], out["rdd"][m]
-        ab_s = f"{ab['mean']:.3f}" if ab else "n/a"
+        ab, ac, rd = out["airbug"][m], out["airbug_confirm"][m], out["rdd"][m]
+        f3 = lambda x: f"{x['mean']:.3f}" if x else "n/a"                   # noqa: E731
         rd_s = f"{rd['mean']:.3f} [{rd['min']:.3f},{rd['max']:.3f}]" if rd else "n/a"
-        print(f"  {m:16} {ab_s:>18} {rd_s:>26}")
+        print(f"  {m:16} {f3(ab):>10} {f3(ac):>20} {rd_s:>26}")
     sp = out["suppressor"]
     print(f"  -- real non-monotone suppressor (LL_LENGTH_REQ, truth-table-backed): "
-          f"AirBug genuine {sp['airbug']['genuine']:.3f} / fc {sp['airbug']['false_credit']:.3f}   "
-          f"RDD genuine {sp['rdd']['genuine']:.3f} / fc {sp['rdd']['false_credit']:.3f}")
+          f"AirBug {sp['airbug']['genuine']:.3f}/{sp['airbug']['false_credit']:.3f}   "
+          f"+1 confirm {sp['airbug_confirm']['genuine']:.3f}/{sp['airbug_confirm']['false_credit']:.3f}   "
+          f"RDD {sp['rdd']['genuine']:.3f}/{sp['rdd']['false_credit']:.3f}  (genuine/false credit)")
     print("  RDD = live open-model L3 (range over seeds; verdicts frozen to the cache for a reproducible CI point);")
     print("  AirBug = exact-id (bit-reproducible). Scored vs the channel-off virtual-perfect. host-native binary + MODELLED channel.")
     return 0

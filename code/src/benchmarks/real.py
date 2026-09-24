@@ -15,14 +15,15 @@ from benchmarks.identity_cache import L2, L3CACHE, L3_BAND_LO, TARGET_TEXT, id_l
 from emulation.multibug import BUGS, MODEL, MultibugOracle, _mbug, id_exact  # noqa: F401  (device re-exports)
 
 
-def _run(arm, identity, bugs, seeds, **kw):
+def _run(arm, identity, bugs, seeds, *, params=None, **kw):
     """Run one campaign function (``scoring.run_baseline_campaign``/``run_tool_campaign``) over every
-    (bug, seed); the campaign fn is a parameter so the runner picks baseline / tool / ddmin-only ablation."""
+    (bug, seed); the campaign fn is a parameter so the runner picks baseline / tool / ddmin-only ablation.
+    ``params`` overrides the device's channel (the noise-sensitivity table uses it)."""
     rows = []
     for b in bugs:
         bug = _mbug(b)
         for s in seeds:
-            o = MultibugOracle(identity=identity)
+            o = MultibugOracle(identity=identity) if params is None else MultibugOracle(identity=identity, params=params)
             r = dict(arm(o, [bug], random.Random(s), **kw)[0])
             r["reads"] = o.calls
             r["bug"] = b

@@ -213,6 +213,14 @@ def frozen(seeds: int = 8, *, cache_path: Path = _CACHE) -> dict:
     return run(seeds, judge=lambda *a, **k: {"same": False}, memo=dict(memo))
 
 
+def refreeze(seeds: int = 8) -> dict:
+    """Write the committed reference from the FROZEN replay (no live model): used after a change to the
+    scorer or the pipeline that leaves the noise streams, and hence the committed L3 memo, valid."""
+    out = frozen(seeds)
+    _REF.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n", encoding="utf-8")
+    return out
+
+
 def coherence(seeds: int = 8, tol: float = 1e-9) -> bool:
     """The FROZEN replay reproduces the committed reference EXACTLY (every leaf) and makes 0 live model calls.
     The top-level ``l3_live`` is skipped — the reference records the live-freeze count, a frozen replay is 0."""
@@ -257,10 +265,12 @@ def main() -> int:
     ap.add_argument("--freeze", action="store_true", help="run LIVE + persist the memo + the reference (regenerate)")
     ap.add_argument("--frozen", action="store_true", help="reproduce from the committed memo (no live model)")
     ap.add_argument("--coherence", action="store_true", help="frozen replay must reproduce the committed reference")
+    ap.add_argument("--refreeze", action="store_true", help="write the reference from the frozen replay (no live model)")
     a = ap.parse_args()
     if a.coherence:
         return 0 if coherence(a.seeds) else 1
     out = (freeze(a.seeds, model_name=a.model, host=a.host) if a.freeze
+           else refreeze(a.seeds) if a.refreeze
            else frozen(a.seeds) if a.frozen
            else run(a.seeds, model_name=a.model, host=a.host))
     _print(out)

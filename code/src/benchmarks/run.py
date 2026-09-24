@@ -4,6 +4,8 @@
                                               #   b1 = real head-to-head, b2 = synthetic resilience, b3 = lever decomposition
   python -m benchmarks.run coherence          # the MODEL-FREE reproducibility gate: the real anchor (+/-0.02) + B2 (leaf-exact)
                                               #   (B1 + B3 are binary-gated -> the self-test reproduces them where the binaries are built)
+  python -m benchmarks.run sensitivity        # the anchor with the report-variation / phantom-crash models switched off
+  python -m benchmarks.run freeze             # regenerate data/reference/anchor.json
 
 Run after `pip install -e code/`. The gate's "real anchor" is the model-free truth-table reproduction of the
 6 real bugs (A-F) + the LL_LENGTH_REQ suppressor (``run_real`` / ``run_suppressor`` below); its preserved arms
@@ -28,24 +30,33 @@ from emulation import suppressor
 _REF = Path(__file__).resolve().parent / "data" / "reference"
 
 
-def run_real(seeds: int = 30, ablate: bool = False) -> dict:
+def run_real(seeds: int = 30, ablate: bool = False, *, params=None, dump_params=None) -> dict:
+    """The model-free real-bug anchor: the six Zephyr bugs A-F on the truth-table oracle, every arm scored
+    by ``scoring.score_bug``. ``params``/``dump_params`` override the channel and the report-variation model
+    (the sensitivity table); the cached open-model L3 serves the tool's escalations (live_calls == 0)."""
     bugs, ss = list(real.BUGS), list(range(seeds))
-    baseline = idc.agg(real._run(scoring.run_baseline_campaign, real.id_exact, bugs, ss))   # exact-id arm: no L3
-    idc.l3_reset()                                           # attribute the TOOL arm's L3 sourcing (the real anchor)
-    tool = idc.agg(real._run(scoring.run_tool_campaign, idc.id_l2l3, bugs, ss, decorrelate=True))
-    out = {"suite": "real", "n_seeds": seeds, "bugs": bugs, "baseline": baseline, "tool": tool,
-           "l3_provenance": idc.l3_provenance()}              # cached open-model: live_calls==0, reproduces from cache
-    if ablate:
-        out["ablation"] = idc.agg(real._run(scoring.run_tool_campaign, idc.id_l2l3, bugs, ss,
-                                            decorrelate=True, ablate_robust=True))
-        # oracle = exact-id + SPRT + ddmin-only. fc lever = the pipeline oracle/gate (fc 0 for oracle/ablation/tool,
-        # fc>0 only in the fixed-K baseline); IDENTITY genuine lever = oracle->ablation (exact-id -> L2/L3).
-        out["oracle"] = idc.agg(real._run(scoring.run_tool_campaign, real.id_exact, bugs, ss,
-                                         decorrelate=True, ablate_robust=True))
+    model_params = real.MODEL.params
+    real.MODEL.params = dump_params or model_params
+    try:
+        out = {"suite": "real", "n_seeds": seeds, "bugs": bugs,
+               "baseline": idc.agg(real._run(scoring.run_baseline_campaign, real.id_exact, bugs, ss, params=params)),
+               "baseline_confirm": idc.agg(real._run(scoring.run_baseline_campaign, real.id_exact, bugs, ss,
+                                                     params=params, confirm=1))}
+        idc.l3_reset()                                        # attribute the tool arm's L3 sourcing
+        out["tool"] = idc.agg(real._run(scoring.run_tool_campaign, idc.id_l2l3, bugs, ss, params=params, decorrelate=True))
+        out["l3_provenance"] = idc.l3_provenance()
+        if ablate:
+            out["ablation"] = idc.agg(real._run(scoring.run_tool_campaign, idc.id_l2l3, bugs, ss, params=params,
+                                                decorrelate=True, ablate_robust=True))
+            out["oracle"] = idc.agg(real._run(scoring.run_tool_campaign, real.id_exact, bugs, ss, params=params,
+                                              decorrelate=True, ablate_robust=True))
+    finally:
+        real.MODEL.params = model_params
     return out
 
 
 def run_suppressor(seeds: int = 30, ablate: bool = False) -> dict:
+    """The real LL_LENGTH_REQ suppressor (non-monotone) on its truth-table oracle."""
     ss = list(range(seeds))
 
     def go(mod, identity, **kw):
@@ -57,11 +68,12 @@ def run_suppressor(seeds: int = 30, ablate: bool = False) -> dict:
             rows.append(r)
         return idc.agg(rows)
 
-    baseline = go(scoring.run_baseline_campaign, real.id_exact)               # exact-id arm: no L3
-    idc.l3_reset()                                           # attribute the TOOL arm's L3 sourcing
-    out = {"suite": "suppressor", "n_seeds": seeds, "true_minimal": [3], "baseline": baseline,
-           "tool": go(scoring.run_tool_campaign, idc.id_l2l3, decorrelate=True),
-           "l3_provenance": idc.l3_provenance()}
+    out = {"suite": "suppressor", "n_seeds": seeds, "true_minimal": [3],
+           "baseline": go(scoring.run_baseline_campaign, real.id_exact),
+           "baseline_confirm": go(scoring.run_baseline_campaign, real.id_exact, confirm=1)}
+    idc.l3_reset()
+    out["tool"] = go(scoring.run_tool_campaign, idc.id_l2l3, decorrelate=True)
+    out["l3_provenance"] = idc.l3_provenance()
     if ablate:
         out["ablation"] = go(scoring.run_tool_campaign, idc.id_l2l3, decorrelate=True, ablate_robust=True)
     return out
@@ -72,43 +84,61 @@ def _metric(m):
     return m["genuine"]
 
 
+_ANCHOR = _REF / "anchor.json"
+_GATED = {"real": ("baseline", "baseline_confirm", "tool"), "suppressor": ("baseline", "baseline_confirm", "tool", "ablation")}
+
+
+def freeze(seeds: int = 30) -> dict:
+    """Regenerate the committed anchor reference (data/reference/anchor.json): the real bugs + the suppressor,
+    every arm, with the L3 provenance the coherence gate checks. Model-free (cached L3)."""
+    out = {"real": run_real(seeds, ablate=True), "suppressor": run_suppressor(seeds, ablate=True)}
+    _ANCHOR.write_text(json.dumps(scoring.clean_nan(out), indent=1) + "\n", encoding="utf-8")
+    return out
+
+
 def coherence(tol: float = 0.02) -> bool:
-    """The fresh real + suppressor suite reproduces the COMMITTED reference for the PRESERVED arms: the
-    baseline == arm_a (byte-identical to AirBugCatcher's minimiser) and the tool == arm_b_plus (the locked
-    robust pipeline), on realbench_robust.json over the 6 real bugs (A-F) + the real suppressor (where the
-    ablation must BAIL == arm_b). Gates ``genuine`` (the soundness-bearing quantity; size_gap/reads are
-    efficiency metrics, not gated). ALSO gates the cached-real L3-source provenance: the path is LIVE-FREE
-    (live_calls==0) and its cache-hit / conservative-NO-rule breakdown reproduces EXACTLY from the frozen
-    cache (integer counts, equality-gated). The unified `python -m benchmarks.run coherence` ALSO re-runs
-    the B2 synthetic sweep (`benchmarks.resilience --coherence`'s exact model-free gate) -- one command gates both."""
-    ref = json.loads((_REF / "realbench_robust.json").read_text(encoding="utf-8"))
-    p1, p2 = ref["part1_real_monotone"], ref["part2_real_lengthreq_suppressor"]
-    fr, fs = run_real(30), run_suppressor(30, ablate=True)
-    checks = [
-        ("real  baseline.genuine == arm_a",      _metric(fr["baseline"]), p1["arm_a"]["genuine"]),
-        ("real  tool.genuine     == arm_b_plus", _metric(fr["tool"]),     p1["arm_b_plus"]["genuine"]),
-        ("supp  baseline.genuine == arm_a",      _metric(fs["baseline"]), p2["arm_a"]["genuine"]),
-        ("supp  tool.genuine     == arm_b_plus", _metric(fs["tool"]),     p2["arm_b_plus"]["genuine"]),
-        ("supp  ablation BAILS   == arm_b",      _metric(fs["ablation"]), p2["arm_b"]["genuine"]),
-    ]
-    print(f"COHERENCE — fresh real+suppressor suite vs committed realbench_robust.json (tol +/-{tol:.3f}):")
+    """The fresh anchor reproduces the committed anchor.json: genuine and false credit of every gated arm
+    within ``tol`` (delta 0.000 in practice), and the tool's L3 provenance equal (live_calls == 0, the same
+    cache-hit / rule-fallback counts, so a drifted cache is detected)."""
+    ref = json.loads(_ANCHOR.read_text(encoding="utf-8"))
+    fresh = {"real": run_real(30), "suppressor": run_suppressor(30, ablate=True)}
+    print(f"COHERENCE — fresh anchor vs committed anchor.json (tol +/-{tol:.3f}):")
     ok = True
-    for name, fresh, refv in checks:
-        d = abs(fresh - refv)
-        good = d <= tol
-        ok = ok and good
-        print(f"  [{'OK' if good else 'XX'}] {name}: fresh={fresh:.3f} ref={refv:.3f} delta={d:.3f}")
-    # L3-source provenance: the cached-real paths are LIVE-FREE (live_calls==0, structural) and their
-    # cache-hit/rule-NO breakdown reproduces EXACTLY (the committed 164/40 counts detect any L3 cache drift).
-    for tag, fp, rp in (("real", fr["l3_provenance"], p1.get("l3_provenance")),
-                        ("supp", fs["l3_provenance"], p2.get("l3_provenance"))):
+    for part, arms in _GATED.items():
+        for arm in arms:
+            for k in ("genuine", "false_credit"):
+                f, r = fresh[part][arm][k], ref[part][arm][k]
+                good = abs(f - r) <= tol
+                ok = ok and good
+                print(f"  [{'OK' if good else 'XX'}] {part:10} {arm:17} {k:12} fresh={f:.3f} ref={r:.3f} delta={abs(f - r):.3f}")
+        fp, rp = fresh[part]["l3_provenance"], ref[part]["l3_provenance"]
         good = (fp == rp) and (fp.get("live_calls") == 0)
         ok = ok and good
-        print(f"  [{'OK' if good else 'XX'}] {tag}  l3_provenance == committed ({fp.get('source')}, "
-              f"live_calls={fp.get('live_calls')}, cache_hits={fp.get('cache_hits')}, "
-              f"rule_no={fp.get('rule_no_fallback')})" + ("" if good else f"  fresh={fp} ref={rp}"))
+        print(f"  [{'OK' if good else 'XX'}] {part:10} l3_provenance == committed ({fp.get('source')}, live_calls="
+              f"{fp.get('live_calls')}, cache_hits={fp.get('cache_hits')}, rule_no={fp.get('rule_no_fallback')})"
+              + ("" if good else f"  fresh={fp} ref={rp}"))
     print("COHERENT" if ok else "INCOHERENT")
     return ok
+
+
+def sensitivity(seeds: int = 30) -> None:
+    """How much of the anchor result is the noise model: genuine / false credit / reads of every arm with the
+    committed noise, with the crash-report variation off, with phantom crashes off, and with both off."""
+    from dataclasses import replace
+    from emulation.channel import GEChannelParams
+    from emulation.dump import DumpParams
+    base = GEChannelParams()
+    settings = [("committed noise model", None, None),
+                ("report variation off", None, DumpParams(p_truncate=0, p_lose_top=0, p_perturb=0, p_lognoise=0, p_garble=0, addr_jitter=False)),
+                ("phantom crashes off", replace(base, p_fp_good=0.0, p_fp_bad=0.0), None),
+                ("both off", replace(base, p_fp_good=0.0, p_fp_bad=0.0),
+                 DumpParams(p_truncate=0, p_lose_top=0, p_perturb=0, p_lognoise=0, p_garble=0, addr_jitter=False))]
+    print(f"NOISE SENSITIVITY — the six real bugs, {seeds} runs each; cell = genuine / false credit / reads")
+    print(f"  {'setting':24} {'baseline':>22} {'baseline + 1 confirm':>22} {'RDD':>22}")
+    for name, params, dp in settings:
+        out = run_real(seeds, params=params, dump_params=dp)
+        cell = lambda m: f"{m['genuine']:.3f} / {m['false_credit']:.3f} / {m['reads']:5.1f}"   # noqa: E731
+        print(f"  {name:24} {cell(out['baseline']):>22} {cell(out['baseline_confirm']):>22} {cell(out['tool']):>22}")
 
 
 def main() -> int:
@@ -120,12 +150,20 @@ def main() -> int:
         return mod.main()
     ap = argparse.ArgumentParser(prog="benchmarks.run",
                                  description="b1|b2|b3 = the 3 headlines; coherence = the model-free gate "
-                                             "(the real anchor + B2, exact and binary-free)",
+                                             "(the real anchor + B2); sensitivity = the anchor under weaker noise; "
+                                             "freeze = regenerate anchor.json",
                                  epilog="headline subcommands: 'b1', 'b2', 'b3' (e.g. 'python -m benchmarks.run "
                                         "b1 --frozen') dispatch to the headtohead / resilience / levers modules.")
-    ap.add_argument("suite", choices=["coherence"])
-    ap.parse_args()
-    scoring.require_hashseed0()                               # the B2 half of the gate hashes bug ids -> needs seed 0
+    ap.add_argument("suite", choices=["coherence", "sensitivity", "freeze"])
+    a = ap.parse_args()
+    scoring.require_hashseed0()                               # B2 hashes bug ids -> needs seed 0
+    if a.suite == "sensitivity":
+        sensitivity()
+        return 0
+    if a.suite == "freeze":
+        freeze()
+        print(f"  -> {_ANCHOR}")
+        return 0
     from benchmarks import resilience                         # the unified MODEL-FREE gate: real anchor + B2
     ok = coherence()                                         # the real anchor (cached-L3, model-free)
     ok = resilience.coherence() and ok                       # B2 (exact, model-free)

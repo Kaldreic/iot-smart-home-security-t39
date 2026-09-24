@@ -23,12 +23,12 @@
    "target": "A",
    "reachable": "A",
    "guard_off": {
-    "genuine": 0.9666666666666667,
+    "genuine": 0.9333333333333333,
     "false_credit": 0.0,
     "n": 30
    },
    "guard_on": {
-    "genuine": 0.9666666666666667,
+    "genuine": 0.9333333333333333,
     "false_credit": 0.0,
     "n": 30
    }
@@ -37,12 +37,12 @@
    "target": "C",
    "reachable": "C",
    "guard_off": {
-    "genuine": 0.9666666666666667,
+    "genuine": 0.9333333333333333,
     "false_credit": 0.0,
     "n": 30
    },
    "guard_on": {
-    "genuine": 0.9666666666666667,
+    "genuine": 0.9333333333333333,
     "false_credit": 0.0,
     "n": 30
    }

@@ -112,7 +112,7 @@ def run(n_bugs: int, n_seeds: int, *, arms, seed: int = 7, regime=None):
         for s in range(n_seeds):
             for label, (mod, oarm, kw) in arms.items():
                 o = LargeOracle(arm_identity[oarm], model, cp)
-                r = dict(mod(o, [b], random.Random(s), **kw)[0])
+                r = dict(mod(o, [b], random.Random(f"{b.bid}:{s}"), **kw)[0])   # own stream per (bug, seed)
                 r.update(reads=o.calls, **ax)
                 rows[label].append(r)
     return bugs, rows

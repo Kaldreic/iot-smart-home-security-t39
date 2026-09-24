@@ -46,6 +46,8 @@ THE RESULT (per arm, guard OFF vs ON):
 from __future__ import annotations
 
 import argparse
+import json
+from pathlib import Path
 import random
 import sys
 
@@ -89,8 +91,13 @@ def main() -> int:
     ap = argparse.ArgumentParser(prog="benchmarks.causeswap",
                                  description="Mode-2 cause-swap guard demo on a co-present A+C deployment binary")
     ap.add_argument("--seeds", type=int, default=30)
+    ap.add_argument("--freeze", action="store_true", help="regenerate the committed reference (causeswap.json)")
     a = ap.parse_args()
     out = run(a.seeds)
+    if a.freeze:
+        ref = Path(__file__).resolve().parent / "data" / "reference" / "causeswap.json"
+        ref.write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
+        print(f"  -> {ref}")
     print(f"=== Mode-2 cause-swap identity-guard demo — {a.seeds} seeds, co-present A+C window ===")
     print("  (REAL: A/C dumps + the guard's L2+L3 identity + the pipeline.  MODELLED: A+C co-present + a")
     print("   CRASH-ONLY in-loop oracle -- identity checked only at the guard, the case the guard is FOR.)")

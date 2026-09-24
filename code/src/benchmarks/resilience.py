@@ -56,8 +56,9 @@ from benchmarks import scoring, synthetic
 # runs with NO decorrelation (not part of its mechanism); RDD runs decorrelated — its shipped recipe. (The
 # ddmin-only ablation + the full lever decomposition are B3, on the real target — B2 is a pure head-to-head.)
 ARMS = {
-    "baseline": (scoring.run_baseline_campaign, "A", {}),
-    "tool":     (scoring.run_tool_campaign,     "B", {"decorrelate": True}),
+    "baseline":         (scoring.run_baseline_campaign, "A", {}),
+    "baseline_confirm": (scoring.run_baseline_campaign, "A", {"confirm": 1}),   # the read-matched control
+    "tool":             (scoring.run_tool_campaign,     "B", {"decorrelate": True}),
 }
 METRICS = ("genuine", "false_credit", "exact_minimal", "mean_size_gap", "reads")
 # B2 never exercises the open model: the in-loop L3 is the deterministic site-string rule.

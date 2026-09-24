@@ -1,0 +1,91 @@
+{
+ "real": {
+  "suite": "real",
+  "n_seeds": 30,
+  "bugs": [
+   "A",
+   "B",
+   "C",
+   "D",
+   "E",
+   "F"
+  ],
+  "baseline": {
+   "genuine": 0.8666666666666667,
+   "false_credit": 0.08888888888888889,
+   "size_gap_genuine": 0.42948717948717946,
+   "reads": 10.194444444444445
+  },
+  "baseline_confirm": {
+   "genuine": 0.7611111111111111,
+   "false_credit": 0.005555555555555556,
+   "size_gap_genuine": 0.6204379562043796,
+   "reads": 18.52777777777778
+  },
+  "tool": {
+   "genuine": 0.9333333333333333,
+   "false_credit": 0.0,
+   "size_gap_genuine": 0.10119047619047619,
+   "reads": 49.111111111111114
+  },
+  "l3_provenance": {
+   "source": "cached_open_model",
+   "model": "llama3.1:8b",
+   "escalations": 164,
+   "cache_hits": 164,
+   "rule_no_fallback": 0,
+   "live_calls": 0
+  },
+  "ablation": {
+   "genuine": 0.9,
+   "false_credit": 0.0,
+   "size_gap_genuine": 0.10493827160493827,
+   "reads": 46.355555555555554
+  },
+  "oracle": {
+   "genuine": 0.7611111111111111,
+   "false_credit": 0.0,
+   "size_gap_genuine": 0.24087591240875914,
+   "reads": 48.03333333333333
+  }
+ },
+ "suppressor": {
+  "suite": "suppressor",
+  "n_seeds": 30,
+  "true_minimal": [
+   3
+  ],
+  "baseline": {
+   "genuine": 0.8,
+   "false_credit": 0.13333333333333333,
+   "size_gap_genuine": 0.8333333333333334,
+   "reads": 12.166666666666666
+  },
+  "baseline_confirm": {
+   "genuine": 0.6333333333333333,
+   "false_credit": 0.0,
+   "size_gap_genuine": 1.263157894736842,
+   "reads": 22.3
+  },
+  "tool": {
+   "genuine": 0.9,
+   "false_credit": 0.0,
+   "size_gap_genuine": 0.0,
+   "reads": 73.23333333333333
+  },
+  "l3_provenance": {
+   "source": "cached_open_model",
+   "model": "llama3.1:8b",
+   "escalations": 40,
+   "cache_hits": 40,
+   "rule_no_fallback": 0,
+   "live_calls": 0
+  },
+  "ablation": {
+   "genuine": 0.0,
+   "false_credit": 0.0,
+   "size_gap_genuine": null,
+   "reads": 7.833333333333333
+  }
+ }
+}

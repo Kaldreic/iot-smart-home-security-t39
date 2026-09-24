@@ -84,12 +84,14 @@ def _run_repro_session(oracle: Oracle, bug: Bug, subset, rng: random.Random, *,
 
 def minimize(oracle: Oracle, bug: Bug, rng: random.Random, *,
              max_card: int = MAX_FUZZED_PKTS, max_try: int = MAX_TRY,
-             decorrelate: bool = False, most_recent_first: bool = True) -> BaselineResult:
+             decorrelate: bool = False, most_recent_first: bool = True, confirm: int = 0) -> BaselineResult:
     """AirBugCatcher's per-bug minimiser: increasing-cardinality ``combinations`` over the window,
     exact-subset dedup, stop at the first caught reproducer (hence smallest size). ``combinations``
     runs over the window MOST-RECENT-FIRST, the locality heuristic that matters (see module
     docstring); ``most_recent_first=False`` is the naive index order, kept only to demonstrate the
-    heuristic's effect."""
+    heuristic's effect. ``confirm`` is NOT part of AirBugCatcher: it is the read-matched control used
+    in the evaluation -- a caught reproducer is credited only after ``confirm`` further sessions reproduce
+    it too, otherwise enumeration continues."""
     W = list(range(bug.window))
     if most_recent_first:                            # closest-to-crash first
         W = W[::-1]
@@ -101,6 +103,8 @@ def minimize(oracle: Oracle, bug: Bug, rng: random.Random, *,
             if S in seen:                            # exact-subset dedup (file-hash skip)
                 continue
             seen.add(S)
-            if _run_repro_session(oracle, bug, S, rng, max_try=max_try, decorrelate=decorrelate):
+            if _run_repro_session(oracle, bug, S, rng, max_try=max_try, decorrelate=decorrelate) and all(
+                    _run_repro_session(oracle, bug, S, rng, max_try=max_try, decorrelate=decorrelate)
+                    for _ in range(confirm)):
                 return BaselineResult(True, S, k, oracle.calls - calls0)
     return BaselineResult(False, None, None, oracle.calls - calls0)

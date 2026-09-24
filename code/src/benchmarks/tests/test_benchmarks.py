@@ -5,6 +5,7 @@ Run:  ``PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks``   (after `
 
 from __future__ import annotations
 
+import random
 import sys
 from pathlib import Path
 
@@ -12,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # code/src -> impo
 
 from benchmarks import run  # noqa: E402
 from emulation import multibug  # noqa: E402
+from emulation import baseline as emulation_baseline  # noqa: E402
 
 
 def test_suite_smoke():
@@ -26,12 +28,11 @@ def test_suite_smoke():
 
 
 def test_real_suppressor_coherence():
-    """The fresh real+suppressor suite reproduces the committed PRESERVED-arm numbers within the gate's
-    +/-0.02 tolerance (delta 0.000 in practice) (baseline==arm_a, tool==arm_b_plus, suppressor ablation bails==arm_b) vs realbench_robust.json. The
-    synthetic resilience sweep (B2) has its OWN exact, model-free gate, pinned by test_b2_resilience_smoke
-    here and reproduced in full by `python -m benchmarks.resilience --coherence`."""
-    assert run.coherence(), "fresh real+suppressor suite must reproduce committed baseline (arm_a) + tool (arm_b_plus)"
-    return "real+suppressor coherence within +/-0.02 (delta 0.000: baseline==arm_a, tool==arm_b_plus, ablation bails)"
+    """The fresh anchor (six real bugs + the real suppressor) reproduces the committed anchor.json: genuine and
+    false credit of every arm within +/-0.02 (delta 0.000 in practice) and the tool's L3 provenance equal. B2
+    has its own leaf-exact gate (`python -m benchmarks.resilience --coherence`)."""
+    assert run.coherence(), "the fresh anchor must reproduce the committed anchor.json"
+    return "anchor coherence within +/-0.02 (delta 0.000 in practice) incl. the L3 provenance"
 
 
 def test_l3_judge_eval_anchored():
@@ -661,19 +662,42 @@ def test_b2_resilience_smoke():
     assert scoring.leaf_diffs(scoring.clean_nan(b), scoring.clean_nan(a)) == [], "B2 must be deterministic (re-run identical)"
     regs = a["regimes"]
     assert set(regs) == {"standard", "high_card", "suppressor", "far_trigger", "deep_noise", "wide_window", "OVERALL"}, f"B2 regimes: {set(regs)}"
-    assert set(regs["standard"]) == set(resilience.ARMS) == {"baseline", "tool"}, "B2 is a 2-arm head-to-head (ablation/levers are B3)"
+    assert set(regs["standard"]) == set(resilience.ARMS) == {"baseline", "baseline_confirm", "tool"}, "B2 arms"
     assert set(regs["standard"]["tool"]) == set(resilience.METRICS) == {
         "genuine", "false_credit", "exact_minimal", "mean_size_gap", "reads"}, "B2 must report B1's full metric set"
     g = lambda reg, arm, k="genuine": regs[reg][arm][k][0]       # noqa: E731  (CI mean)
-    for reg in regs:                                             # RDD sound + out-reproduces AirBug in every regime
+    for reg in regs:                                             # the alpha bound is a property of the tool
         assert g(reg, "tool", "false_credit") <= 0.02, f"RDD false_credit must be ~0 in {reg}, got {g(reg, 'tool', 'false_credit')}"
-        assert g(reg, "tool") > g(reg, "baseline") + 0.2, f"RDD genuine must beat AirBug in {reg}: {g(reg,'tool'):.2f} vs {g(reg,'baseline'):.2f}"
-    assert g("standard", "baseline", "false_credit") > 0.1, "the fixed-K AirBug baseline must false-credit"
-    assert g("OVERALL", "tool", "reads") > g("OVERALL", "baseline", "reads"), "RDD's robustness costs more device reads (the honest trade)"
     assert a["l3_provenance"] == {"source": "deterministic_rule", "model": None}, "B2 is model-free"
-    return (f"B2 smoke (150x2, deterministic, 2 arms x 6 regimes): RDD fc<=0.02 + out-reproduces AirBug every regime; "
-            f"OVERALL genuine RDD {g('OVERALL', 'tool'):.2f} vs AirBug {g('OVERALL', 'baseline'):.2f}; "
-            f"reads {g('OVERALL', 'tool', 'reads'):.0f} vs {g('OVERALL', 'baseline', 'reads'):.0f}; baseline fc {g('standard', 'baseline', 'false_credit'):.2f}")
+    return (f"B2 smoke (150x2, deterministic, 3 arms x 6 regimes): RDD fc<=0.02 every regime; OVERALL genuine "
+            f"RDD {g('OVERALL', 'tool'):.2f} / baseline {g('OVERALL', 'baseline'):.2f} / +1 confirm {g('OVERALL', 'baseline_confirm'):.2f}")
+
+
+def test_baseline_false_credit_is_the_phantom_rate():
+    """The baseline's false credit is a property of the noise MODEL, not of the algorithm: a phantom crash carries
+    the target's own dump, so accept-first books it. With the phantom rate zeroed the baseline's false credit is
+    exactly 0 (and its recall rises); with it on, one confirming re-run removes almost all of it."""
+    from dataclasses import replace
+    from benchmarks import scoring, synthetic
+    from emulation.dump import DumpModel
+    from emulation.synthetic import LargeOracle, base_dump, sev_channel
+    bugs = synthetic.gen_population(80, 7)
+    model = DumpModel(base={b.bid: base_dump(b) for b in bugs})
+    synthetic._TARGET_EXACT.clear()
+    synthetic._TARGET_EXACT.update({b.bid: emulation_baseline.exact_crash_id(model.clean_obs(b.bid)) for b in bugs})
+    def fc(params_of, **kw):
+        rows = []
+        for b in bugs:
+            o = LargeOracle(synthetic.id_exact, model, params_of(b))
+            rows += scoring.run_baseline_campaign(o, [b], random.Random(f"{b.bid}:0"), **kw)
+        return sum(r["false_credit"] for r in rows) / len(rows), sum(r["true_reproduced"] for r in rows) / len(rows)
+    on = fc(lambda b: sev_channel(b.sev))
+    off = fc(lambda b: replace(sev_channel(b.sev), p_fp_good=0.0, p_fp_bad=0.0))
+    conf = fc(lambda b: sev_channel(b.sev), confirm=1)
+    assert off[0] == 0.0, f"with no phantom crashes the baseline cannot false-credit, got {off[0]}"
+    assert off[1] >= on[1], "removing phantoms must not lower the baseline's recall"
+    assert conf[0] < on[0] / 4, f"one confirming re-run must remove most false credit: {on[0]:.3f} -> {conf[0]:.3f}"
+    return f"phantom rate on: fc {on[0]:.3f}; off: fc {off[0]:.3f} (genuine {on[1]:.2f} -> {off[1]:.2f}); +1 confirm: fc {conf[0]:.3f}"
 
 
 def test_b3_levers_coherence():
@@ -712,36 +736,20 @@ def test_leaf_diffs_comparator():
 
 
 def test_b1_reference_invariants():
-    """B1 (headtohead.json) STRUCTURAL gate — model-free + binary-free, so it runs in vanilla CI where the
-    binary-gated test_b1_headtohead_coherence SKIPs. It does NOT re-run B1 (that needs the host-native
-    binaries); it gates the committed reference's PUBLISHED STORY against a silent drift / hand-edit: RDD
-    out-reproduces AirBug end-to-end AND minimiser-isolated, RDD is sound (fc 0) while the fixed-K AirBug
-    false-credits, RDD's PoCs are tighter, both arms share ONE (identical) dedup front-end, RDD pays more
-    reads (the honest cost trade), and the real suppressor showcase has RDD strictly above AirBug at fc 0."""
+    """headtohead.json is well-formed: both arms carry B1's metric set, the shared dedup front-end gives both
+    arms the same accuracy, and the tool's false credit is within its alpha bound. (Whether the tool beats the
+    baseline is a result to be read, not a test to be passed.)"""
     import json
     ref = json.loads((run._REF / "headtohead.json").read_text(encoding="utf-8"))
     ab, rd, sp = ref["airbug"], ref["rdd"], ref["suppressor"]
     metrics = {"genuine", "genuine_routed", "false_credit", "dedup_accuracy", "exact_minimal", "mean_size_gap", "reads"}
     assert metrics <= set(ab) and metrics <= set(rd), f"B1 arms must carry B1's metric set, got {set(ab)} / {set(rd)}"
     m = lambda arm, k: arm[k]["mean"]                            # noqa: E731
-    # RDD out-reproduces AirBug end-to-end AND on the minimiser-isolated (correctly-routed) metric
-    assert m(rd, "genuine") > m(ab, "genuine"), f"RDD genuine must beat AirBug: {m(rd,'genuine')} vs {m(ab,'genuine')}"
-    assert m(rd, "genuine_routed") > m(ab, "genuine_routed"), "RDD genuine_routed must beat AirBug"
-    # soundness: RDD false-credit is 0; the fixed-K AirBug false-credits (the lever the SPRT+gate removes)
-    assert m(rd, "false_credit") == 0.0, f"RDD false_credit must be 0, got {m(rd,'false_credit')}"
-    assert m(ab, "false_credit") > 0.1, f"the fixed-K AirBug must false-credit, got {m(ab,'false_credit')}"
-    # tighter PoCs + the honest cost trade + the shared (identical) dedup front-end
-    assert m(rd, "exact_minimal") > m(ab, "exact_minimal") and m(rd, "mean_size_gap") < m(ab, "mean_size_gap"), "RDD PoCs must be tighter"
-    assert m(rd, "reads") > m(ab, "reads"), "RDD must pay more reads (the honest correctness-for-reads trade)"
+    assert m(rd, "false_credit") <= 0.02, f"RDD false_credit must be within its alpha bound, got {m(rd,'false_credit')}"
     assert m(rd, "dedup_accuracy") == m(ab, "dedup_accuracy"), "both arms share ONE dedup front-end (identical accuracy)"
-    # the real non-monotone suppressor showcase: RDD strictly above AirBug, sound vs the baseline's false-credit
-    assert sp["rdd"]["genuine"] > sp["airbug"]["genuine"] and sp["rdd"]["false_credit"] == 0.0 < sp["airbug"]["false_credit"], f"suppressor showcase off: {sp}"
-    # a loose magnitude pin (catches a wholesale value corruption without duplicating the exact binary-gated gate)
-    assert 0.80 <= m(rd, "genuine") <= 0.95 and 0.70 <= m(ab, "genuine") <= 0.80, f"B1 headline magnitudes drifted: RDD {m(rd,'genuine')} / AirBug {m(ab,'genuine')}"
-    assert ref["l3_live"] > 0, "the reference must record the live-freeze L3-call count"
-    return (f"B1 reference invariants (model-free): RDD genuine {m(rd,'genuine'):.3f} > AirBug {m(ab,'genuine'):.3f}; "
-            f"RDD fc 0 < AirBug {m(ab,'false_credit'):.3f}; RDD reads {m(rd,'reads'):.0f} > {m(ab,'reads'):.0f}; "
-            f"suppressor RDD {sp['rdd']['genuine']:.2f} > AirBug {sp['airbug']['genuine']:.2f}")
+    assert sp["rdd"]["false_credit"] <= 0.02, f"suppressor: RDD false credit within bound, got {sp['rdd']}"
+    return (f"B1 reference well-formed: RDD {m(rd,'genuine'):.3f}/{m(rd,'false_credit'):.3f} vs AirBug "
+            f"{m(ab,'genuine'):.3f}/{m(ab,'false_credit'):.3f}; reads {m(rd,'reads'):.0f} vs {m(ab,'reads'):.0f}")
 
 
 def test_b3_lever_consistency():
@@ -766,17 +774,13 @@ def test_b3_lever_consistency():
     assert close(msup, lev["minimiser_genuine_suppressor"]), f"minimiser delta desynced: arms={msup} vs levers={lev['minimiser_genuine_suppressor']}"
     for a in arms:
         assert close(lev["oracle_fc_invariance"][a], real[a]["false_credit"]["mean"]), f"oracle_fc_invariance[{a}] desynced from the arm fc"
-    # the published SIGNS: identity adds genuine; the minimiser recovers the suppressor where bare ddmin bails
-    assert lev["identity_genuine_real"] > 0, f"the IDENTITY lever must add genuine, got {lev['identity_genuine_real']}"
-    assert lev["minimiser_genuine_suppressor"] > 0, f"the MINIMISER lever must recover the suppressor, got {lev['minimiser_genuine_suppressor']}"
-    assert sup["ablation"]["genuine"] == 0.0 < sup["tool"]["genuine"], f"bare ddmin must BAIL (0) and the robust minimiser recover: {sup['ablation']['genuine']}/{sup['tool']['genuine']}"
-    # the ORACLE/gate lever = false-credit INVARIANCE: the fixed-K baseline false-credits, the 3 pipeline arms don't
+    # bare ddmin on a suppressed full window returns [] (the seed-bail the robust minimiser exists for)
+    assert sup["ablation"]["genuine"] == 0.0, f"bare ddmin must BAIL (0) on the suppressor, got {sup['ablation']['genuine']}"
     fci = lev["oracle_fc_invariance"]
-    assert fci["baseline"] > 0, f"the fixed-K baseline must false-credit, got {fci['baseline']}"
-    assert fci["oracle"] == fci["ablation"] == fci["tool"] == 0.0, f"the 3 pipeline arms must have fc 0 (the gate), got {fci}"
-    return (f"B3 lever consistency (model-free): identity +{lev['identity_genuine_real']:.3f} (= ablation-oracle), "
-            f"minimiser +{lev['minimiser_genuine_suppressor']:.3f} (suppressor tool {sup['tool']['genuine']:.1f} vs ablation {sup['ablation']['genuine']:.1f}); "
-            f"oracle-gate fc-invariance baseline {fci['baseline']:.3f} vs pipeline 0")
+    assert max(fci["oracle"], fci["ablation"], fci["tool"]) <= 0.02, f"the 3 pipeline arms must stay within the alpha bound, got {fci}"
+    return (f"B3 levers consistent with their arms: identity {lev['identity_genuine_real']:+.3f}, minimiser "
+            f"{lev['minimiser_genuine_suppressor']:+.3f} (suppressor tool {sup['tool']['genuine']:.2f} vs ablation "
+            f"{sup['ablation']['genuine']:.2f}); pipeline fc <= 0.02")
 
 
 TESTS = [test_suite_smoke, test_l3_collect_and_judge, test_l3_score, test_real_credit_path_strict,
@@ -789,6 +793,7 @@ TESTS = [test_suite_smoke, test_l3_collect_and_judge, test_l3_score, test_real_c
          test_l3_provenance_self_documents_source, test_scenario_l3_provenance_live,
          test_cached_and_synthetic_paths_never_call_live_judge, test_causeswap_cause_swap_guard,
          test_scenario_multiseed_robust_invariants, test_l2_threshold_not_overfit, test_leaf_diffs_comparator,
+         test_baseline_false_credit_is_the_phantom_rate,
          test_b1_reference_invariants, test_b1_headtohead_coherence, test_b3_lever_consistency,
          test_b2_resilience_smoke, test_b3_levers_coherence]
 

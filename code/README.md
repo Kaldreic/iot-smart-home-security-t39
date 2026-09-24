@@ -2,94 +2,107 @@
 
 The reference implementation and benchmark suite behind the report
 [_Stabilising the Oracle: Robust Delta-Debugging for Reproducing Wireless IoT
-Fuzzing Bugs_](../report/) (LaTeX source; the PDF is built by CI).
+Fuzzing Bugs_](../report/) (LaTeX source; CI builds the PDF).
 
 ## What it does
 
-When you fuzz the wireless stack of a smart-home device you get **crashes**, but what
-a developer needs is a **Proof-of-Concept**: the _shortest_ packet sequence that still
-triggers the bug. Shrinking a crash to that minimal PoC is the job of **delta
-debugging** (`ddmin`) — but on a noisy wireless target the "does it still crash?"
-oracle gives inconsistent answers, and `ddmin`, which assumes a stable answer, breaks.
-**RDD makes the answer stable in software** so classical minimisation works again:
+Fuzzing the wireless stack of a smart-home device yields crashes; a developer needs a
+proof of concept, the shortest packet sequence that still triggers the bug. Delta
+debugging (`ddmin`) finds one, but it assumes a stable "does it still crash?" answer, and
+a noisy wireless target does not give one. RDD makes the answer stable enough in software:
 
-- a **truncated SPRT** turns many noisy per-attempt verdicts into one accountable
-  decision with a bounded error rate;
-- a **two-tier crash-identity oracle** — a fast deterministic matcher that escalates
-  only its hard cases to a small open LLM judge — recognises the same bug through a
+- a **truncated SPRT** turns repeated noisy attempts into one decision with a bounded
+  error rate;
+- a **two-tier crash-identity oracle**, a deterministic matcher that escalates only its
+  uncertain cases to a small open language model, recognises the same bug through a
   garbled dump;
-- a **non-monotone-robust minimiser** drives `ddmin` to a minimal PoC and credits it
-  only after an independent re-confirmation.
+- a **suppressor-robust minimiser** drives `ddmin` from a crashing starting window and
+  credits a recipe only after an independent re-confirmation.
 
-> **The L3 LLM judge is a recall aid, not the soundness mechanism.** It is deliberately
-> biased toward "same" — its job is to _recover_ a same-bug reproduction L2 abstained on
-> through a garbled dump, not to discriminate — so the committed numbers reproduce even
-> with it forced to "same". Zero false credit comes from the minimiser's independent
-> re-confirmation that the PoC _provably crashes the right bug_, never from the judge.
+The judge (L3) is a recall aid, not the soundness mechanism: on the pairs it is asked
+about it says "same" almost always, so cross-bug discrimination rests on the
+deterministic matcher, and the false-credit bound rests on the SPRT re-confirmation.
 
 ## Install
 
-Requires **Python 3.11+**. From `code/`:
+Python 3.11 or newer. From `code/`:
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate   # recommended; required on PEP-668 distros (Ubuntu 24.04+, Debian 12+)
+python3 -m venv .venv && source .venv/bin/activate   # required on PEP 668 distributions
 python -m pip install -e .
 ```
 
-The only third-party dependencies are `numpy` and `drain3`; everything below runs
-**offline, on CPU**.
+The only dependencies are `numpy` and `drain3`. Everything below runs offline, on CPU.
 
-## Run it
-
-```bash
-PYTHONHASHSEED=0 python -m rdd.tests.test_rdd                # the tool's 18 invariants (~seconds)
-PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks  # the suite self-test (~15 s)
-PYTHONHASHSEED=0 python -m benchmarks.run coherence          # reproduce the committed numbers (delta = 0.000)
-```
-
-`PYTHONHASHSEED=0` pins determinism (the tests need no `pytest` — a tiny runner prints
-`ALL PASS` / `SKIP` / `FAIL`). `coherence` re-runs the benchmarks from scratch and
-checks that the fresh real-anchor rates land within ±0.02 of the committed references
-(they reproduce exactly here, delta 0.000) and that the B2 sweep matches leaf for leaf;
-if it prints `COHERENT`, the report's results reproduce on your machine.
-
-The three headline benchmarks — `PYTHONHASHSEED=0 python -m benchmarks.run <cmd>`:
-
-| Command      | What it measures                                                    | RDD vs. AirBugCatcher  |
-| ------------ | ------------------------------------------------------------------- | ---------------------- |
-| `b1`         | real Zephyr-binary head-to-head through the full pipeline (live L3) | 0.863 vs. 0.759 genuine |
-| `b2`         | 75k-campaign, 6-regime synthetic resilience sweep (model-free)      | 0.916 vs. 0.282 genuine |
-| `b3`         | real-target lever decomposition (oracle / identity / minimiser)     | isolates each lever     |
-| `coherence`  | the model-free reproducibility gate: the real anchor + B2           | delta = 0.000           |
-
-`b2` and `coherence` are fully model-free, so they run on a bare clone. `b1`/`b3` need
-the real Zephyr binaries (built below) — with `--frozen` they replay from the committed
-L3 cache; without the binaries they stop with a `FileNotFoundError` naming the build recipe.
-`--freeze` (b1/b2/b3) rewrites the committed reference and L3 cache in place and is never
-needed to reproduce. The suite self-test stays green on a fresh clone: its binary-gated
-B1/B3 checks SKIP cleanly when those are absent.
-
-## Reproduce the live Zephyr campaigns
-
-`b1`, `b3`, the end-to-end `scenario`, and the off-the-shelf `benchmarks.live` drive real, vulnerable Zephyr
-Bluetooth-controller binaries built for Zephyr's host-native `unit_testing` board (a ztest
-executable, no radio). **Build them** (needs Docker) with the
-recipe in [`src/emulation/zephyr-targets/`](./src/emulation/zephyr-targets/). The binaries are **32-bit**
-(`unit_testing` builds default to i386), so on a 64-bit host install the i386 runtime once before running them:
+## Run
 
 ```bash
-sudo dpkg --add-architecture i386 && sudo apt-get update && sudo apt-get install -y libc6:i386   # Debian/Ubuntu
-sudo dnf install -y glibc.i686                                                                   # Fedora/RHEL
+PYTHONHASHSEED=0 python -m rdd.tests.test_rdd                # the tool's 18 invariants (seconds)
+PYTHONHASHSEED=0 python -m benchmarks.tests.test_benchmarks  # the suite self-test (~15 s without binaries)
+PYTHONHASHSEED=0 python -m benchmarks.run coherence          # reproduce the committed numbers (~3 min)
+PYTHONHASHSEED=0 python -m benchmarks.run sensitivity        # the same anchor with the noise models switched off
 ```
 
-Then replay offline (the frozen L3 cache is keyed on the build-reproducible controller frames, so the replay
-reproduces on **any** machine) or run live against an [Ollama](https://ollama.com) `llama3.1:8b` judge:
+`PYTHONHASHSEED=0` pins the synthetic population. The tests need no `pytest`; a small
+runner prints `ALL PASS`, `SKIP` or `FAIL`. `coherence` re-runs the model-free
+benchmarks and checks them against `src/benchmarks/data/reference/`: the real-bug anchor
+within ±0.02 (it reproduces exactly, delta 0.000) and the synthetic sweep leaf for leaf.
+
+## Benchmarks
+
+`PYTHONHASHSEED=0 python -m benchmarks.run <command>`:
+
+| Command       | What it measures                                                       | Genuine recovery, RDD vs. baseline |
+| ------------- | ---------------------------------------------------------------------- | ---------------------------------- |
+| `b1`          | six real Zephyr bugs through the full pipeline (frozen judge cache)    | 0.848 vs. 0.759; false credit 0.000 vs. 0.137 |
+| `b2`          | 75,000-campaign, six-regime synthetic sweep (model-free)               | 0.824 vs. 0.266; false credit 0.000 vs. 0.632 |
+| `b3`          | real-bug lever decomposition (oracle, identity, minimiser)             | one arm per lever                  |
+| `coherence`   | the model-free reproducibility gate (real anchor + B2)                 | delta 0.000                        |
+| `sensitivity` | the real anchor with report variation and phantom crashes switched off | see below                          |
+
+Every arm is scored by the same rule: a reproduction is genuine only if the arm credited
+its recipe and the recipe crashes the target with the channel off; it is a false credit
+if the arm credited a recipe that does not. The baseline is a re-implementation of
+AirBugCatcher's reproduction strategy (bounded enumeration up to three packets, one
+attempt per candidate, exact signature match), not the original tool. A third arm,
+`baseline_confirm`, is the read-matched control: the same baseline that credits a
+candidate only after one confirming re-run.
+
+The comparison is a mechanism study under an assumed noise model, and the `sensitivity`
+command shows how much of it is the model. On the six real bugs (30 runs each):
+
+| Noise model            | Baseline          | Baseline + 1 confirm | RDD               |
+| ---------------------- | ----------------- | -------------------- | ----------------- |
+| as committed           | 0.867 / 0.089 / 10 | 0.761 / 0.006 / 19   | 0.933 / 0.000 / 49 |
+| report variation off   | 0.911 / 0.067 / 9  | 0.911 / 0.000 / 17   | 0.928 / 0.000 / 50 |
+| phantom crashes off    | 0.933 / 0.000 / 11 | 0.750 / 0.000 / 19   | 0.933 / 0.000 / 48 |
+| both off               | 0.978 / 0.000 / 10 | 0.933 / 0.000 / 17   | 0.928 / 0.000 / 47 |
+
+(cells: genuine / false credit / device reads per campaign). The baseline's false credit
+comes entirely from the modelled phantom crashes, which carry the target's own crash
+dump; RDD's advantage in recall comes from the modelled report variation, which defeats
+exact signature matching. Without either, the baseline wins at one fifth of the reads.
+
+`b2` and `coherence` are model-free and run on a bare clone. `b1` and `b3` drive the real
+Zephyr binaries (built below); `--frozen` replays them from the committed judge cache,
+`--refreeze` writes the reference from that replay, and `--freeze` re-runs them against a
+live judge and rewrites cache and reference. Without the binaries they stop with a
+`FileNotFoundError` naming the build recipe, and the self-test skips its binary-gated checks.
+
+## The real Zephyr targets
+
+`b1`, `b3`, `benchmarks.scenario` and `benchmarks.live` execute real, vulnerable Zephyr
+Bluetooth-controller binaries built for Zephyr's host-native `unit_testing` board (a
+32-bit ztest executable, no radio). Build them with Docker using the recipe in
+[`src/emulation/zephyr-targets/`](./src/emulation/zephyr-targets/); each script also
+verifies its binary's channel-off truth table. On a 64-bit host install the i386 runtime
+once (`libc6:i386` on Debian/Ubuntu, `glibc.i686` on Fedora, `lib32-glibc` on Arch).
 
 ```bash
 PYTHONHASHSEED=0 python -m benchmarks.run b1 --frozen        # offline replay, no model
-PYTHONHASHSEED=0 python -m benchmarks.run b1 --seeds 8       # live (needs Ollama)
-PYTHONHASHSEED=0 python -m benchmarks.scenario --traces 40   # the full fuzz -> dedup -> RDD -> PoC run
-PYTHONHASHSEED=0 python -m benchmarks.live --bug A --seeds 5 # the RDD tool off-the-shelf, one live bug
+PYTHONHASHSEED=0 python -m benchmarks.run b1 --seeds 8       # live judge (needs Ollama, llama3.1:8b)
+PYTHONHASHSEED=0 python -m benchmarks.scenario --traces 40   # fuzz trace -> dedup -> RDD -> PoC, live judge
+PYTHONHASHSEED=0 python -m benchmarks.live --bug A --seeds 5 # the tool off the shelf on one bug, live judge
 ```
 
 ## Layout
@@ -98,42 +111,44 @@ PYTHONHASHSEED=0 python -m benchmarks.live --bug A --seeds 5 # the RDD tool off-
 code/
 ├── pyproject.toml      # packaging + the two dependencies
 └── src/
-    ├── rdd/            # THE TOOL — self-contained: pipeline, SPRT oracle, L2/L3 identity, robust ddmin
-    ├── emulation/      # THE HARDWARE-FREE TEST BED — device oracles + the channel/dump noise models
-    │   └── zephyr-targets/   #   Docker build recipe for the real host-native bug binaries
-    └── benchmarks/     # THE SUITE — AirBugCatcher baseline vs. the tool + the reproducibility gate
+    ├── rdd/            # the tool: pipeline, SPRT oracle, L2/L3 identity, robust ddmin
+    ├── emulation/      # the hardware-free test bed: device oracles, channel and dump noise models
+    │   └── zephyr-targets/   #   Docker build recipe for the real bug binaries
+    └── benchmarks/     # the suite: baseline, runners, scoring, committed references
 ```
 
-The import graph is one-way **`benchmarks` → `emulation` → `rdd`**: the tool imports
-neither of the others; the test bed depends only on the tool's interfaces and injects
-its device oracles into it. Swap `emulation` for a real radio + device and the tool is
-unchanged.
+The import graph is one-way, `benchmarks` → `emulation` → `rdd`: the tool imports
+neither of the others, and the test bed injects its device oracles into it.
 
 ## Reproducibility
 
-Every benchmark is deterministic under `PYTHONHASHSEED=0`. The crash-identity LLM judge
-(L3) runs only on the real-bug anchor and the live campaigns; its verdicts are
-**committed to a cache** (`src/benchmarks/data/llm_cache/`), so every reported number
-reproduces with **no LLM, GPU, or network** — a cache hit returns the stored verdict, a
-miss falls back to a conservative "different bug". Tests that need the compiled binaries
-(under the gitignored `upstream/`) skip cleanly when absent, so a fresh clone is always
-green.
+Every benchmark is deterministic under `PYTHONHASHSEED=0`. The judge runs only on the
+real bugs; its verdicts are committed (`src/benchmarks/data/llm_cache/`), so every number
+above reproduces with no model, GPU or network. A cache miss falls back to a
+conservative "different bug", and the coherence gate checks that no miss occurred.
 
 ## Known limitations
 
-- The committed Bug-B base dump (`src/emulation/data/logs/dump-bug-b.txt`) is an abbreviated
-  transcript whose frame lines carry no bracketed return address, so the dump-variation model
-  yields a header-only report with no stack for B. The exact-id baseline is therefore *stronger*
-  on B than on the other bugs, which is conservative for RDD's claims; a raw re-capture would need
-  the Docker build.
-- The LL_LENGTH_REQ suppressor harness installs no SIGFPE handler and prints no backtrace, so
-  its emulated oracle re-uses Bug A's captured dump (the crash *is* A's conn-update SIGFPE): that
-  dump is borrowed, not captured.
-- The live campaigns (`b1`, `b3`, `scenario`, `live`) were not re-run during the September 2026
-  audit (the binaries were not rebuilt); their committed references and L3 caches are the June
-  2026 runs, which `--frozen` replays.
+- The channel is a Gilbert–Elliott process on a deterministic host binary, and every
+  RDD run resets the session before each attempt, which makes attempts independent; the
+  effect of correlated attempts on the sequential test is not evaluated.
+- A phantom crash (a non-reproducing subset reported as crashing, 2–7% per attempt,
+  taken from a software flaky-test corpus) is modelled as carrying the target's own dump.
+  The baseline's false credit is a direct consequence of this assumption.
+- Crash-report variation is modelled with assumed rates (truncation 0.35, top-frame
+  loss 0.20, frame churn 0.15, log interleaving 0.40, garbling 0.08). The identity
+  layer's gain over exact matching is a function of these rates.
+- The committed Bug-B dump is an abbreviated transcript with no bracketed return
+  addresses, so it yields no stack frames; exact matching is stronger on B. The
+  suppressor harness prints no backtrace, so its oracle re-uses Bug A's dump.
+- No experiment presents a different bug's dump to the in-loop identity oracle, so the
+  risk of crediting a recipe that reproduces a different bug is unmeasured.
+- Roughly a third of the synthetic bugs have minimal recipes larger than the baseline's
+  three-packet cap and cannot be recovered by it by construction.
+- The live end-to-end scenario is not bit-reproducible (live judge) and was not re-run
+  in the September 2026 audit; `b1` and `b3` were replayed from their caches on rebuilt
+  binaries.
 
-## License & citation
+## License and citation
 
-Released under the [MIT License](../LICENSE); to cite the project see
-[`../CITATION.cff`](../CITATION.cff).
+MIT, see [`../LICENSE`](../LICENSE). To cite the project use [`../CITATION.cff`](../CITATION.cff).

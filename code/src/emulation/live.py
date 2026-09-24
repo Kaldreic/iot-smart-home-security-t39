@@ -84,22 +84,6 @@ class LiveBinaryOracle:
         crashed, _ = self._run(subset)
         return crashed
 
-    def identity_truth(self, bug, subset) -> bool:
-        """Mode-2 CAUSE-SWAP guard for the minimiser's final-validation (rdd.minimizer identity_check): run
-        ``subset`` ONCE channel-OFF and confirm the binary's REAL crash dump (parsed from stderr, NOT the
-        modelled report ``rep_session`` uses) matches the TARGET identity. False if ``subset`` does not crash
-        OR crashes a DIFFERENT bug than ``self.bug``. DEMOTE-only (conjoined with the raw final-validation)
-        -> can only under-credit, never false-credit. Each oracle instance drives ONE target (HARNESS_BUG=self.bug), so
-        the binary emits only that target's crash and the real dump always matches -> a no-op for the
-        per-target benchmark oracles (incl. the A,C share of build-multibug, each targeted separately). It
-        hardens a MULTI-bug deployment binary, where a recipe could converge onto a DIFFERENT co-present
-        crash in the window and pass the crash-only raw_test."""
-        crashed, text = self._run(subset)
-        if not crashed:
-            return False
-        obs = DumpModel(base={self.bug: parse_base_dump(text, self.bug)}).clean_obs(self.bug)
-        return bool(self.identity(self.bug, obs))
-
     def rep_session(self, bug, subset, rng, *, decorrelate: bool = False):
         crashed, _ = self._run(subset)                     # ONE live binary run per subset (truth is determinate;
         params = replace(self.params, dev_settle=1.0, reset=1.0) if decorrelate else self.params  # the channel

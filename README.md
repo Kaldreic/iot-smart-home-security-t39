@@ -16,10 +16,12 @@ A deep-dive into Wi-Fi sensing defences and automated IoT bug reproduction, with
 
 ## Project status
 
-**Complete.** The coursework was delivered and graded in June 2026 (release `v1.0.0`); the repository is kept as an
-archival record and is not under active development. A final audit in September 2026 (release `v1.0.1`) re-verified
-every link and reference, rebuilt all three deliverables from a clean clone, and confirmed that the benchmark suite
-reproduces the report's numbers exactly.
+**Complete.** The coursework was delivered and graded in June 2026 (`v1.0.0`); the repository is kept as an
+archival record. A second pass in September 2026 (`v1.0.1`) re-verified every link, reference and slide claim
+against its source, rebuilt the three deliverables and the Zephyr targets from a clean clone, and corrected the
+evaluation where a fresh review found it unfair: the scorer now holds both tools to the same rule, the tool no
+longer gets a noise-free validation run the baseline lacks, and the report states which results depend on the
+simulator's noise assumptions. The corrected numbers are lower than the graded ones and are the ones reported here.
 
 ## Deliverables
 

@@ -30,13 +30,15 @@ def require_hashseed0() -> None:
 
 
 def score_bug(oracle: Oracle, bug: Bug, r) -> dict:
-    """Score one result against the NON-CIRCULAR channel-off ground truth (the minimiser never sees it):
-    a genuine reproduction vs an FP-driven FALSE CREDIT, and the size gap from the true 1-minimal."""
+    """Score one result against the channel-off ground truth the minimiser never sees. Both arms are held
+    to the same rule: a reproduction is *genuine* only if the arm credited its recipe AND the recipe crashes
+    the target channel-off; it is a *false credit* if the arm credited a recipe that does not. A recipe the
+    tool returned but refused to validate counts for neither."""
     gtm = oracle.ground_truth_minimals(bug)
     opt = min((len(m) for m in gtm), default=None)
-    true_repro = r.subset is not None and oracle.truth(bug, r.subset)
+    crashes = r.subset is not None and oracle.truth(bug, r.subset)
     return {
-        "true_reproduced": true_repro, "false_credit": bool(r.reproduced and not true_repro),
+        "true_reproduced": bool(r.reproduced and crashes), "false_credit": bool(r.reproduced and not crashes),
         "size_gap": (r.size - opt) if (r.size is not None and opt is not None) else None,
         "calls": r.calls,
     }
@@ -56,10 +58,11 @@ def run_tool_campaign(oracle, bugs: list, rng: random.Random, **kw) -> list[dict
 
 def run_baseline_campaign(oracle: Oracle, bugs: list[Bug], rng: random.Random, *,
                           max_card: int = baseline.MAX_FUZZED_PKTS, max_try: int = baseline.MAX_TRY,
-                          decorrelate: bool = False, most_recent_first: bool = True) -> list[dict]:
-    """Run the AirBugCatcher baseline over every bug; per-bug scored rows."""
+                          decorrelate: bool = False, most_recent_first: bool = True, confirm: int = 0) -> list[dict]:
+    """Run the AirBugCatcher baseline over every bug; per-bug scored rows. ``confirm`` > 0 is the
+    read-matched control: a caught reproducer must reproduce again that many times before it is credited."""
     return [score_bug(oracle, bug, baseline.minimize(oracle, bug, rng, max_card=max_card, max_try=max_try,
-            decorrelate=decorrelate, most_recent_first=most_recent_first)) for bug in bugs]
+            decorrelate=decorrelate, most_recent_first=most_recent_first, confirm=confirm)) for bug in bugs]
 
 
 def clean_nan(o):

@@ -23,11 +23,9 @@ realism/provenance, while the FUNCTIONAL inputs are the (modelled-varied) crash 
 fixed W-window -> MINIMISE (where the minimiser discards the window's real decoys to find the trigger). It is
 NOT a larger candidate space — the one gap a HW radio would close. USAGE VALIDATION: no baseline, no coherence
 gate (a live model + a live binary are not bit-reproducible). End-to-end genuine varies with the seed (live
-model + OTA channel), SUBSTANTIATED at mean 0.872, range [0.825, 0.925] over 8 seeds (``run_multiseed``;
-recorded disclosed-live in data/reference/scenario_multiseed.json -- a single seed is not bit-reproducible, so
-the RANGE is the claim). The dedup accuracy (mean 0.931) and the 0 false-credit (max 0.000 across all 8 seeds)
-are ROBUST; ``test_scenario_multiseed_robust_invariants`` pins those invariants reproducibly in CI (fake judge +
-mocked binary).
+model + OTA channel), so a single seed is not bit-reproducible and the RANGE over seeds is the claim
+(``run_multiseed``). The dedup accuracy and the 0 false-credit are the robust invariants;
+``test_scenario_multiseed_robust_invariants`` pins them reproducibly in CI (fake judge + mocked binary).
 
   python -m benchmarks.scenario --traces 40 --model llama3.1:8b              # one live run (+ confusion matrix)
   python -m benchmarks.scenario --traces 40 --seeds 8 --model llama3.1:8b    # the multi-seed range (needs Ollama)
