@@ -10,9 +10,9 @@ single flaw can become a persistent way in.
 
 The standard way to surface such flaws is \emph{fuzzing}: sending a target many
 malformed or out-of-order packets and watching for anything that crashes it. The
-\textsc{SweynTooth} campaign found twelve new Bluetooth Low Energy vulnerabilities
-across seven vendors and \textsc{BrakTooth} sixteen in Bluetooth Classic
-devices~\cite{sweyntooth2020,braktooth2022}. Detecting a crash, though, does not
+\textsc{SweynTooth} campaign found eleven new Bluetooth Low Energy vulnerabilities
+in chips from seven vendors and \textsc{BrakTooth} eighteen in thirteen Bluetooth
+Classic devices from eleven vendors~\cite{sweyntooth2020,braktooth2022}. Detecting a crash, though, does not
 give a developer enough to fix it. What a developer needs is a
 \emph{proof of concept} (PoC): the minimal set of packets that reliably triggers
 the fault. Distilling that from a campaign that sent tens of thousands of packets
@@ -26,9 +26,10 @@ the same result, because the device keeps hidden state and the channel adds
 noise. Every reproduction tool depends on an \emph{oracle}~\cite{oracleproblem2015},
 the component that decides whether a sequence triggered the bug, and here the
 oracle answers inconsistently. Delta debugging~\cite{ddmin2002} is an established
-technique for isolating failure-inducing inputs, but its guarantees assume that a
-query always gets the same answer and that adding packets never removes a crash.
-When either assumption fails it can discard the critical packet and converge on
+technique for isolating failure-inducing inputs, but its minimality proof treats
+the test as a deterministic function of the input, and delta debugging assumes
+that adding packets never removes a crash. When either fails it can discard the
+critical packet and converge on
 an incorrect or empty result. \textsc{AirBugCatcher} avoids the algorithm: it
 enumerates small combinations of suspect packets and runs each once, which keeps
 the search cheap but forgoes minimality and accepts the first crash it sees.

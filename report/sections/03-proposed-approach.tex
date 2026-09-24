@@ -90,7 +90,7 @@ L3, the other two being the tiers of the identity oracle. Both RDD and
 \textsc{AirBugCatcher} are evaluated on a software target (the Zephyr controller
 compiled for its host-native \texttt{unit\_testing} target, without radio
 hardware), so the medium is simulated. Each attempt passes through a
-\emph{Gilbert--Elliott} burst channel~\cite{gilbert1960,elliott1963}, a two-state
+\emph{Gilbert--Elliott} burst channel~\cite{gilbert1960,elliott1963} applied per packet, a two-state
 Markov chain whose ``bad'' state raises the loss rate for a few attempts, on top
 of which a flakiness layer decides whether an attempt registers the crash: a
 true reproducer is missed on about 0.44 of valid attempts, an attempt fails to
@@ -143,8 +143,8 @@ use the cache.
 \subsection{The two-tier crash-identity oracle (L2$\rightarrow$L3)}
 
 An attempt that crashes must be recognised as the target bug. Under noise the same
-crash arrives with different addresses, a truncated backtrace or interleaved log
-lines, so an exact match fails. RDD uses a cost-gated cascade in the manner of
+crash arrives with a truncated backtrace, lost top frames or interleaved log
+lines, so a match on the recorded trace fails. RDD uses a cost-gated cascade in the manner of
 \emph{FrugalGPT}~\cite{frugalgpt2023}: a deterministic matcher first, a language
 model only for what it cannot settle.
 
@@ -182,8 +182,8 @@ exact matching in Section~\ref{sec:evaluation} is a function of these rates.
 
 \subsection{Non-monotone-robust delta debugging}
 
-Standard \texttt{ddmin}~\cite{ddmin2002} assumes monotonicity: if a set of packets
-crashes the device, adding packets does not stop the crash. A \emph{suppressor}
+Delta debugging~\cite{ddmin2002} assumes monotonicity: if a set of packets crashes
+the device, adding packets does not stop the crash. A \emph{suppressor}
 packet in the window violates it, and if the full window contains one, the first
 test fails and \texttt{ddmin} returns nothing. RDD's driver first tests the full
 window with the uncached oracle; if it does not crash, it searches for a crashing

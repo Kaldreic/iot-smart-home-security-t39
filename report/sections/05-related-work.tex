@@ -21,10 +21,9 @@ calls. However, these methods treat the oracle as \emph{deterministic}, making
 assumptions about the input rather than the verdict. Probabilistic Monotonicity
 Assessment (\textsc{PMA})~\cite{pma2025} departs from this,
 modelling the search space's \emph{monotonicity} probabilistically to avoid
-redundant tests. \textsc{PMA} is the closest related work, but it only accelerates
-\texttt{ddmin} under structural (deterministic) non-monotonicity and does not
-\emph{stabilise} the verdict or use an
-oracle model with sequential tests or bounded error. All these methods assume a
+redundant tests. \textsc{PMA} is the closest related work; it cites noise and
+intermittent failures as motivation, but it accepts each verdict as given and does
+not \emph{stabilise} it with repeated trials, sequential tests or an error bound. All these methods assume a
 reliable oracle, which wireless environments do not provide, so \texttt{ddmin}'s
 1-minimality guarantee does not hold. RDD adopts a different strategy: it maintains
 a classical search but prioritises producing a reliable verdict, complementing
@@ -37,26 +36,30 @@ decision on a real channel.
 \subsection{Wireless fuzzing: discovery versus reproduction}
 
 Over-the-air protocol fuzzing is a well-established field.
-\textsc{SweynTooth}~\cite{sweyntooth2020} identified twelve BLE vulnerabilities
-across seven vendors, and \textsc{BrakTooth}~\cite{braktooth2022} found sixteen in
-Bluetooth Classic. Both projects conclude at discovery, requiring analysts to
+\textsc{SweynTooth}~\cite{sweyntooth2020} identified eleven BLE vulnerabilities
+in chips from seven vendors, and \textsc{BrakTooth}~\cite{braktooth2022} eighteen in
+Bluetooth Classic devices from eleven vendors. Both projects conclude at discovery, requiring analysts to
 manually construct a clean PoC. \textsc{U-Fuzz}~\cite{ufuzz2024} advances further:
 after stateful fuzzing of IoT and 5G protocols, it performs a post-fuzzing step to
 identify the minimal set of mutated packets that cause a crash. This makes U-Fuzz
-RDD's closest counterpart, but the distinction lies in the oracle. U-Fuzz uses a
-single backward replay per candidate and records any remaining instability as
-anomalies, while RDD employs a sequential, bounded-error verdict.
+RDD's closest counterpart, but the distinction lies in the oracle. U-Fuzz walks
+backwards from the crash replaying one mutated packet at a time in a fresh session
+until the crash recurs, states no retry policy, and labels crashes whose
+reproduction is unstable as anomalies, while RDD employs a sequential,
+bounded-error verdict.
 \textsc{AirBugCatcher}~\cite{airbugcatcher2024} is the most direct comparator, as it
 also addresses noisy-verdict problems. However, it examines suspect combinations up
-to a small fixed size and manages non-determinism by repeating trials within a set
-budget, rather than stabilising the verdict. In its study, a plain replay baseline,
+to a small fixed size and runs each generated test case once within a trial budget,
+rather than stabilising the verdict. In its study, a plain replay baseline,
 repeated five times to average out the medium, reproduced only 13 to 23 of 190
-crashes~\cite{airbugcatcher2024}. % AirBugCatcher RQ5: replay baseline, 13-23/190 over 5 trials
+crashes on its Bluetooth target and none on the other four~\cite{airbugcatcher2024}. % AirBugCatcher RQ5, Table 7
 RDD builds upon these concepts rather than competing with them. Three improvements
-have been noted: bounded enumeration is replaced by \texttt{ddmin}, and time-budget
-repetition is replaced by a statistical oracle. The third improvement is in the
-identity layer: while \textsc{AirBugCatcher} matches crashes by exact source-line or
-memory-offset, RDD uses a noise-tolerant two-tier cascade.
+have been noted: bounded enumeration is replaced by \texttt{ddmin}, and one attempt
+per candidate is replaced by a statistical oracle. The third improvement is in the
+identity layer: \textsc{AirBugCatcher} matches crashes by exact source-line trace,
+by an address-offset pattern on memory traces, or by packet state when no log
+exists, and counts a crash with a non-matching identifier as ``unexpected'';
+RDD uses a two-tier cascade tolerant of truncated and garbled reports.
 
 \subsection{Oracle stabilisation and flaky tests}
 
@@ -70,9 +73,10 @@ for noisy \emph{physical} targets. The Sequential Probability Ratio Test
 a set budget while controlling both error rates. Applying SPRT to the reproduction
 oracle introduces Wald's guarantees, reducing false credit from the baseline's
 0.632 to 0.000 in all stress tests. Using a statistical test as an oracle is not new: Guderlei and
-Mayer~\cite{statoracle2007} evaluate random-output programs against a distribution,
-but they do so as a batch decision offline, whereas RDD makes sequential,
-bounded-error verdicts during the reduction process.
+Mayer~\cite{statoracle2007} test random-output programs by comparing independent
+output samples under a metamorphic relation with a fixed-sample hypothesis test, an
+offline batch decision, whereas RDD makes sequential, bounded-error verdicts during
+the reduction process.
 
 \subsection{Language models (LLMs) as testing oracles}
 
@@ -87,8 +91,10 @@ generate oracles offline. The most structurally similar approach is
 within a delta-debugging loop for chatbot over-refusal. While similar to RDD, DDOR
 targets a replayable software endpoint, without wireless noise or a statistical
 reproduction oracle. Another recent effort applies delta debugging to
-LLM-integrated systems~\cite{ddllm2026} with semantic markers, again on replayable
-models without a statistical test. Ensemble frameworks differ:
+LLM-integrated systems~\cite{ddllm2026} with semantic markers; it treats the model
+as a probabilistic oracle and classifies each subset by a fixed number of repeated
+trials with a failure threshold, a majority vote rather than a sequential,
+error-bounded test. Ensemble frameworks differ:
 self-consistency~\cite{selfconsistency2023} uses a single model's majority vote,
 cross-model voting yields only minor gains once voters are
 correlated~\cite{condorcetllm2024}, LLM-as-a-judge approaches approximate human
@@ -119,11 +125,12 @@ determines identity during the process as part of the reproduction verdict.
 
 Commercial wireless fuzzing is well established. Defensics~\cite{defensics} provides
 Bluetooth and Wi-Fi suites that transmit malformed traffic over the air, and
-Keysight's IoT Security Assessment offers similar capabilities for radio stacks,
-leveraging \textsc{BrakTooth} research~\cite{keysightiot,braktooth2022}. Both tools
+Keysight's IoT Security Assessment offers similar capabilities for radio stacks
+and incorporated the \textsc{BrakTooth} findings, whose research Keysight
+funded~\cite{keysightiot,keysightbraktooth2021,braktooth2022}. Both tools
 identify failures but do not perform minimisation. Crash triage is also commercial:
 Google's ClusterFuzz~\cite{clusterfuzz} deduplicates and minimises test cases, but
-only on local instrumented software where results are repeatable. A market review
+only on locally executed software where results are repeatable. A market review
 found no tool that combines adaptive minimisation with a non-deterministic
 over-the-air target; these features are offered separately.
 
@@ -136,6 +143,6 @@ and false-credit-bounded on a non-deterministic wireless target, together with a
 tiered identity cascade for the varied dumps caused by noise. Other tools are
 similar but not equivalent. \textsc{U-Fuzz} minimises wireless crashes, but only
 with a single replay rather than a stabilised verdict. \textsc{PMA} measures
-monotonicity but does not provide a bounded-error verdict. \textsc{DDOR} and
-LLM-system reducers operate on replayable targets. The quantum reducer uses a
+monotonicity but does not provide a bounded-error verdict. \textsc{DDOR} reduces against a replayable
+endpoint, and the LLM-system reducer votes over a fixed number of trials. The quantum reducer uses a
 fixed-sample check. That is the position RDD takes.
