@@ -2,12 +2,12 @@
 
 <div class="slide-tagline">Group similar bugs together, even when log traces differ.</div>
 
-<div class="split-label" style="text-align: center; margin-top: 0.3rem;">Failure types</div>
+<div class="split-label centered" style="margin-top: 0.3rem;">Failure types</div>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 36rem; margin: 0.2rem auto 0 auto;">
+<div class="failure-grid">
 
-<div class="testcase-card" style="padding: 0.55rem 0.8rem;">
-<svg viewBox="0 0 50 50" width="30" height="30" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 0.15rem;">
+<div class="testcase-card">
+<svg viewBox="0 0 50 50" width="30" height="30" xmlns="http://www.w3.org/2000/svg">
 <path d="M 25 6 L 46 42 L 4 42 Z" fill="#ffffff" stroke="#822433" stroke-width="2.2" stroke-linejoin="round"/>
 <line x1="25" y1="19" x2="25" y2="31" stroke="#822433" stroke-width="3" stroke-linecap="round"/>
 <circle cx="25" cy="37" r="1.8" fill="#822433"/>
@@ -16,8 +16,8 @@
 <div class="testcase-body">Directly seen in logs or packet traces.</div>
 </div>
 
-<div class="testcase-card" style="padding: 0.55rem 0.8rem;">
-<svg viewBox="0 0 50 50" width="30" height="30" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 0.15rem;">
+<div class="testcase-card">
+<svg viewBox="0 0 50 50" width="30" height="30" xmlns="http://www.w3.org/2000/svg">
 <circle cx="25" cy="25" r="17" fill="#faf5f6" stroke="#822433" stroke-width="1.8"/>
 <line x1="25" y1="9" x2="25" y2="12" stroke="#822433" stroke-width="1.5"/>
 <line x1="25" y1="38" x2="25" y2="41" stroke="#822433" stroke-width="1.5"/>
@@ -34,13 +34,13 @@
 
 </div>
 
-<div style="max-width: 38rem; margin: 0.5rem auto 0 auto;">
+<div class="decision-tree">
 
-<div style="display: flex; justify-content: center;">
-<div style="padding: 0.35rem 1rem; background: var(--sapienza-red); color: #ffffff; border-radius: 999px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em;">Log available?</div>
+<div class="decision-root">
+<div class="decision">Log available?</div>
 </div>
 
-<svg viewBox="0 0 400 28" preserveAspectRatio="none" style="width: 100%; height: 24px; display: block;" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 400 28" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
 <line x1="200" y1="0" x2="200" y2="10" stroke="#822433" stroke-width="2"/>
 <line x1="100" y1="10" x2="300" y2="10" stroke="#822433" stroke-width="2"/>
 <line x1="100" y1="10" x2="100" y2="24" stroke="#822433" stroke-width="2"/>
@@ -49,25 +49,25 @@
 <polygon points="300,27 295,21 305,21" fill="#822433"/>
 </svg>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
-<div style="text-align: center; padding: 0.45rem 0.8rem; border: 2px solid var(--sapienza-red); border-radius: 6px; background: #ffffff; box-shadow: 0 1px 3px rgba(130, 36, 51, 0.1);">
-<div style="font-size: 0.66rem; color: var(--sapienza-red); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.15rem;">Yes · with log</div>
-<div style="font-size: 0.78rem; color: var(--sapienza-ink); line-height: 1.3;">Source-code line + memory trace</div>
+<div class="branches">
+<div class="branch">
+<div class="kicker">Yes · with log</div>
+<div class="text">Source-code line + memory trace</div>
 </div>
-<div style="text-align: center; padding: 0.45rem 0.8rem; border: 2px dashed var(--sapienza-red); border-radius: 6px; background: #faf5f6; box-shadow: 0 1px 3px rgba(130, 36, 51, 0.08);">
-<div style="font-size: 0.66rem; color: var(--sapienza-red); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.15rem;">No · fallback</div>
-<div style="font-size: 0.78rem; color: var(--sapienza-ink); line-height: 1.3;">Packet state before crash</div>
+<div class="branch fallback">
+<div class="kicker">No · fallback</div>
+<div class="text">Packet state before crash</div>
 </div>
-</div>
-
 </div>
 
-<div style="max-width: 26rem; margin: 0.55rem auto 0 auto; background: var(--sapienza-red-soft); border: 1px solid rgba(130, 36, 51, 0.35); border-radius: 6px; padding: 0.5rem 0.8rem; box-shadow: 0 1px 3px rgba(130, 36, 51, 0.08);">
-<div style="font-size: 0.64rem; color: var(--sapienza-red); font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.4rem;"><span style="font-family: 'Menlo', 'Monaco', monospace; font-weight: 500; letter-spacing: 0;">›_</span>Example log trace</div>
-<pre style="margin: 0; font-size: 0.72rem; color: var(--sapienza-ink); line-height: 1.45; font-family: 'Menlo', 'Monaco', 'Courier New', monospace; white-space: pre;">BugID1=<span style="background: rgba(130, 36, 51, 0.18); padding: 0 0.15em; border-radius: 2px;">0x40101311</span>:0x3ffcc170
-       <span style="background: rgba(130, 36, 51, 0.18); padding: 0 0.15em; border-radius: 2px;">0x4001a637</span>:0x3ffcc190...
-BugID2=<span style="background: rgba(130, 36, 51, 0.18); padding: 0 0.15em; border-radius: 2px;">0x40101311</span>:0x3ffcc580
-       <span style="background: rgba(130, 36, 51, 0.18); padding: 0 0.15em; border-radius: 2px;">0x4001a637</span>:0x3ffcc5a0...</pre>
 </div>
 
-<div style="max-width: 30rem; margin: 0.4rem auto 0 auto; text-align: center; font-size: 0.73rem; color: var(--sapienza-muted); font-style: italic; line-height: 1.4;">Highlighted addresses match across different offsets — <strong style="color: var(--sapienza-red); font-style: normal;">same root cause, one group</strong>.</div>
+<div class="log-box">
+<div class="kicker"><span class="prompt">›_</span>Example log trace</div>
+<pre class="log">BugID1=<span class="hl">0x40101311</span>:0x3ffcc170
+       <span class="hl">0x4001a637</span>:0x3ffcc190...
+BugID2=<span class="hl">0x40101311</span>:0x3ffcc580
+       <span class="hl">0x4001a637</span>:0x3ffcc5a0...</pre>
+</div>
+
+<div class="note log-note">Highlighted addresses match across different offsets — <strong>same root cause, one group</strong>.</div>

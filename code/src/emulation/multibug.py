@@ -1,11 +1,15 @@
-"""emulation.multibug — the REAL Zephyr controller target as a hardware-free oracle.
+"""emulation.multibug — the real Zephyr controller target as a hardware-free oracle.
 
-Composes the channel + the dump-variation model + the channel-off truth table into the reproduction
-oracle the minimisers drive: inject a packet subset -> ``which_crash`` (the real binary's channel-off
-truth) -> the L1 Gilbert-Elliott channel (is the crash OBSERVED on this OTA attempt) -> if observed,
-a VARIED crash dump. The identity matcher (the baseline's exact-id, or the tool's L2/L3) is INJECTED
-by the benchmark runner. Replace this module with a real radio + device and the RDD tool is unchanged (the
-benchmark re-wires its oracle). Device data (the truth table + the captured base dumps) lives in emulation/data/."""
+Composes the channel, the dump-variation model and the channel-off truth table
+into the reproduction oracle the minimisers drive: inject a packet subset,
+``which_crash`` gives the binary's channel-off truth, the L1 Gilbert-Elliott
+channel decides whether the crash is observed on this OTA attempt, and if it is,
+a varied crash dump is emitted. The identity matcher (the baseline's exact-id or
+the tool's L2/L3) is injected by the benchmark runner. Replacing this module with
+a real radio and device leaves the RDD tool unchanged; the benchmark re-wires its
+oracle. Device data (the truth table and the captured base dumps) lives in
+emulation/data/.
+"""
 
 from __future__ import annotations
 
@@ -21,13 +25,13 @@ from rdd.sprt import Rep
 _DATA = Path(__file__).resolve().parent / "data"
 LOGS = _DATA / "logs"          # the captured base dumps (device data)
 
-TRUTH = json.loads((_DATA / "truth-multibug.json").read_text())     # {"A":..,..,"F":..} channel-off truth
+TRUTH = json.loads((_DATA / "truth-multibug.json").read_text(encoding="utf-8"))     # {"A":..,..,"F":..} channel-off truth
 WINDOW = {"A": 8, "B": 8, "C": 5, "D": 5, "E": 5, "F": 5}
 TRUE_MIN = {"A": [frozenset({7})], "B": [frozenset({7})],           # channel-off exhaustive minimals
             "C": [frozenset({3, 4})], "D": [frozenset({3, 4})],
             "E": [frozenset({3, 4})], "F": [frozenset({3, 4})]}
 BUGS = tuple(b for b in TRUTH if b in WINDOW)
-MODEL = DumpModel.from_logs(LOGS, bugs=BUGS)              # the REAL captured base dumps
+MODEL = DumpModel.from_logs(LOGS, bugs=BUGS)              # the real captured base dumps
 
 
 def which_crash(bug: str, subset) -> str | None:
@@ -39,7 +43,6 @@ class MBug:
     bug: str
     window: int
     crash_sig: str
-    kind: str = "crash"
 
 
 def _mbug(b: str) -> MBug:
@@ -52,12 +55,12 @@ def id_exact(target_bug: str, obs) -> bool:                         # baseline: 
 
 @dataclass
 class MultibugOracle:
-    """The oracle interface; the identity matcher is INJECTED so the arms run verbatim."""
+    """The oracle interface; the identity matcher is injected so the arms run verbatim."""
     identity: object
     params: GEChannelParams = field(default_factory=GEChannelParams)
     calls: int = 0
 
-    def truth(self, bug, subset) -> bool:                          # channel-OFF, identity-free truth
+    def truth(self, bug, subset) -> bool:                          # channel-off, identity-free truth
         return which_crash(bug.bug, subset) == bug.bug
 
     def rep_session(self, bug, subset, rng, *, decorrelate: bool = False):
@@ -70,7 +73,7 @@ class MultibugOracle:
             out = ch.step(crashes)
             if out is not Outcome.REPRODUCED:                      # OTA: crash not observed this attempt
                 return OUT2REP[out]
-            obs = MODEL.emit(bug.bug, rng)                         # observed -> a VARIED report
+            obs = MODEL.emit(bug.bug, rng)                         # observed -> a varied report
             return Rep.YES if self.identity(bug.bug, obs) else Rep.NO
         return rep
 

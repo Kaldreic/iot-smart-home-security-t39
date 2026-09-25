@@ -1,8 +1,9 @@
 % ============================================================================
-% References. Trimmed to the basic elements (authors, title, venue) plus a URL
-% to find each work and the date it was last accessed. Publication dates, page
-% numbers, volumes and issue numbers are intentionally omitted; the URL is the
-% authoritative locator. Every URL was verified live on 24 June 2026.
+% References. Authors, title, venue, year, and for published works the volume,
+% issue and pages as Crossref records them, plus a DOI or URL. Web pages and
+% preprints carry the date they were last accessed. Every URL was verified live,
+% and every entry checked against the Crossref, arXiv or publisher record, on
+% 24 September 2026.
 % Keys are stable — do not change them. AirBugCatcher is the source paper.
 % ============================================================================
 
@@ -13,8 +14,8 @@
   author    = {Hua, Guoqiang and Garbelini, Matheus E. and Chattopadhyay, Sudipta},
   year      = {2024},
   booktitle = {Proceedings of the Annual Computer Security Applications Conference ({ACSAC})},
-  url       = {https://asset-group.github.io/papers/airbugcatcher.pdf},
-  note      = {Accessed: 24 June 2026},
+  pages     = {607--620},
+  url       = {https://doi.org/10.1109/ACSAC63791.2024.00058},
 }
 
 % --- IoT / OTA wireless fuzzing ---
@@ -25,7 +26,7 @@
   year      = {2020},
   booktitle = {Proceedings of the {USENIX} Annual Technical Conference ({USENIX ATC})},
   url       = {https://www.usenix.org/conference/atc20/presentation/garbelini},
-  note      = {Accessed: 24 June 2026},
+  note      = {Accessed: 24 September 2026},
 }
 
 @inproceedings{braktooth2022,
@@ -34,7 +35,7 @@
   year      = {2022},
   booktitle = {Proceedings of the {USENIX} Security Symposium},
   url       = {https://www.usenix.org/conference/usenixsecurity22/presentation/garbelini},
-  note      = {Accessed: 24 June 2026},
+  note      = {Accessed: 24 September 2026},
 }
 
 @inproceedings{chatafl2024,
@@ -43,16 +44,16 @@
   year      = {2024},
   booktitle = {Proceedings of the Network and Distributed System Security Symposium ({NDSS})},
   url       = {https://www.ndss-symposium.org/ndss-paper/large-language-model-guided-protocol-fuzzing/},
-  note      = {Accessed: 24 June 2026},
+  note      = {Accessed: 24 September 2026},
 }
 
 @inproceedings{ufuzz2024,
   title     = {{U-Fuzz}: Stateful Fuzzing of {IoT} Protocols on {COTS} Devices},
   author    = {Shang, Zewen and Garbelini, Matheus E. and Chattopadhyay, Sudipta},
   year      = {2024},
-  booktitle = {Proceedings of the {IEEE} International Conference on Software Testing, Verification and Validation ({ICST})},
+  booktitle = {Proceedings of the {IEEE} Conference on Software Testing, Verification and Validation ({ICST})},
+  pages     = {209--220},
   url       = {https://doi.org/10.1109/ICST60714.2024.00027},
-  note      = {Accessed: 24 June 2026},
 }
 
 % --- Delta debugging / failure-inducing-input minimisation ---
@@ -62,8 +63,10 @@
   author  = {Zeller, Andreas and Hildebrandt, Ralf},
   year      = {2002},
   journal = {{IEEE} Transactions on Software Engineering},
+  volume  = {28},
+  number  = {2},
+  pages   = {183--200},
   url     = {https://doi.org/10.1109/32.988498},
-  note    = {Accessed: 24 June 2026},
 }
 
 @inproceedings{hdd2006,
@@ -71,8 +74,8 @@
   author    = {Misherghi, Ghassan and Su, Zhendong},
   year      = {2006},
   booktitle = {Proceedings of the International Conference on Software Engineering ({ICSE})},
+  pages     = {142--151},
   url       = {https://doi.org/10.1145/1134285.1134307},
-  note      = {Accessed: 24 June 2026},
 }
 
 @inproceedings{probdd2021,
@@ -80,8 +83,8 @@
   author    = {Wang, Guancheng and Shen, Ruobing and Chen, Junjie and Xiong, Yingfei and Zhang, Lu},
   year      = {2021},
   booktitle = {Proceedings of the {ACM} Joint Meeting on European Software Engineering Conference and Symposium on the Foundations of Software Engineering ({ESEC/FSE})},
+  pages     = {881--892},
   url       = {https://doi.org/10.1145/3468264.3468625},
-  note      = {Accessed: 24 June 2026},
 }
 
 @inproceedings{lpr2024,
@@ -89,8 +92,8 @@
   author    = {Zhang, Mengxiao and Tian, Yongqiang and Xu, Zhenyang and Dong, Yiwen and Tan, Shin Hwei and Sun, Chengnian},
   year      = {2024},
   booktitle = {Proceedings of the {ACM} {SIGSOFT} International Symposium on Software Testing and Analysis ({ISSTA})},
+  pages     = {261--273},
   url       = {https://doi.org/10.1145/3650212.3652126},
-  note      = {Accessed: 24 June 2026},
 }
 
 @inproceedings{creduce2012,
@@ -98,8 +101,8 @@
   author    = {Regehr, John and Chen, Yang and Cuoq, Pascal and Eide, Eric and Ellison, Chucky and Yang, Xuejun},
   year      = {2012},
   booktitle = {Proceedings of the {ACM} {SIGPLAN} Conference on Programming Language Design and Implementation ({PLDI})},
+  pages     = {335--346},
   url       = {https://doi.org/10.1145/2254064.2254104},
-  note      = {Accessed: 24 June 2026},
 }
 
 @inproceedings{perses2018,
@@ -107,8 +110,8 @@
   author    = {Sun, Chengnian and Li, Yuanbo and Zhang, Qirun and Gu, Tianxiao and Su, Zhendong},
   year      = {2018},
   booktitle = {Proceedings of the International Conference on Software Engineering ({ICSE})},
+  pages     = {361--371},
   url       = {https://doi.org/10.1145/3180155.3180236},
-  note      = {Accessed: 24 June 2026},
 }
 
 % --- LLM-as-oracle / ensemble voting foundations ---
@@ -119,7 +122,7 @@
   year      = {2023},
   booktitle = {Proceedings of the International Conference on Learning Representations ({ICLR})},
   url       = {https://openreview.net/forum?id=1PL1NIMMrw},
-  note      = {Accessed: 24 June 2026},
+  note      = {Accessed: 24 September 2026},
 }
 
 @misc{condorcetllm2024,
@@ -128,7 +131,7 @@
   year      = {2024},
   howpublished = {arXiv preprint},
   url          = {https://arxiv.org/abs/2409.00094},
-  note         = {Accessed: 24 June 2026},
+  note         = {Accessed: 24 September 2026},
 }
 
 @inproceedings{llmjudge2023,
@@ -136,8 +139,9 @@
   author    = {Zheng, Lianmin and Chiang, Wei-Lin and Sheng, Ying and Zhuang, Siyuan and Wu, Zhanghao and Zhuang, Yonghao and Lin, Zi and Li, Zhuohan and Li, Dacheng and Xing, Eric P. and Zhang, Hao and Gonzalez, Joseph E. and Stoica, Ion},
   year      = {2023},
   booktitle = {Advances in Neural Information Processing Systems ({NeurIPS}), Datasets and Benchmarks Track},
+  pages     = {46595--46623},
   url       = {https://proceedings.neurips.cc/paper_files/paper/2023/hash/91f18a1287b398d378ef22505bf41832-Abstract-Datasets_and_Benchmarks.html},
-  note      = {Accessed: 24 June 2026},
+  note      = {Accessed: 24 September 2026},
 }
 
 % --- Software-testing methodology foundations ---
@@ -147,8 +151,10 @@
   author  = {Barr, Earl T. and Harman, Mark and McMinn, Phil and Shahbaz, Muzammil and Yoo, Shin},
   year      = {2015},
   journal = {{IEEE} Transactions on Software Engineering},
+  volume  = {41},
+  number  = {5},
+  pages   = {507--525},
   url     = {https://doi.org/10.1109/TSE.2014.2372785},
-  note    = {Accessed: 24 June 2026},
 }
 
 @inproceedings{flakytests2014,
@@ -156,8 +162,17 @@
   author    = {Luo, Qingzhou and Hariri, Farah and Eloussi, Lamyaa and Marinov, Darko},
   year      = {2014},
   booktitle = {Proceedings of the {ACM} {SIGSOFT} International Symposium on Foundations of Software Engineering ({FSE})},
+  pages     = {643--653},
   url       = {https://doi.org/10.1145/2635868.2635920},
-  note      = {Accessed: 24 June 2026},
+}
+
+@inproceedings{flakeflagger2021,
+  title     = {{FlakeFlagger}: Predicting Flakiness Without Rerunning Tests},
+  author    = {Alshammari, Abdulrahman and Morris, Christopher and Hilton, Michael and Bell, Jonathan},
+  year      = {2021},
+  booktitle = {Proceedings of the {IEEE/ACM} International Conference on Software Engineering ({ICSE})},
+  pages     = {1572--1584},
+  url       = {https://doi.org/10.1109/ICSE43902.2021.00140},
 }
 
 @article{cohenkappa1960,
@@ -165,8 +180,10 @@
   author  = {Cohen, Jacob},
   year      = {1960},
   journal = {Educational and Psychological Measurement},
+  volume  = {20},
+  number  = {1},
+  pages   = {37--46},
   url     = {https://doi.org/10.1177/001316446002000104},
-  note    = {Accessed: 24 June 2026},
 }
 
 @inproceedings{pma2025,
@@ -174,8 +191,8 @@
   author    = {Tao, Yonggang and Xue, Jingling},
   year      = {2025},
   booktitle = {Proceedings of the International Conference on Evaluation and Assessment in Software Engineering ({EASE})},
+  pages     = {12--22},
   url       = {https://doi.org/10.1145/3756681.3756940},
-  note      = {Accessed: 24 June 2026},
 }
 
 @misc{ddor2026,
@@ -184,35 +201,34 @@
   year      = {2026},
   howpublished = {arXiv preprint},
   url          = {https://arxiv.org/abs/2606.03601},
-  note         = {Accessed: 24 June 2026},
+  note         = {Accessed: 24 September 2026},
 }
 
-@misc{llmjuries2026,
-  title        = {Vibe Coding on Trial: Operating Characteristics of Unanimous {LLM} Juries},
-  author       = {Ullah, Muhammad Aziz and Serwadda, Abdul},
+@inproceedings{llmjuries2026,
+  title     = {Vibe Coding on Trial: Operating Characteristics of Unanimous {LLM} Juries},
+  author    = {Ullah, Muhammad Aziz and Serwadda, Abdul},
   year      = {2026},
-  howpublished = {arXiv preprint},
-  url          = {https://arxiv.org/abs/2602.18492},
-  note         = {Accessed: 24 June 2026},
+  booktitle = {Proceedings of the {IEEE} International Conference on Semantic Computing ({ICSC})},
+  pages     = {230--237},
+  url       = {https://doi.org/10.1109/ICSC67292.2026.00039},
 }
 
-@misc{candor2025,
-  title        = {Hallucination to Consensus: Multi-Agent {LLMs} for End-to-End {JUnit} Test Generation},
-  author       = {Xu, Qinghua and Wang, Guancheng and Briand, Lionel and Liu, Kui},
-  year      = {2025},
-  howpublished = {arXiv preprint},
-  url          = {https://arxiv.org/abs/2506.02943},
-  note         = {Accessed: 24 June 2026},
+@article{candor2025,
+  title   = {Hallucination to Consensus: Multi-Agent {LLMs} for End-to-End {JUnit} Test Generation},
+  author  = {Xu, Qinghua and Wang, Guancheng and Briand, Lionel and Liu, Kui},
+  year    = {2026},
+  journal = {{ACM} Transactions on Software Engineering and Methodology},
+  url     = {https://doi.org/10.1145/3803418},
 }
 
 % --- Marketplace (product pages) ---
 
 @misc{defensics,
-  title        = {{Defensics} Fuzz Testing},
+  title        = {{Defensics} Fuzz Testing: Test Suites and Protocols},
   author       = {{Black Duck Software}},
   howpublished = {Product page},
-  url          = {https://www.blackduck.com/fuzz-testing.html},
-  note         = {Accessed: 24 June 2026},
+  url          = {https://www.blackduck.com/fuzz-testing/defensics.html},
+  note         = {Accessed: 24 September 2026},
 }
 
 @misc{keysightiot,
@@ -220,7 +236,15 @@
   author       = {{Keysight Technologies}},
   howpublished = {Product page},
   url          = {https://www.keysight.com/us/en/products/network-security/iot-security-assessment.html},
-  note         = {Accessed: 24 June 2026},
+  note         = {Accessed: 24 September 2026},
+}
+
+@misc{keysightbraktooth2021,
+  title        = {Keysight Delivers New {IoT} Security Assessment Test Software},
+  author       = {{Keysight Technologies}},
+  howpublished = {Press release, 13 October 2021},
+  url          = {https://www.keysight.com/us/en/about/newsroom/news-releases/2021/1013-nr21135-keysight-delivers-new-iot-security-assessment-test-.html},
+  note         = {Accessed: 24 September 2026},
 }
 
 @misc{clusterfuzz,
@@ -228,7 +252,7 @@
   author       = {{Google}},
   howpublished = {Project documentation},
   url          = {https://google.github.io/clusterfuzz/},
-  note         = {Accessed: 24 June 2026},
+  note         = {Accessed: 24 September 2026},
 }
 
 % --- Background / standards ---
@@ -238,8 +262,10 @@
   author  = {Wald, Abraham},
   year      = {1945},
   journal = {The Annals of Mathematical Statistics},
+  volume  = {16},
+  number  = {2},
+  pages   = {117--186},
   url     = {https://doi.org/10.1214/aoms/1177731118},
-  note    = {Accessed: 24 June 2026},
 }
 
 @article{gilbert1960,
@@ -247,8 +273,10 @@
   author  = {Gilbert, Edgar N.},
   year      = {1960},
   journal = {The Bell System Technical Journal},
+  volume  = {39},
+  number  = {5},
+  pages   = {1253--1265},
   url     = {https://doi.org/10.1002/j.1538-7305.1960.tb03959.x},
-  note    = {Accessed: 24 June 2026},
 }
 
 @article{elliott1963,
@@ -256,8 +284,10 @@
   author  = {Elliott, Edwin O.},
   year      = {1963},
   journal = {The Bell System Technical Journal},
+  volume  = {42},
+  number  = {5},
+  pages   = {1977--1997},
   url     = {https://doi.org/10.1002/j.1538-7305.1963.tb00955.x},
-  note    = {Accessed: 24 June 2026},
 }
 
 @article{youden1950,
@@ -265,8 +295,10 @@
   author  = {Youden, W. J.},
   year      = {1950},
   journal = {Cancer},
+  volume  = {3},
+  number  = {1},
+  pages   = {32--35},
   url     = {https://doi.org/10.1002/1097-0142(1950)3:1%3C32::AID-CNCR2820030106%3E3.0.CO;2-3},
-  note    = {Accessed: 24 June 2026},
 }
 
 @inproceedings{drain2017,
@@ -274,8 +306,8 @@
   author    = {He, Pinjia and Zhu, Jieming and Zheng, Zibin and Lyu, Michael R.},
   year      = {2017},
   booktitle = {Proceedings of the {IEEE} International Conference on Web Services ({ICWS})},
+  pages     = {33--40},
   url       = {https://doi.org/10.1109/ICWS.2017.13},
-  note      = {Accessed: 24 June 2026},
 }
 
 @inproceedings{scb2018,
@@ -283,8 +315,8 @@
   author    = {van Tonder, Rijnard and Kotheimer, John and Le Goues, Claire},
   year      = {2018},
   booktitle = {Proceedings of the {ACM/IEEE} International Conference on Automated Software Engineering ({ASE})},
+  pages     = {612--622},
   url       = {https://doi.org/10.1145/3238147.3238200},
-  note      = {Accessed: 24 June 2026},
 }
 
 @inproceedings{igor2021,
@@ -292,17 +324,17 @@
   author    = {Jiang, Zhiyuan and Jiang, Xiyue and Hazimeh, Ahmad and Tang, Chaojing and Zhang, Chao and Payer, Mathias},
   year      = {2021},
   booktitle = {Proceedings of the {ACM} {SIGSAC} Conference on Computer and Communications Security ({CCS})},
+  pages     = {3318--3336},
   url       = {https://doi.org/10.1145/3460120.3485364},
-  note      = {Accessed: 24 June 2026},
 }
 
-@misc{frugalgpt2023,
-  title        = {{FrugalGPT}: How to Use Large Language Models While Reducing Cost and Improving Performance},
-  author       = {Chen, Lingjiao and Zaharia, Matei and Zou, James},
-  year      = {2023},
-  howpublished = {arXiv preprint},
-  url          = {https://arxiv.org/abs/2305.05176},
-  note         = {Accessed: 24 June 2026},
+@article{frugalgpt2023,
+  title   = {{FrugalGPT}: How to Use Large Language Models While Reducing Cost and Improving Performance},
+  author  = {Chen, Lingjiao and Zaharia, Matei and Zou, James},
+  year    = {2024},
+  journal = {Transactions on Machine Learning Research},
+  url     = {https://openreview.net/forum?id=cSimKw5p6R},
+  note    = {Accessed: 24 September 2026},
 }
 
 @misc{llama3_2024,
@@ -311,7 +343,7 @@
   year      = {2024},
   howpublished = {arXiv preprint},
   url          = {https://arxiv.org/abs/2407.21783},
-  note         = {Accessed: 24 June 2026},
+  note         = {Accessed: 24 September 2026},
 }
 
 % --- Closest neighbours: statistical oracles, DD on non-deterministic / LLM
@@ -322,8 +354,8 @@
   author    = {Guderlei, Ralph and Mayer, Johannes},
   year      = {2007},
   booktitle = {Proceedings of the International Conference on Quality Software ({QSIC})},
-  url       = {https://doi.org/10.1109/QSIC.2007.54},
-  note      = {Accessed: 24 June 2026},
+  pages     = {404--409},
+  url       = {https://doi.org/10.1109/QSIC.2007.4385527},
 }
 
 @inproceedings{quantumdd2024,
@@ -331,17 +363,17 @@
   author    = {Pontolillo, Gabriel Joseph and Mousavi, Mohammad Reza},
   year      = {2024},
   booktitle = {Proceedings of the {ACM/IEEE} International Workshop on Quantum Software Engineering ({Q-SE})},
+  pages     = {1--8},
   url       = {https://doi.org/10.1145/3643667.3648219},
-  note      = {Accessed: 24 June 2026},
 }
 
 @inproceedings{ddllm2026,
   title     = {Delta Debugging for {LLM}-integrated Systems},
-  author    = {Zhu, Hao-Nan and others},
+  author    = {Zhu, Hao-Nan and Mansur, Muhammad Numair and Sch{\"a}f, Martin and Chen, Zeya and Lepoint, Tancr{\`e}de and Visser, Willem},
   year      = {2026},
   booktitle = {Proceedings of the International Conference on Software Engineering, Software Engineering in Practice Track ({ICSE-SEIP})},
-  url       = {https://conf.researchr.org/details/icse-2026/icse-2026-software-engineering-in-practice/5/Delta-Debugging-for-LLM-integrated-Systems},
-  note      = {Accessed: 24 June 2026},
+  pages     = {70--80},
+  url       = {https://doi.org/10.1145/3786583.3786854},
 }
 
 @inproceedings{gptrace2026,
@@ -349,6 +381,6 @@
   author       = {Herter, Patrick and Ahlrichs, Vincent and A{\c{c}}ilan, Ridvan and Horsch, Julian},
   year      = {2026},
   booktitle = {Proceedings of the {IEEE/ACM} International Conference on Software Engineering ({ICSE})},
-  url          = {https://arxiv.org/abs/2512.01609},
-  note         = {Accessed: 24 June 2026},
+  pages        = {3535--3546},
+  url          = {https://doi.org/10.1145/3744916.3773161},
 }

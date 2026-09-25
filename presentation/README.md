@@ -1,18 +1,16 @@
 # Presentation — IoT and Smart Home Security
 
-Slidev-based slides for the T39 classroom presentation.
+Slidev source of the T39 classroom talk.
 
-## Development
+From the repository root, after `pnpm install` once:
 
 ```bash
-pnpm dev    # http://localhost:3030
-pnpm build  # SPA in dist/
-pnpm export # PDF export (requires Playwright)
+pnpm slides:dev      # live deck at http://localhost:3030
+pnpm slides:build    # static site in presentation/dist/
+pnpm slides:export   # PDF export (uses the Chromium that pnpm install downloads)
 ```
 
-## Structure
-
-- `slides.md` — title slide and section imports
+- `slides.md` — cover slide and section imports
 - `slides/` — one file per section
-- `public/` — figure images
+- `public/` — figures; those reproduced from the two source papers remain the copyright of their authors and publisher
 - `style.css` — deck styles

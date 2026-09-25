@@ -1,10 +1,13 @@
-"""emulation.baseline — AirBugCatcher's EXACT crash-identity matcher (is_same_crash_id), shared device infra.
+"""emulation.baseline — AirBugCatcher's exact crash-identity matcher, shared device infrastructure.
 
-The deterministic stack-bucket crash key the baseline arm keys on: the top-K address-normalised frame symbols
-(the crash bucket), or the assert site when the report has no stack. Brittle to backtrace truncation/garble --
-the false-negative the tool's fuzzy L2/L3 fixes. Shared device/identity infra: reused by the device oracles'
-baseline exact-id (emulation.multibug) and the synthetic suite (benchmarks.synthetic), and exercised by
-rdd.tests. The AirBugCatcher MINIMISER that uses it as its head-to-head arm lives in benchmarks.baseline."""
+``exact_crash_id`` reproduces is_same_crash_id: the crash key is the top-K
+address-normalised frame symbols (the crash bucket), or the assert site when the
+report carries no stack. It is brittle to backtrace truncation and garble -- the
+false negative the tool's fuzzy L2/L3 fixes. The matcher is reused by the device
+oracles' baseline exact-id (emulation.multibug) and the synthetic suite
+(benchmarks.synthetic), and exercised by rdd.tests. The AirBugCatcher minimiser
+that uses it as its head-to-head arm lives in benchmarks.baseline.
+"""
 
 from __future__ import annotations
 
@@ -23,9 +26,8 @@ def _site_from_log(log_lines):
 
 
 def exact_crash_id(obs: DumpObs, k: int = 5):
-    """AirBugCatcher's EXACT is_same_crash_id: top-K address-normalized frame symbols (the crash bucket),
-    or the assert site when the report has no stack. Exactly what a stack-hash dedup keys on. Brittle to
-    backtrace truncation/garble -- the false-negative the tool's fuzzy L2/L3 fixes."""
+    """The exact is_same_crash_id key: the top-K address-normalised frame symbols, or the assert site when
+    the report has no stack -- what a stack-hash dedup keys on."""
     norm = tuple(re.sub(r"\+0x[0-9a-fA-F]+$", "", f) for f in obs.stack[:k])
     if norm:
         return ("stack", obs.fault, norm)
